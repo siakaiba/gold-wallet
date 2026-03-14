@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | QAR Gram View</title>
+    <title>Samir's Gold Wallet | Live Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,7 +20,6 @@
         .table-container::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         input, select { background-color: #374151 !important; color: white !important; border-color: #4b5563 !important; }
         #goldTable tr td { font-size: 14px; padding: 12px; }
-        #reportTable thead th { font-size: 12px; }
     </style>
 </head>
 <body class="text-gray-100 font-sans">
@@ -27,7 +28,9 @@
         <header class="bg-gray-900 text-white px-6 py-3 shadow-2xl flex justify-between items-center shrink-0 border-b border-gray-800">
             <div>
                 <h1 class="text-2xl font-bold uppercase tracking-widest leading-none text-yellow-600">Gold Investment Wallet</h1>
-                <p class="text-gray-400 text-[10px] mt-1 uppercase tracking-tighter">Live 24K Price (Qatar): <span class="font-bold text-yellow-500">599.50 QAR/g</span></p>
+                <p class="text-gray-400 text-[10px] mt-1 uppercase tracking-tighter">
+                    Live Calculation Basis (24K): <span id="headerLivePrice" class="font-bold text-yellow-500">Loading...</span> <span class="text-yellow-500">QAR/g</span>
+                </p>
             </div>
             <button onclick="downloadPDF()" class="bg-gray-800 text-yellow-500 border border-gray-700 px-6 py-2 rounded font-bold shadow-lg hover:bg-gray-700 hover:text-yellow-400 transition text-xs uppercase tracking-wider">
                 Export Report
@@ -61,7 +64,6 @@
             <div class="w-1/2 border-r border-gray-700 relative h-full">
                 <div id="tradingview_live" class="h-full w-full"></div>
             </div>
-            
             <div class="w-1/2 p-6 flex items-center justify-center bg-gray-900 shrink-0">
                 <div class="w-full flex flex-col items-center">
                     <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-6">Asset Allocation (Grams)</h2>
@@ -75,8 +77,11 @@
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Date</label><input type="date" id="purchaseDate" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Purity</label><select id="purity" class="w-full border p-1.5 rounded text-xs outline-none"><option value="24">24K</option><option value="22">22K</option><option value="21">21K</option></select></div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Grams</label><input type="number" id="grams" placeholder="0.00" class="w-full border p-1.5 rounded text-xs outline-none"></div>
-                <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Rate (QAR/g)</label><input type="number" id="price" placeholder="Price" class="w-full border p-1.5 rounded text-xs outline-none"></div>
-                <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Making Cost</label><input type="number" id="costs" placeholder="Optional" class="w-full border p-1.5 rounded text-xs outline-none"></div>
+                <div class="flex-1">
+                    <label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Market Price QAR/g</label>
+                    <input type="number" id="currentMarketPrice" class="w-full border p-1.5 rounded text-xs outline-none text-yellow-500 font-bold" onchange="updateLivePrice(this.value)">
+                </div>
+                <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Paid Rate</label><input type="number" id="price" placeholder="Price" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <button onclick="addEntry()" class="bg-yellow-700 text-white px-8 h-9 rounded font-bold hover:bg-yellow-600 transition uppercase text-[12px] shadow-lg">Update Wallet</button>
             </div>
         </div>
@@ -95,125 +100,121 @@
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        const livePrice24K = 599.50;
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "PASTE_YOUR_API_KEY_HERE",
+            databaseURL: "https://samirgoldwallet-default-rtdb.firebaseio.com/",
+            projectId: "samirgoldwallet"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const walletRef = db.ref('samir_wallet');
+
+        let livePrice24K = 599.50; // Initial default
         let barChart;
-        let weights = { 24: 0, 22: 0, 21: 0 };
+        let walletEntries = [];
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
             
-            // Formula: (Spot Gold Price * USD/QAR Exchange Rate) / 31.1035 (grams in an ounce)
-            const qarPerGramSymbol = "TVC:GOLD*FX_IDC:USDQAR/31.1035";
-
+            // TradingView Widget (XAU/USD converted to QAR/Gram)
             new TradingView.widget({
-                "autosize": true,
-                "symbol": qarPerGramSymbol,
-                "interval": "D",
-                "timezone": "Etc/UTC",
-                "theme": "dark",
-                "style": "1",
-                "locale": "en",
-                "container_id": "tradingview_live",
-                "studies": [],
-                "backgroundColor": "#1f2937",
-                "gridColor": "rgba(75, 85, 99, 0.1)",
-                "withdateranges": true,
-                "allow_symbol_change": false
+                "autosize": true, "symbol": "TVC:GOLD*FX_IDC:USDQAR/31.1035", "interval": "D", "theme": "dark", "style": "1", "container_id": "tradingview_live"
             });
+
             initCharts();
-            loadEntries();
+
+            // Real-time listener: Sync data from Firebase
+            walletRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                walletEntries = data ? Object.values(data) : [];
+                renderWallet();
+            });
+
+            // Set initial UI market price
+            document.getElementById('currentMarketPrice').value = livePrice24K;
+            document.getElementById('headerLivePrice').innerText = livePrice24K;
         };
+
+        function updateLivePrice(val) {
+            livePrice24K = parseFloat(val) || 0;
+            document.getElementById('headerLivePrice').innerText = livePrice24K.toFixed(2);
+            renderWallet();
+        }
 
         function initCharts() {
             const ctx = document.getElementById('allocationBarChart').getContext('2d');
             Chart.register(ChartDataLabels);
             barChart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: ['24K', '22K', '21K'],
-                    datasets: [{
-                        label: 'Grams',
-                        data: [0, 0, 0],
-                        backgroundColor: ['#ca8a04', '#b45309', '#92400e'],
-                        borderRadius: 6,
-                        barThickness: 50
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end', align: 'right', color: '#e5e7eb',
-                            font: { weight: 'bold', size: 14 },
-                            formatter: (value) => value.toFixed(2) + 'g'
-                        }
-                    },
-                    scales: { x: { display: false }, y: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 14, weight: 'bold' } } } }
-                }
+                data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#b45309', '#92400e'], borderRadius: 6, barThickness: 50 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'right', color: '#e5e7eb', font: { weight: 'bold' }, formatter: (v) => v.toFixed(2)+'g' } }, scales: { x: { display: false }, y: { grid: { display: false }, ticks: { color: '#9ca3af' } } } }
             });
         }
 
-        // Core App Functions (addEntry, loadEntries, updateCardColors, deleteEntry, downloadPDF unchanged)
         function addEntry() {
-            const rawDate = document.getElementById('purchaseDate').value;
-            const purity = parseInt(document.getElementById('purity').value);
-            const grams = parseFloat(document.getElementById('grams').value) || 0;
-            const price = parseFloat(document.getElementById('price').value) || 0;
-            const costs = parseFloat(document.getElementById('costs').value) || 0;
-            if(!rawDate || grams <= 0) return alert("Fill data!");
-            const entry = { id: Date.now(), timestamp: new Date(rawDate).getTime(), dateStr: new Date(rawDate).toLocaleDateString('en-GB'), purity, grams, totalCost: (grams * price) + costs };
-            let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            entries.push(entry);
-            localStorage.setItem('goldEntries', JSON.stringify(entries));
-            loadEntries();
+            const grams = parseFloat(document.getElementById('grams').value);
+            const price = parseFloat(document.getElementById('price').value);
+            if (!grams || !price) return alert("Fill Grams and Price!");
+
+            const newEntry = {
+                id: Date.now(),
+                dateStr: document.getElementById('purchaseDate').value,
+                purity: parseInt(document.getElementById('purity').value),
+                grams: grams,
+                totalCost: grams * price
+            };
+
+            walletRef.push(newEntry);
             document.getElementById('grams').value = '';
         }
 
-        function loadEntries() {
+        function renderWallet() {
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
-            let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            weights = { 24: 0, 22: 0, 21: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
-            entries.sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
+            let weights = { 24: 0, 22: 0, 21: 0 };
+
+            walletEntries.sort((a,b) => b.id - a.id).forEach(e => {
                 const currentVal = e.grams * (livePrice24K * (e.purity / 24));
                 const profitVal = currentVal - e.totalCost;
                 weights[e.purity] += e.grams;
                 tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
+
                 const color = profitVal >= 0 ? 'text-green-400' : 'text-red-400';
-                tableBody.innerHTML += `<tr><td class="p-3">${e.dateStr}</td><td class="font-bold text-yellow-600">${e.purity}K</td><td class="text-center font-bold">${e.grams}g</td><td class="text-center">${e.totalCost.toLocaleString()}</td><td class="text-center font-semibold text-gray-100">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td><td class="text-center font-bold ${color}">${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-right"><button class="text-gray-500 hover:text-red-400" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
+                tableBody.innerHTML += `<tr><td class="p-3">${e.dateStr}</td><td class="font-bold text-yellow-600">${e.purity}K</td><td class="text-center font-bold">${e.grams}g</td><td class="text-center">${e.totalCost.toLocaleString()}</td><td class="text-center">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td><td class="text-center font-bold ${color}">${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-right"><button onclick="deleteEntry('${e.id}')" class="text-gray-500 hover:text-red-400">Del</button></td></tr>`;
             });
-            const netProfit = tVal - tCost;
-            document.getElementById('statCount').innerText = entries.length;
+
+            document.getElementById('statCount').innerText = walletEntries.length;
             document.getElementById('statGrams').innerText = tGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + tCost.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statProfit').innerText = 'QAR ' + netProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
-            updateCardColors(tVal, tCost, netProfit);
+            document.getElementById('statProfit').innerText = 'QAR ' + (tVal - tCost).toLocaleString(undefined, {maximumFractionDigits: 0});
+            
+            updateCardColors(tVal, tCost);
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
             barChart.update();
         }
 
-        function updateCardColors(tVal, tCost, netProfit) {
-            const cardValue = document.getElementById('cardValue');
-            const cardProfit = document.getElementById('cardProfit');
-            if (tVal > tCost) cardValue.className = "border-r border-gray-800 p-3 text-center bg-green-900/20";
-            else if (tVal < tCost && tVal > 0) cardValue.className = "border-r border-gray-800 p-3 text-center bg-red-900/20";
-            if (netProfit > 0) cardProfit.className = "p-3 text-center bg-green-900/20";
-            else if (netProfit < 0) cardProfit.className = "p-3 text-center bg-red-900/20";
+        function updateCardColors(tVal, tCost) {
+            const cardP = document.getElementById('cardProfit');
+            if (tVal > tCost) cardP.className = "p-3 text-center bg-green-900/20";
+            else if (tVal < tCost) cardP.className = "p-3 text-center bg-red-900/20";
         }
 
-        function deleteEntry(id) { if(confirm("Remove?")) { let entries = JSON.parse(localStorage.getItem('goldEntries')) || []; entries = entries.filter(e => e.id !== id); localStorage.setItem('goldEntries', JSON.stringify(entries)); loadEntries(); } }
+        function deleteEntry(id) {
+            if(!confirm("Remove?")) return;
+            walletRef.orderByChild('id').equalTo(parseInt(id)).once('value', (snapshot) => {
+                snapshot.forEach((child) => child.ref.remove());
+            });
+        }
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
-            doc.text("Gold Investment Report", 14, 20);
-            doc.autoTable({ startY: 45, html: '#reportTable' });
-            doc.save("Gold_Portfolio.pdf");
+            doc.text("Gold Portfolio Sync Report", 14, 20);
+            doc.autoTable({ startY: 30, html: '#reportTable' });
+            doc.save("Gold_Sync_Report.pdf");
         }
     </script>
 </body>
