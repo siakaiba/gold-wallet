@@ -55,9 +55,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b">
             <div class="lg:col-span-2">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Wallet Behavior (Growth)</h2>
-                </div>
+                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Wallet Behavior (Growth)</h2>
                 <div style="height: 220px;"><canvas id="walletBehaviorChart"></canvas></div>
             </div>
             <div class="border-l dark:border-gray-700 lg:pl-6">
@@ -120,10 +118,8 @@
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.theme = isDark ? 'dark' : 'light';
             document.getElementById('themeIcon').innerText = isDark ? '☀️' : '🌙';
-            walletChart.destroy();
-            barChart.destroy();
-            initCharts();
-            fetchEntries();
+            walletChart.destroy(); barChart.destroy();
+            initCharts(); fetchEntries();
         }
 
         function initCharts() {
@@ -131,11 +127,9 @@
             const textColor = isDark ? '#9ca3af' : '#6b7280';
             const gridColor = isDark ? '#374151' : '#e5e7eb';
 
-            // Line Chart - Wallet Behavior
-            const walletCtx = document.getElementById('walletBehaviorChart').getContext('2d');
-            walletChart = new Chart(walletCtx, {
+            walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Total Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] },
+                data: { labels: [], datasets: [{ label: 'Wallet Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false }, datalabels: { display: false } },
@@ -146,9 +140,7 @@
                 }
             });
 
-            // Bar Chart - Inside values
-            const barCtx = document.getElementById('weightBarChart').getContext('2d');
-            barChart = new Chart(barCtx, {
+            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), {
                 type: 'bar',
                 data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] },
                 options: {
@@ -179,19 +171,15 @@
             const costs = parseFloat(document.getElementById('costs').value) || 0;
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
 
-            const dateObj = new Date(rawDate);
             const entry = {
-                timestamp: dateObj.getTime(),
-                dateStr: dateObj.toLocaleDateString('en-GB'),
-                dayName: dateObj.toLocaleDateString('en-GB', { weekday: 'long' }),
-                purity: purity,
-                grams: grams,
-                totalCost: (grams * price) + costs
+                timestamp: new Date(rawDate).getTime(),
+                dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
+                dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }),
+                purity: purity, grams: grams, totalCost: (grams * price) + costs
             };
 
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(entry) });
             fetchEntries();
-            ['grams', 'price', 'costs'].forEach(id => document.getElementById(id).value = '');
         }
 
         function renderTable(data) {
@@ -200,86 +188,50 @@
             if (!data) { updateStats(0, 0, 0, 0); return; }
 
             const entries = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-            entries.sort((a, b) => a.timestamp - b.timestamp); // Sort oldest to newest for behavior chart
+            entries.sort((a, b) => a.timestamp - b.timestamp);
 
             const weights = { 24: 0, 22: 0, 21: 0 };
-            let cumulativeGrams = 0, cumulativeValue = 0, tCost = 0;
-            let chartLabels = [], chartData = [];
+            let cumulativeValue = 0, tGrams = 0, tCost = 0;
+            let cLabels = [], cData = [];
 
             entries.forEach(e => {
-                const currentVal = e.grams * (livePrice24K * (e.purity / 24));
-                const profitVal = currentVal - e.totalCost;
-                
-                if(weights.hasOwnProperty(e.purity)) weights[e.purity] += e.grams;
-                cumulativeGrams += e.grams;
-                tCost += e.totalCost;
-                
-                // Track cumulative value for the behavior chart
-                cumulativeValue += currentVal;
-                chartLabels.push(e.dateStr);
-                chartData.push(cumulativeValue.toFixed(0));
+                const curVal = e.grams * (livePrice24K * (e.purity / 24));
+                weights[e.purity] += e.grams;
+                tGrams += e.grams; tCost += e.totalCost; cumulativeValue += curVal;
+                cLabels.push(e.dateStr); cData.push(cumulativeValue.toFixed(0));
             });
 
-            // Update Wallet Behavior Chart
-            walletChart.data.labels = chartLabels;
-            walletChart.data.datasets[0].data = chartData;
-            walletChart.update();
+            walletChart.data.labels = cLabels; walletChart.data.datasets[0].data = cData; walletChart.update();
+            barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]]; barChart.update();
 
-            // Reverse for display in table (newest first)
-            [...entries].sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
-                const currentVal = e.grams * (livePrice24K * (e.purity / 24));
-                const profitVal = currentVal - e.totalCost;
-                const color = profitVal >= 0 ? 'text-green-500' : 'text-red-500';
-
+            [...entries].reverse().forEach(e => {
+                const profit = (e.grams * (livePrice24K * (e.purity / 24))) - e.totalCost;
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
-                        <td class="p-4 font-medium">${e.dateStr}</td>
-                        <td class="p-4 text-gray-500 dark:text-gray-400">${e.dayName}</td>
-                        <td class="p-4 font-bold text-yellow-700 dark:text-yellow-500">${e.purity}K</td>
-                        <td class="p-4 text-center font-bold">${e.grams}g</td>
+                        <td class="p-4">${e.dateStr}</td>
+                        <td class="p-4 text-gray-500">${e.dayName}</td>
+                        <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
+                        <td class="p-4 text-center">${e.grams}g</td>
                         <td class="p-4 text-center">---</td>
-                        <td class="p-4 text-center text-blue-500 font-bold">---</td>
-                        <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {minimumFractionDigits:1})}</td>
+                        <td class="p-4 text-center">---</td>
+                        <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${profit.toLocaleString()}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
                     </tr>`;
             });
-
-            updateStats(entries.length, cumulativeGrams, tCost, cumulativeValue);
-            barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
-            barChart.update();
+            updateStats(entries.length, tGrams, tCost, cumulativeValue);
         }
 
         function updateStats(count, grams, invested, value) {
             const profit = value - invested;
-            const isDark = document.documentElement.classList.contains('dark');
-            
             document.getElementById('statCount').innerText = count;
             document.getElementById('statGrams').innerText = grams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + invested.toLocaleString();
-            document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString(undefined, {maximumFractionDigits: 0});
-
-            const updateCard = (cardId, labelId, statId, isPositive) => {
-                const card = document.getElementById(cardId);
-                const label = document.getElementById(labelId);
-                const stat = document.getElementById(statId);
-                if (isPositive && invested > 0) {
-                    card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`;
-                    label.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400";
-                    stat.className = "text-xl font-black text-green-700 dark:text-green-300";
-                } else {
-                    card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`;
-                    label.className = "text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400";
-                    stat.className = "text-xl font-black text-gray-800 dark:text-white";
-                }
-            };
-
-            updateCard('cardValue', 'labelValue', 'statValue', value > invested);
-            updateCard('cardProfit', 'labelProfit', 'statProfit', profit > invested);
+            document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString();
+            document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString();
         }
 
         async function deleteEntry(id) {
-            if(confirm("Delete this entry?")) {
+            if(confirm("Delete?")) {
                 await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'DELETE' });
                 fetchEntries();
             }
@@ -288,8 +240,41 @@
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
-            doc.text("Gold Investment Report", 14, 15);
-            doc.autoTable({ html: '#reportTable', startY: 25, headStyles: { fillColor: [202, 138, 4] } });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            
+            // Header
+            doc.setFontSize(18);
+            doc.setTextColor(202, 138, 4);
+            doc.text("Samir's Gold Investment Report", 14, 15);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+
+            // Summary Stats
+            doc.setDrawColor(200);
+            doc.line(14, 25, pageWidth - 14, 25);
+            doc.text(`Total Weight: ${document.getElementById('statGrams').innerText}`, 14, 32);
+            doc.text(`Total Investment: ${document.getElementById('statInvested').innerText}`, 60, 32);
+            doc.text(`Current Value: ${document.getElementById('statValue').innerText}`, 110, 32);
+            doc.text(`Net Profit: ${document.getElementById('statProfit').innerText}`, 160, 32);
+
+            // Charts
+            const walletImg = document.getElementById('walletBehaviorChart').toDataURL('image/png', 1.0);
+            const barImg = document.getElementById('weightBarChart').toDataURL('image/png', 1.0);
+            
+            doc.setFontSize(12);
+            doc.text("Wallet Behavior & Weight Breakdown", 14, 45);
+            doc.addImage(walletImg, 'PNG', 14, 50, 130, 60);
+            doc.addImage(barImg, 'PNG', 150, 50, 130, 60);
+
+            // Table
+            doc.autoTable({ 
+                html: '#reportTable', 
+                startY: 120,
+                headStyles: { fillColor: [202, 138, 4] },
+                didParseCell: (data) => { if(data.column.index === 7) data.cell.text = ''; }
+            });
+
             doc.save("Gold_Wallet_Report.pdf");
         }
     </script>
