@@ -66,7 +66,7 @@
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Grams</label><input type="number" id="grams" placeholder="0.00" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <div class="flex-1">
                     <label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Market Price QAR/g (Opt)</label>
-                    <input type="number" id="currentMarketPrice" placeholder="Default: 599.50" class="w-full border p-1.5 rounded text-xs outline-none text-yellow-500" onchange="updateLivePrice(this.value)">
+                    <input type="number" id="currentMarketPrice" placeholder="Default: 599.50" class="w-full border p-1.5 rounded text-xs outline-none text-yellow-500">
                 </div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Paid Rate (Opt)</label><input type="number" id="price" placeholder="Same as Market" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <button onclick="addEntry()" class="bg-yellow-700 text-white px-8 h-9 rounded font-bold hover:bg-yellow-600 transition uppercase text-[12px] shadow-lg">Update Wallet</button>
@@ -96,25 +96,17 @@
         const db = firebase.database();
         const walletRef = db.ref('samir_wallet');
 
-        // Current retail rates for March 2026 in Qatar
-        const defaultRates = {
-            "24": 599.50,
-            "22": 555.50,
-            "21": 530.25
-        };
-
+        const defaultRates = { "24": 599.50, "22": 555.50, "21": 530.25 };
         let livePrice24K = 599.50; 
         let barChart;
         let walletEntries = [];
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
-            new TradingView.widget({
-                "autosize": true, "symbol": "TVC:GOLD*FX_IDC:USDQAR/31.1035", "theme": "dark", "style": "1", "container_id": "tradingview_live"
-            });
+            new TradingView.widget({ "autosize": true, "symbol": "TVC:GOLD*FX_IDC:USDQAR/31.1035", "theme": "dark", "style": "1", "container_id": "tradingview_live" });
             initCharts();
             
-            // Set initial placeholder/default for 24K
+            // Set initial placeholder
             document.getElementById('currentMarketPrice').placeholder = `Default: ${defaultRates["24"]}`;
 
             walletRef.on('value', (snapshot) => {
@@ -124,21 +116,17 @@
             });
         };
 
+        // FIXED: Only changes market price field if it's currently empty
         function handlePurityChange(purity) {
-            const marketPriceInput = document.getElementById('currentMarketPrice');
-            marketPriceInput.placeholder = `Default: ${defaultRates[purity]}`;
-            // If the user has manually entered a price, we don't clear it, 
-            // but we update the internal baseline for the overall portfolio valuation
-            livePrice24K = defaultRates[purity];
-            document.getElementById('headerLivePrice').innerText = livePrice24K.toFixed(2);
-            renderWallet();
-        }
-
-        function updateLivePrice(val) {
-            const purity = document.getElementById('purity').value;
-            livePrice24K = parseFloat(val) || defaultRates[purity];
-            document.getElementById('headerLivePrice').innerText = livePrice24K.toFixed(2);
-            renderWallet();
+            const marketInput = document.getElementById('currentMarketPrice');
+            marketInput.placeholder = `Default: ${defaultRates[purity]}`;
+            
+            if (marketInput.value === "") {
+                // Keep it empty so placeholder shows, but update internal calc base
+                livePrice24K = defaultRates[purity];
+                document.getElementById('headerLivePrice').innerText = livePrice24K.toFixed(2);
+                renderWallet();
+            }
         }
 
         function initCharts() {
@@ -154,27 +142,29 @@
         function addEntry() {
             const grams = parseFloat(document.getElementById('grams').value);
             const purity = document.getElementById('purity').value;
-            
-            // Check manual price first, then current market price, then the hardcoded default
-            let pricePaid = parseFloat(document.getElementById('price').value);
-            if (!pricePaid) {
-                const marketVal = parseFloat(document.getElementById('currentMarketPrice').value);
-                pricePaid = marketVal || defaultRates[purity];
-            }
+            const manualMarket = parseFloat(document.getElementById('currentMarketPrice').value);
+            const manualPaid = parseFloat(document.getElementById('price').value);
 
             if (!grams) return alert("Please enter weight!");
+
+            // Logic: Use Manual Paid -> Else use Manual Market -> Else use Default for purity
+            const marketToUse = manualMarket || defaultRates[purity];
+            const priceToUse = manualPaid || marketToUse;
 
             const newEntry = {
                 id: Date.now(),
                 dateStr: document.getElementById('purchaseDate').value,
                 purity: parseInt(purity),
                 grams: grams,
-                totalCost: grams * pricePaid
+                totalCost: grams * priceToUse
             };
 
             walletRef.push(newEntry);
+            
+            // RESET FORM
             document.getElementById('grams').value = '';
             document.getElementById('price').value = '';
+            document.getElementById('currentMarketPrice').value = ''; 
         }
 
         function renderWallet() {
@@ -184,8 +174,6 @@
             let weights = { 24: 0, 22: 0, 21: 0 };
 
             walletEntries.sort((a,b) => b.id - a.id).forEach(e => {
-                // Valuation is based on the currently active purity type's market price
-                // but normalized to 24K for the global stats if needed, or simply per-entry
                 const currentVal = e.grams * (livePrice24K * (e.purity / 24));
                 const profitVal = currentVal - e.totalCost;
                 weights[e.purity] += e.grams;
