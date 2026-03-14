@@ -12,22 +12,11 @@
 <body class="bg-gray-100 p-4 font-sans text-gray-900">
     <div class="max-w-7xl mx-auto">
         <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
-            <div class="flex flex-col md:flex-row items-center gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <p class="text-yellow-100">Live 24K Price: <span class="font-bold" id="livePriceDisplay">599.50 QAR/g</span></p>
-                </div>
-                <div class="bg-yellow-700/50 p-1 rounded-lg flex items-center gap-2 border border-yellow-500">
-                    <label class="text-[10px] font-bold uppercase ml-2">Currency:</label>
-                    <select id="currencySelector" onchange="changeCurrency()" class="bg-yellow-600 text-white text-xs font-bold p-1 rounded outline-none cursor-pointer">
-                        <option value="QAR">QAR (Riyal)</option>
-                        <option value="USD">USD (Dollar)</option>
-                        <option value="JOD">JOD (Dinar)</option>
-                        <option value="EUR">EUR (Euro)</option>
-                    </select>
-                </div>
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
+                <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
-            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition mt-4 md:mt-0">Download PDF Report</button>
+            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b text-center">
@@ -41,21 +30,29 @@
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Total Investment</p>
-                <p id="statInvested" class="text-xl font-black">0</p>
+                <p id="statInvested" class="text-xl font-black text-gray-700">QAR 0</p>
             </div>
             <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-colors duration-300 bg-gray-50 border-gray-200">
                 <p id="labelValue" class="text-[10px] uppercase font-bold text-gray-500">Investment Value</p>
-                <p id="statValue" class="text-xl font-black">0</p>
+                <p id="statValue" class="text-xl font-black text-gray-800">QAR 0</p>
             </div>
             <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-colors duration-300 bg-gray-50 border-gray-200">
                 <p id="labelProfit" class="text-[10px] uppercase font-bold text-gray-500">Net Profit/Loss</p>
-                <p id="statProfit" class="text-xl font-black">0</p>
+                <p id="statProfit" class="text-xl font-black text-gray-800">QAR 0</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 bg-white border-x p-6 gap-6 border-b">
             <div class="lg:col-span-2">
-                <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Market Trend</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Market Trend</h2>
+                    <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                        <button onclick="updateLineChart('1D')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1D</button>
+                        <button onclick="updateLineChart('1W')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1W</button>
+                        <button onclick="updateLineChart('1M')" class="px-3 py-1 text-[10px] font-bold rounded bg-white shadow-sm transition">1M</button>
+                        <button onclick="updateLineChart('1Y')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1Y</button>
+                    </div>
+                </div>
                 <div style="height: 220px;"><canvas id="goldChart"></canvas></div>
             </div>
             <div class="border-l lg:pl-6">
@@ -72,11 +69,10 @@
                     <option value="21">21K</option><option value="18">18K</option>
                 </select>
                 <input type="number" id="grams" placeholder="Grams" class="border p-2 rounded text-sm outline-none">
-                <input type="number" id="price" placeholder="Price/g (QAR)" class="border p-2 rounded text-sm outline-none">
-                <input type="number" id="costs" placeholder="Making (QAR)" class="border p-2 rounded text-sm outline-none">
+                <input type="number" id="price" placeholder="Price/g (Opt)" class="border p-2 rounded text-sm outline-none">
+                <input type="number" id="costs" placeholder="Making (Opt)" class="border p-2 rounded text-sm outline-none">
                 <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
             </div>
-            <p class="text-[9px] text-gray-400 mt-2 font-bold uppercase italic">* Always enter purchase values in QAR. The app will convert them for you.</p>
         </div>
 
         <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-sm border-x border-b">
@@ -86,10 +82,10 @@
                         <th class="p-4 border-b">Date</th>
                         <th class="p-4 border-b">Type</th>
                         <th class="p-4 border-b text-center">Weight</th>
-                        <th class="p-4 border-b text-center">Cost (<span class="cur-label">QAR</span>)</th>
-                        <th class="p-4 border-b text-center">Market (<span class="cur-label">QAR</span>)</th>
+                        <th class="p-4 border-b text-center">Total Cost</th>
+                        <th class="p-4 border-b text-center">Current Val.</th>
                         <th class="p-4 border-b text-center">Profit (%)</th>
-                        <th class="p-4 border-b text-center">Gain (<span class="cur-label">QAR</span>)</th>
+                        <th class="p-4 border-b text-center">Profit (QAR)</th>
                         <th class="p-4 border-b text-right no-pdf">Action</th>
                     </tr>
                 </thead>
@@ -99,10 +95,8 @@
     </div>
 
     <script>
-        const basePriceQAR = 599.50;
-        // 2026 Estimated Rates
-        const rates = { QAR: 1, USD: 0.27, JOD: 0.19, EUR: 0.25 };
-        let donutChart;
+        const livePrice24K = 599.50;
+        let lineChart, donutChart;
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
@@ -110,20 +104,9 @@
             loadEntries();
         };
 
-        function changeCurrency() {
-            const currency = document.getElementById('currencySelector').value;
-            const convertedPrice = (basePriceQAR * rates[currency]).toFixed(2);
-            document.getElementById('livePriceDisplay').innerText = `${convertedPrice} ${currency}/g`;
-            
-            // Update Table Headers
-            document.querySelectorAll('.cur-label').forEach(el => el.innerText = currency);
-            
-            loadEntries();
-        }
-
         function initCharts() {
             const lineCtx = document.getElementById('goldChart').getContext('2d');
-            new Chart(lineCtx, {
+            lineChart = new Chart(lineCtx, {
                 type: 'line',
                 data: {
                     labels: ['W1', 'W2', 'W3', 'Today'],
@@ -149,30 +132,40 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } },
                     cutout: '70%'
                 }
             });
+        }
+
+        function updateLineChart(range) {
+            const dataMap = {
+                '1D': [598, 597, 599, 599.5], '1W': [590, 595, 592, 599.5],
+                '1M': [580, 592, 588, 599.5], '1Y': [510, 540, 570, 599.5]
+            };
+            lineChart.data.datasets[0].data = dataMap[range];
+            lineChart.update();
         }
 
         function addEntry() {
             const rawDate = document.getElementById('purchaseDate').value;
             const purity = parseInt(document.getElementById('purity').value);
             const grams = parseFloat(document.getElementById('grams').value) || 0;
-            const priceQAR = parseFloat(document.getElementById('price').value) || 0;
-            const costsQAR = parseFloat(document.getElementById('costs').value) || 0;
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const costs = parseFloat(document.getElementById('costs').value) || 0;
             
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
 
-            const totalCostQAR = (grams * priceQAR) + costsQAR;
+            const totalCost = (grams * price) + costs;
             const entry = {
                 id: Date.now(),
                 timestamp: new Date(rawDate).getTime(),
                 dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
                 purity: purity,
                 grams: grams,
-                costQAR: totalCostQAR
+                totalCost: totalCost
             };
 
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
@@ -183,63 +176,63 @@
         }
 
         function loadEntries() {
-            const currency = document.getElementById('currencySelector').value;
-            const rate = rates[currency];
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
-            
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
-            let tGrams = 0, tCostQAR = 0, tValQAR = 0;
 
-            entries.sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
-                const currentValQAR = e.grams * (basePriceQAR * (e.purity / 24));
-                const profitValQAR = currentValQAR - e.costQAR;
-                const profitPct = e.costQAR > 0 ? ((profitValQAR / e.costQAR) * 100).toFixed(1) : "---";
+            const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
+            let tGrams = 0, tCost = 0, tVal = 0;
+
+            // Simple fixed sort: Newest Date First
+            entries.sort((a, b) => b.timestamp - a.timestamp);
+
+            entries.forEach(e => {
+                const currentVal = e.grams * (livePrice24K * (e.purity / 24));
+                const profitVal = currentVal - e.totalCost;
+                const profitPct = e.totalCost > 0 ? ((profitVal / e.totalCost) * 100).toFixed(1) : "---";
 
                 weights[e.purity] += e.grams;
-                tGrams += e.grams; tCostQAR += e.costQAR; tValQAR += currentValQAR;
+                tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
 
-                const color = e.costQAR > 0 ? (profitValQAR >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
+                const color = e.totalCost > 0 ? (profitVal >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
                 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 border-b">
-                        <td class="p-4 font-medium text-[11px]">${e.dateStr}</td>
-                        <td class="p-4 font-bold text-yellow-700 text-[11px]">${e.purity}K</td>
-                        <td class="p-4 text-center font-bold text-[11px]">${e.grams}g</td>
-                        <td class="p-4 text-center font-mono text-[11px]">${e.costQAR > 0 ? (e.costQAR * rate).toLocaleString(undefined,{maximumFractionDigits:1}) : '---'}</td>
-                        <td class="p-4 text-center font-semibold font-mono text-[11px]">${(currentValQAR * rate).toLocaleString(undefined, {maximumFractionDigits:1})}</td>
-                        <td class="p-4 text-center font-bold text-[11px] ${color}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
-                        <td class="p-4 text-center font-bold font-mono text-[11px] ${color}">${e.costQAR > 0 ? (profitValQAR * rate).toLocaleString(undefined, {maximumFractionDigits:1}) : '---'}</td>
-                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold text-[10px]" onclick="deleteEntry(${e.id})">Del</button></td>
+                        <td class="p-4 font-medium">${e.dateStr}</td>
+                        <td class="p-4 font-bold text-yellow-700">${e.purity}K</td>
+                        <td class="p-4 text-center font-bold">${e.grams}g</td>
+                        <td class="p-4 text-center">QAR ${e.totalCost.toLocaleString()}</td>
+                        <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                        <td class="p-4 text-center font-bold ${color}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
+                        <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {maximumFractionDigits:1})}</td>
+                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Delete</button></td>
                     </tr>`;
             });
 
-            // Update Global Summary with Conversion
-            const totalProfitQAR = tValQAR - tCostQAR;
+            const totalProfit = tVal - tCost;
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = tGrams.toFixed(2) + 'g';
-            document.getElementById('statInvested').innerText = currency + ' ' + (tCostQAR * rate).toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statValue').innerText = currency + ' ' + (tValQAR * rate).toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statProfit').innerText = currency + ' ' + (totalProfitQAR * rate).toLocaleString(undefined, {maximumFractionDigits:0});
+            document.getElementById('statInvested').innerText = 'QAR ' + tCost.toLocaleString();
+            document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
+            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
             
-            updateCardColors('cardValue', 'labelValue', 'statValue', tValQAR, tCostQAR);
-            updateCardColors('cardProfit', 'labelProfit', 'statProfit', totalProfitQAR, 0);
+            updateCardColors('cardValue', 'labelValue', 'statValue', tVal, tCost);
+            updateCardColors('cardProfit', 'labelProfit', 'statProfit', totalProfit, 0);
 
             donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21], weights[18]];
             donutChart.update();
         }
 
-        function updateCardColors(cardId, labelId, statId, currentVal, compareVal) {
+        function updateCardColors(cardId, labelId, statId, current, compare) {
             const card = document.getElementById(cardId);
             const label = document.getElementById(labelId);
             const stat = document.getElementById(statId);
 
-            if (currentVal > compareVal) {
+            if (current > compare) {
                 card.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm transition-colors duration-300";
                 stat.className = "text-xl font-black text-green-700";
                 label.className = "text-[10px] uppercase font-bold text-green-600";
-            } else if (currentVal < compareVal) {
+            } else if (current < compare) {
                 card.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm transition-colors duration-300";
                 stat.className = "text-xl font-black text-red-700";
                 label.className = "text-[10px] uppercase font-bold text-red-600";
@@ -251,7 +244,7 @@
         }
 
         function deleteEntry(id) {
-            if(confirm("Delete purchase?")) {
+            if(confirm("Are you sure?")) {
                 let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
                 entries = entries.filter(e => e.id !== id);
                 localStorage.setItem('goldEntries', JSON.stringify(entries));
