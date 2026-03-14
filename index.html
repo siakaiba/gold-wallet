@@ -101,7 +101,7 @@
     <script>
         Chart.register(ChartDataLabels);
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
-        const livePrice24K = 600; // Updated to whole number
+        const livePrice24K = 600; 
         let walletChart, barChart;
 
         window.onload = function() {
@@ -135,7 +135,7 @@
                     plugins: { legend: { display: false }, datalabels: { display: false } },
                     scales: {
                         x: { ticks: { color: textColor }, grid: { display: false } },
-                        y: { ticks: { color: textColor, callback: (v) => 'QAR ' + v }, grid: { color: gridColor } }
+                        y: { ticks: { color: textColor }, grid: { color: gridColor } }
                     }
                 }
             });
@@ -208,12 +208,13 @@
             [...entries].reverse().forEach(e => {
                 const curVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 const profit = curVal - Math.round(e.totalCost);
+                // dayName and dateStr now both have font-medium
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
-                        <td class="p-4">${e.dateStr}</td>
-                        <td class="p-4 text-gray-500">${e.dayName}</td>
+                        <td class="p-4 font-medium">${e.dateStr}</td>
+                        <td class="p-4 font-medium">${e.dayName}</td>
                         <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
-                        <td class="p-4 text-center">${e.grams}g</td>
+                        <td class="p-4 text-center font-bold">${e.grams}g</td>
                         <td class="p-4 text-center">---</td>
                         <td class="p-4 text-center">---</td>
                         <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profit).toLocaleString()}</td>
@@ -262,25 +263,17 @@
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
-            const pageWidth = doc.internal.pageSize.getWidth();
-            
-            doc.setFontSize(18);
-            doc.setTextColor(202, 138, 4);
             doc.text("Gold Investment Report", 14, 15);
             
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            doc.text(`Total Weight: ${document.getElementById('statGrams').innerText} | Profit: ${document.getElementById('statProfit').innerText}`, 14, 25);
-
             const walletImg = document.getElementById('walletBehaviorChart').toDataURL('image/png', 1.0);
             const barImg = document.getElementById('weightBarChart').toDataURL('image/png', 1.0);
             
-            doc.addImage(walletImg, 'PNG', 14, 30, 130, 60);
-            doc.addImage(barImg, 'PNG', 150, 30, 130, 60);
+            doc.addImage(walletImg, 'PNG', 14, 25, 130, 60);
+            doc.addImage(barImg, 'PNG', 150, 25, 130, 60);
 
             doc.autoTable({ 
                 html: '#reportTable', 
-                startY: 100,
+                startY: 95,
                 headStyles: { fillColor: [202, 138, 4] },
                 didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; }
             });
