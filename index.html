@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | Bar Chart View</title>
+    <title>Samir's Gold Wallet | Optimized Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -17,7 +17,6 @@
         .table-container::-webkit-scrollbar-track { background: #111827; }
         .table-container::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         input, select { background-color: #374151 !important; color: white !important; border-color: #4b5563 !important; }
-        
         #goldTable tr td { font-size: 14px; padding: 12px; }
         #reportTable thead th { font-size: 12px; }
     </style>
@@ -61,29 +60,10 @@
                 <div id="tradingview_live" class="h-full w-full"></div>
             </div>
             
-            <div class="w-1/2 p-6 flex items-start justify-around bg-gray-900 shrink-0">
-                <div class="w-7/12 flex flex-col items-center">
+            <div class="w-1/2 p-6 flex items-center justify-center bg-gray-900 shrink-0">
+                <div class="w-full flex flex-col items-center">
                     <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-6">Asset Allocation (Grams)</h2>
-                    <div class="h-[220px] w-full"><canvas id="allocationBarChart"></canvas></div>
-                </div>
-                
-                <div class="w-4/12 self-center">
-                    <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-4 text-center">Purity Summary</h2>
-                    <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-2xl">
-                        <table class="w-full text-center text-[13px]">
-                            <thead class="bg-gray-700 text-gray-400 uppercase text-[10px]">
-                                <tr>
-                                    <th class="py-3 px-2 border-r border-gray-600">Type</th>
-                                    <th class="py-3 px-2">Total Weight</th>
-                                </tr>
-                            </thead>
-                            <tbody id="summaryTableBody" class="font-bold">
-                                <tr class="border-t border-gray-700"><td class="py-3 px-2 border-r border-gray-600 text-yellow-600">24K</td><td id="sum24" class="text-gray-100">0.00g</td></tr>
-                                <tr class="border-t border-gray-700"><td class="py-3 px-2 border-r border-gray-600 text-yellow-600">22K</td><td id="sum22" class="text-gray-100">0.00g</td></tr>
-                                <tr class="border-t border-gray-700"><td class="py-3 px-2 border-r border-gray-600 text-yellow-600">21K</td><td id="sum21" class="text-gray-100">0.00g</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="h-[280px] w-full"><canvas id="allocationBarChart"></canvas></div>
                 </div>
             </div>
         </div>
@@ -128,7 +108,6 @@
         function initCharts() {
             const ctx = document.getElementById('allocationBarChart').getContext('2d');
             Chart.register(ChartDataLabels);
-            
             barChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -138,11 +117,11 @@
                         data: [0, 0, 0],
                         backgroundColor: ['#ca8a04', '#b45309', '#92400e'],
                         borderRadius: 6,
-                        barThickness: 40
+                        barThickness: 50
                     }]
                 },
                 options: {
-                    indexAxis: 'y', // Makes it horizontal
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
@@ -151,15 +130,15 @@
                             anchor: 'end',
                             align: 'right',
                             color: '#e5e7eb',
-                            font: { weight: 'bold', size: 12 },
+                            font: { weight: 'bold', size: 14 },
                             formatter: (value) => value.toFixed(2) + 'g'
                         }
                     },
                     scales: {
-                        x: { display: false, grid: { display: false } },
+                        x: { display: false },
                         y: { 
                             grid: { display: false }, 
-                            ticks: { color: '#9ca3af', font: { size: 12, weight: 'bold' } } 
+                            ticks: { color: '#9ca3af', font: { size: 14, weight: 'bold' } } 
                         }
                     }
                 }
@@ -197,7 +176,7 @@
                 tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
 
                 const color = profitVal >= 0 ? 'text-green-400' : 'text-red-400';
-                tableBody.innerHTML += `<tr><td class="p-3">${e.dateStr}</td><td class="font-bold text-yellow-600">${e.purity}K</td><td class="text-center">${e.grams}g</td><td class="text-center">${e.totalCost.toLocaleString()}</td><td class="text-center font-semibold text-gray-100">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td><td class="text-center font-bold ${color}">${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-right"><button class="text-gray-500 hover:text-red-400" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
+                tableBody.innerHTML += `<tr><td class="p-3">${e.dateStr}</td><td class="font-bold text-yellow-600">${e.purity}K</td><td class="text-center font-bold">${e.grams}g</td><td class="text-center">${e.totalCost.toLocaleString()}</td><td class="text-center font-semibold text-gray-100">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td><td class="text-center font-bold ${color}">${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-right"><button class="text-gray-500 hover:text-red-400" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
             });
 
             const netProfit = tVal - tCost;
@@ -207,12 +186,7 @@
             document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
             document.getElementById('statProfit').innerText = 'QAR ' + netProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
             
-            document.getElementById('sum24').innerText = weights[24].toFixed(2) + 'g';
-            document.getElementById('sum22').innerText = weights[22].toFixed(2) + 'g';
-            document.getElementById('sum21').innerText = weights[21].toFixed(2) + 'g';
-
             updateCardColors(tVal, tCost, netProfit);
-            
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
             barChart.update();
         }
