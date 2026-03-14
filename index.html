@@ -49,9 +49,9 @@
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Total Investment</p>
                 <p id="statInvested" class="text-xl font-black text-gray-700">QAR 0</p>
             </div>
-            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 shadow-sm">
-                <p class="text-[10px] text-yellow-700 uppercase font-bold">Investment Value</p>
-                <p id="statValue" class="text-xl font-black text-yellow-800">QAR 0</p>
+            <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-colors duration-500 bg-gray-50 border-gray-200">
+                <p id="labelValue" class="text-[10px] uppercase font-bold text-gray-500">Investment Value</p>
+                <p id="statValue" class="text-xl font-black">QAR 0</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Net Profit/Loss</p>
@@ -200,13 +200,35 @@
             const currentTotalValue = totalGrams * livePrice;
             const totalProfit = currentTotalValue - totalInvested;
 
-            // Updated Summary UI
+            // Summary UI Logic
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = totalGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + totalInvested.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + currentTotalValue.toLocaleString();
             document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 1});
             
+            // Dynamic Color Logic for Investment Value Card
+            const cardValue = document.getElementById('cardValue');
+            const statValue = document.getElementById('statValue');
+            const labelValue = document.getElementById('labelValue');
+
+            if (currentTotalValue > totalInvested) {
+                // Profit Look (Green)
+                cardValue.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm transition-colors duration-500";
+                statValue.className = "text-xl font-black text-green-800";
+                labelValue.className = "text-[10px] uppercase font-bold text-green-700";
+            } else if (currentTotalValue < totalInvested) {
+                // Loss Look (Red)
+                cardValue.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm transition-colors duration-500";
+                statValue.className = "text-xl font-black text-red-800";
+                labelValue.className = "text-[10px] uppercase font-bold text-red-700";
+            } else {
+                // Neutral/Empty Look
+                cardValue.className = "bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm transition-colors duration-500";
+                statValue.className = "text-xl font-black text-gray-800";
+                labelValue.className = "text-[10px] uppercase font-bold text-gray-500";
+            }
+
             document.getElementById('statProfit').className = `text-xl font-black ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
         }
 
