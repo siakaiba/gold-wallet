@@ -27,7 +27,7 @@
                 <p id="statCount" class="text-xl font-black text-blue-700">0</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight (Mixed)</p>
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight</p>
                 <p id="statGrams" class="text-xl font-black text-gray-800">0.00g</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -75,7 +75,6 @@
                     <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
                 </div>
             </div>
-            <p class="text-[10px] text-gray-400 mt-2">* If you don't remember the price/costs, leave them blank. The app will track weight only.</p>
         </div>
 
         <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-sm border-x border-b">
@@ -114,12 +113,14 @@
             
             if(!rawDate || grams <= 0) return alert("Please enter the Date and Grams!");
 
+            const selectedDate = new Date(rawDate);
             const totalCost = (grams * price) + costs;
 
             const entry = {
                 id: Date.now(),
-                dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
-                day: new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long' }),
+                timestamp: selectedDate.getTime(), // Added for sorting
+                dateStr: selectedDate.toLocaleDateString('en-GB'),
+                day: selectedDate.toLocaleDateString('en-US', { weekday: 'long' }),
                 purity: purity,
                 grams: grams,
                 buyPrice: price,
@@ -132,7 +133,6 @@
             localStorage.setItem('goldEntries', JSON.stringify(entries));
             loadEntries();
 
-            // Reset
             document.getElementById('grams').value = '';
             document.getElementById('price').value = '';
             document.getElementById('costs').value = '';
@@ -145,13 +145,15 @@
             
             let totalGrams = 0, totalInvested = 0, currentPortfolioValue = 0;
 
-            entries.sort((a,b) => b.id - a.id).forEach(entry => {
+            // CRITICAL: Sorting by Date (Latest on Top)
+            // We use 'timestamp' if it exists, or 'id' as a fallback
+            entries.sort((a, b) => (b.timestamp || b.id) - (a.timestamp || a.id));
+
+            entries.forEach(entry => {
                 const purityFactor = entry.purity / 24;
                 const currentUnitPrice = livePrice24K * purityFactor;
                 const currentVal = entry.grams * currentUnitPrice;
                 const profitVal = currentVal - entry.totalCost;
-                
-                // If price was unknown (0), we don't show a misleading 1000% profit
                 const profitPct = entry.totalCost > 0 ? ((profitVal / entry.totalCost) * 100).toFixed(1) : "---";
 
                 totalGrams += entry.grams;
@@ -184,15 +186,15 @@
             document.getElementById('statValue').innerText = 'QAR ' + currentPortfolioValue.toLocaleString(undefined, {maximumFractionDigits:0});
             document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 0});
             
-            // Card Color Logic
+            // Dynamic Color Logic
             const cardValue = document.getElementById('cardValue');
             const statProfit = document.getElementById('statProfit');
             
             if (currentPortfolioValue > totalInvested && totalInvested > 0) {
-                cardValue.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm transition-colors";
+                cardValue.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm";
                 statProfit.className = "text-xl font-black text-green-600";
             } else if (currentPortfolioValue < totalInvested) {
-                cardValue.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm transition-colors";
+                cardValue.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm";
                 statProfit.className = "text-xl font-black text-red-600";
             } else {
                 cardValue.className = "bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm";
