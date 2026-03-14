@@ -10,14 +10,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100 p-4 font-sans text-gray-900">
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-6xl mx-auto">
         <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold">Gold Investment Wallet</h1>
-                <p class="text-yellow-100">Live 24K Price: <span class="font-bold" id="livePriceDisplay">599.50 QAR/g</span></p>
+                <p class="text-yellow-100">Live 24K Price: <span class="font-bold">599.50 QAR/g</span></p>
             </div>
             <div class="mt-4 md:mt-0 flex gap-3">
-                <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF</button>
+                <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
             </div>
         </header>
 
@@ -25,10 +25,10 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-gray-700">Market Trend</h2>
                 <div class="flex gap-2 bg-gray-100 p-1 rounded-lg">
-                    <button onclick="updateChartRange('1D')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm">1D</button>
-                    <button onclick="updateChartRange('1W')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm">1W</button>
-                    <button onclick="updateChartRange('1M')" class="px-3 py-1 text-xs font-bold rounded bg-white shadow-sm">1M</button>
-                    <button onclick="updateChartRange('1Y')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm">1Y</button>
+                    <button onclick="updateChartRange('1D')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm transition">1D</button>
+                    <button onclick="updateChartRange('1W')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm transition">1W</button>
+                    <button onclick="updateChartRange('1M')" class="px-3 py-1 text-xs font-bold rounded bg-white shadow-sm transition">1M</button>
+                    <button onclick="updateChartRange('1Y')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm transition">1Y</button>
                 </div>
             </div>
             <div class="h-64">
@@ -42,7 +42,7 @@
                 <p id="statGrams" class="text-2xl font-black">0.00g</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border">
-                <p class="text-xs text-gray-500 uppercase font-bold">Total Invested</p>
+                <p class="text-xs text-gray-500 uppercase font-bold">Total Invested (Cost)</p>
                 <p id="statInvested" class="text-2xl font-black text-gray-700">QAR 0.00</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border">
@@ -63,12 +63,16 @@
 
         <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-sm border-x border-b">
             <table class="w-full text-left border-collapse" id="reportTable">
-                <thead class="bg-gray-100 text-gray-700 uppercase font-bold">
+                <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[11px]">
                     <tr>
                         <th class="p-4 border-b">Date</th>
-                        <th class="p-4 border-b">Day Name</th>
+                        <th class="p-4 border-b">Day</th>
+                        <th class="p-4 border-b text-center">Weight</th>
+                        <th class="p-4 border-b text-center">Total Cost</th>
+                        <th class="p-4 border-b text-center">Current Val.</th>
                         <th class="p-4 border-b text-center">Prob.</th>
-                        <th class="p-4 border-b text-center">% Positive Prob.</th>
+                        <th class="p-4 border-b text-center">% Pos. Prob.</th>
+                        <th class="p-4 border-b text-center">Profit (QAR)</th>
                         <th class="p-4 border-b text-right no-pdf">Action</th>
                     </tr>
                 </thead>
@@ -92,7 +96,7 @@
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Week 1', 'Week 2', 'Week 3', 'Today'],
+                    labels: ['W1', 'W2', 'W3', 'Today'],
                     datasets: [{
                         label: 'Gold Price (QAR)',
                         data: [580, 592, 588, 599.50],
@@ -112,7 +116,6 @@
         }
 
         function updateChartRange(range) {
-            // Simulated data updates based on range
             const dataMap = {
                 '1D': [598, 597, 599, 599.50],
                 '1W': [590, 595, 592, 599.50],
@@ -123,16 +126,19 @@
             myChart.update();
         }
 
-        // Logic functions (Add, Render, Save, Delete, Summary) stay the same as previous step
         function addEntry() {
             const rawDate = document.getElementById('purchaseDate').value;
-            const grams = parseFloat(document.getElementById('grams').value);
-            const price = parseFloat(document.getElementById('price').value);
+            const grams = parseFloat(document.getElementById('grams').value) || 0;
+            const price = parseFloat(document.getElementById('price').value) || 0;
             const costs = parseFloat(document.getElementById('costs').value) || 0;
             
-            if(!rawDate || !grams || !price) return alert("Fill all fields!");
+            if(!rawDate || grams <= 0 || price <= 0) return alert("Fill all fields with valid numbers!");
 
             const selectedDate = new Date(rawDate);
+            const totalCostPaid = (grams * price) + costs;
+            const currentVal = grams * livePrice;
+            const netProfitVal = currentVal - totalCostPaid;
+
             const entry = {
                 id: Date.now(),
                 dateStr: selectedDate.toLocaleDateString('en-GB'),
@@ -140,25 +146,37 @@
                 grams: grams,
                 buyPrice: price,
                 makingCosts: costs,
+                totalCost: totalCostPaid,
+                currentValue: currentVal,
+                netProfit: netProfitVal,
                 prob: (livePrice / price).toFixed(2),
-                posProb: (((livePrice * grams) - (price * grams + costs)) / (price * grams + costs) * 100).toFixed(1)
+                posProb: ((netProfitVal / totalCostPaid) * 100).toFixed(1)
             };
 
             saveToLocal(entry);
             renderRow(entry);
             updateSummary();
+
+            // Clear inputs
+            document.getElementById('grams').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('costs').value = '';
         }
 
         function renderRow(entry) {
-            const colorClass = entry.posProb >= 0 ? 'text-green-600' : 'text-red-600';
+            const colorClass = entry.netProfit >= 0 ? 'text-green-600' : 'text-red-600';
             const row = `
-                <tr id="row-${entry.id}" class="hover:bg-gray-50">
-                    <td class="p-4 border-b font-medium">${entry.dateStr}</td>
-                    <td class="p-4 border-b">${entry.day}</td>
-                    <td class="p-4 border-b text-center font-mono">${entry.prob}</td>
-                    <td class="p-4 border-b text-center font-bold ${colorClass}">${entry.posProb}%</td>
-                    <td class="p-4 border-b text-right no-pdf">
-                        <button class="text-red-400 font-bold" onclick="deleteEntry(${entry.id})">Delete</button>
+                <tr id="row-${entry.id}" class="hover:bg-gray-50 border-b">
+                    <td class="p-4 font-medium">${entry.dateStr}</td>
+                    <td class="p-4">${entry.day}</td>
+                    <td class="p-4 text-center font-bold">${entry.grams}g</td>
+                    <td class="p-4 text-center">QAR ${entry.totalCost.toLocaleString()}</td>
+                    <td class="p-4 text-center font-semibold">QAR ${entry.currentValue.toLocaleString()}</td>
+                    <td class="p-4 text-center font-mono">${entry.prob}</td>
+                    <td class="p-4 text-center font-bold ${colorClass}">${entry.posProb}%</td>
+                    <td class="p-4 text-center font-bold ${colorClass}">QAR ${entry.netProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td class="p-4 text-right no-pdf">
+                        <button class="text-red-400 font-bold hover:text-red-600" onclick="deleteEntry(${entry.id})">Delete</button>
                     </td>
                 </tr>`;
             document.getElementById('goldTable').insertAdjacentHTML('afterbegin', row);
@@ -167,15 +185,19 @@
         function updateSummary() {
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
             let totalGrams = 0, totalInvested = 0;
+            
             entries.forEach(e => {
                 totalGrams += e.grams;
-                totalInvested += (e.grams * e.buyPrice) + e.makingCosts;
+                totalInvested += e.totalCost;
             });
-            const profit = (totalGrams * livePrice) - totalInvested;
+
+            const currentTotalValue = totalGrams * livePrice;
+            const totalProfit = currentTotalValue - totalInvested;
+
             document.getElementById('statGrams').innerText = totalGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + totalInvested.toLocaleString();
-            document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString();
-            document.getElementById('statProfit').className = `text-2xl font-black ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString();
+            document.getElementById('statProfit').className = `text-2xl font-black ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
         }
 
         function saveToLocal(entry) {
@@ -200,9 +222,14 @@
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Samir's Gold Wallet Report", 14, 15);
-            doc.autoTable({ html: '#reportTable', startY: 25, didParseCell: (d) => { if(d.column.index === 4) d.cell.text = ''; } });
+            const doc = new jsPDF('l', 'mm', 'a4'); // 'l' for Landscape
+            doc.text("Gold Investment Report", 14, 15);
+            doc.autoTable({ 
+                html: '#reportTable', 
+                startY: 25, 
+                theme: 'striped',
+                didParseCell: (d) => { if(d.column.index === 8) d.cell.text = ''; } 
+            });
             doc.save("Gold_Report.pdf");
         }
     </script>
