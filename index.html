@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | Optimized Edition</title>
+    <title>Samir's Gold Wallet | Dark Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -24,18 +24,20 @@
 <body class="text-gray-100 font-sans">
 
     <div class="app-viewport">
-        <header class="bg-yellow-700 text-white px-6 py-3 shadow-2xl flex justify-between items-center shrink-0 border-b border-yellow-600">
+        <header class="bg-gray-900 text-white px-6 py-3 shadow-2xl flex justify-between items-center shrink-0 border-b border-gray-800">
             <div>
-                <h1 class="text-2xl font-bold uppercase tracking-widest leading-none">Gold Investment Wallet</h1>
-                <p class="text-yellow-200 text-[10px] mt-1 uppercase tracking-tighter">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
+                <h1 class="text-2xl font-bold uppercase tracking-widest leading-none text-yellow-600">Gold Investment Wallet</h1>
+                <p class="text-gray-400 text-[10px] mt-1 uppercase tracking-tighter">Live 24K Price (Qatar): <span class="font-bold text-yellow-500">599.50 QAR/g</span></p>
             </div>
-            <button onclick="downloadPDF()" class="bg-white text-yellow-900 px-5 py-1.5 rounded font-bold shadow-lg hover:bg-yellow-50 transition text-xs uppercase">Export Report</button>
+            <button onclick="downloadPDF()" class="bg-gray-800 text-yellow-500 border border-gray-700 px-6 py-2 rounded font-bold shadow-lg hover:bg-gray-700 hover:text-yellow-400 transition text-xs uppercase tracking-wider">
+                Export Report
+            </button>
         </header>
 
         <div class="grid grid-cols-5 bg-gray-900 border-b border-gray-800 shrink-0">
             <div class="border-r border-gray-800 p-3 text-center">
                 <p class="text-[12px] text-gray-400 uppercase font-bold mb-1">Transactions</p>
-                <p id="statCount" class="text-xl font-black">0</p>
+                <p id="statCount" class="text-xl font-black text-gray-100">0</p>
             </div>
             <div class="border-r border-gray-800 p-3 text-center">
                 <p class="text-[12px] text-gray-400 uppercase font-bold mb-1">Total Weight</p>
@@ -43,15 +45,15 @@
             </div>
             <div class="border-r border-gray-800 p-3 text-center">
                 <p class="text-[12px] text-gray-400 uppercase font-bold mb-1">Invested Capital</p>
-                <p id="statInvested" class="text-xl font-black">QAR 0</p>
+                <p id="statInvested" class="text-xl font-black text-gray-100">QAR 0</p>
             </div>
             <div id="cardValue" class="border-r border-gray-800 p-3 text-center transition-colors duration-500">
                 <p id="labelValue" class="text-[12px] uppercase font-bold text-gray-400 mb-1">Portfolio Value</p>
-                <p id="statValue" class="text-xl font-black">QAR 0</p>
+                <p id="statValue" class="text-xl font-black text-gray-100">QAR 0</p>
             </div>
             <div id="cardProfit" class="p-3 text-center transition-colors duration-500">
                 <p id="labelProfit" class="text-[12px] uppercase font-bold text-gray-400 mb-1">Net Profit/Loss</p>
-                <p id="statProfit" class="text-xl font-black">QAR 0</p>
+                <p id="statProfit" class="text-xl font-black text-gray-100">QAR 0</p>
             </div>
         </div>
 
@@ -59,7 +61,6 @@
             <div class="w-1/2 border-r border-gray-700 relative h-full">
                 <div id="tradingview_live" class="h-full w-full"></div>
             </div>
-            
             <div class="w-1/2 p-6 flex items-center justify-center bg-gray-900 shrink-0">
                 <div class="w-full flex flex-col items-center">
                     <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-6">Asset Allocation (Grams)</h2>
@@ -75,7 +76,7 @@
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Grams</label><input type="number" id="grams" placeholder="0.00" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Rate (QAR/g)</label><input type="number" id="price" placeholder="Price" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Making Cost</label><input type="number" id="costs" placeholder="Optional" class="w-full border p-1.5 rounded text-xs outline-none"></div>
-                <button onclick="addEntry()" class="bg-yellow-600 text-white px-8 h-9 rounded font-bold hover:bg-yellow-500 transition uppercase text-[12px] shadow-lg">Update Wallet</button>
+                <button onclick="addEntry()" class="bg-yellow-700 text-white px-8 h-9 rounded font-bold hover:bg-yellow-600 transition uppercase text-[12px] shadow-lg">Update Wallet</button>
             </div>
         </div>
 
@@ -95,6 +96,7 @@
     <script>
         const livePrice24K = 599.50;
         let barChart;
+        let weights = { 24: 0, 22: 0, 21: 0 };
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
@@ -127,20 +129,12 @@
                     plugins: {
                         legend: { display: false },
                         datalabels: {
-                            anchor: 'end',
-                            align: 'right',
-                            color: '#e5e7eb',
+                            anchor: 'end', align: 'right', color: '#e5e7eb',
                             font: { weight: 'bold', size: 14 },
                             formatter: (value) => value.toFixed(2) + 'g'
                         }
                     },
-                    scales: {
-                        x: { display: false },
-                        y: { 
-                            grid: { display: false }, 
-                            ticks: { color: '#9ca3af', font: { size: 14, weight: 'bold' } } 
-                        }
-                    }
+                    scales: { x: { display: false }, y: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 14, weight: 'bold' } } } }
                 }
             });
         }
@@ -164,9 +158,7 @@
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            entries = entries.filter(e => e.purity !== 18);
-            
-            const weights = { 24: 0, 22: 0, 21: 0 };
+            weights = { 24: 0, 22: 0, 21: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
 
             entries.sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
@@ -204,10 +196,61 @@
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-            doc.text("Gold Investment Report", 14, 15);
-            doc.autoTable({ html: '#reportTable', startY: 20 });
-            doc.save("Gold_Portfolio.pdf");
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            doc.setFontSize(22);
+            doc.setTextColor(202, 138, 4);
+            doc.text("Gold Investment Report", 14, 20);
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Report Generated: ${new Date().toLocaleString()}`, 14, 28);
+            doc.line(14, 32, pageWidth - 14, 32);
+            doc.setFontSize(10);
+            doc.setTextColor(0);
+            doc.setFont("helvetica", "bold");
+            doc.text("PORTFOLIO SUMMARY", 14, 42);
+            const summaryData = [
+                ["Metric", "Value"],
+                ["Total Transactions", document.getElementById('statCount').innerText],
+                ["Total Weight", document.getElementById('statGrams').innerText],
+                ["Invested Capital", document.getElementById('statInvested').innerText],
+                ["Portfolio Value", document.getElementById('statValue').innerText],
+                ["Net Profit/Loss", document.getElementById('statProfit').innerText]
+            ];
+            doc.autoTable({
+                startY: 45,
+                head: [summaryData[0]],
+                body: summaryData.slice(1),
+                theme: 'grid',
+                headStyles: { fillColor: [202, 138, 4] },
+                styles: { fontSize: 10 }
+            });
+            doc.setFont("helvetica", "bold");
+            doc.text("ASSET ALLOCATION", 14, doc.lastAutoTable.finalY + 15);
+            const allocationData = [
+                ["Gold Type", "Total Weight"],
+                ["24K Pure Gold", weights[24].toFixed(2) + "g"],
+                ["22K Gold", weights[22].toFixed(2) + "g"],
+                ["21K Gold", weights[21].toFixed(2) + "g"]
+            ];
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 18,
+                head: [allocationData[0]],
+                body: allocationData.slice(1),
+                theme: 'striped',
+                headStyles: { fillColor: [180, 83, 9] }
+            });
+            doc.addPage();
+            doc.setFont("helvetica", "bold");
+            doc.text("DETAILED TRANSACTION HISTORY", 14, 20);
+            doc.autoTable({
+                startY: 25,
+                html: '#reportTable',
+                theme: 'striped',
+                headStyles: { fillColor: [75, 85, 99] },
+                didParseCell: (data) => { if (data.column.index === 7) data.cell.text = ''; }
+            });
+            doc.save("Samir_Gold_Portfolio_Report.pdf");
         }
     </script>
 </body>
