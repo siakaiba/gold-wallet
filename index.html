@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samir's Gold Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-4 font-sans">
+    <div class="max-w-4xl mx-auto">
+        <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg">
+            <h1 class="text-2xl font-bold text-center">Gold Investment Wallet</h1>
+            <p class="text-center text-yellow-100 mt-2">Live 24K Price in Qatar: <span class="font-bold">599.50 QAR/g</span></p>
+        </header>
+
+        <div class="bg-white p-6 shadow-md border-x">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="number" id="grams" placeholder="Grams" class="border p-2 rounded">
+                <input type="number" id="price" placeholder="Price (QAR)" class="border p-2 rounded">
+                <input type="number" id="costs" placeholder="Making Costs" class="border p-2 rounded">
+                <button onclick="addEntry()" class="bg-black text-white py-2 rounded font-bold hover:bg-gray-800">Add Monthly Grams</button>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-md rounded-b-xl overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-100 text-gray-700 uppercase text-sm">
+                    <tr>
+                        <th class="p-4 border-b">Date</th>
+                        <th class="p-4 border-b">Day Name</th>
+                        <th class="p-4 border-b text-center">Prob.</th>
+                        <th class="p-4 border-b text-center">% Positive Prob.</th>
+                        <th class="p-4 border-b text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="goldTable">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function addEntry() {
+            const grams = document.getElementById('grams').value;
+            const price = document.getElementById('price').value;
+            const livePrice = 599.50; // Current rate in Qatar
+            
+            if(!grams || !price) return alert("Please enter grams and price!");
+
+            const now = new Date();
+            const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
+            const dateStr = now.toLocaleDateString('en-GB');
+            
+            // Logic: Probability of profit based on buy price vs live price
+            const probValue = (livePrice / price).toFixed(2);
+            const posProb = ((livePrice - price) / price * 100).toFixed(1);
+            const colorClass = posProb >= 0 ? 'text-green-600' : 'text-red-600';
+
+            const row = `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 border-b font-medium">${dateStr}</td>
+                    <td class="p-4 border-b">${dayName}</td>
+                    <td class="p-4 border-b text-center font-mono">${probValue}</td>
+                    <td class="p-4 border-b text-center font-bold ${colorClass}">${posProb}%</td>
+                    <td class="p-4 border-b text-right">
+                        <button class="text-red-500 hover:underline" onclick="this.closest('tr').remove()">Delete</button>
+                    </td>
+                </tr>`;
+            
+            document.getElementById('goldTable').innerHTML += row;
+        }
+    </script>
+</body>
+</html>
