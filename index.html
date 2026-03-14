@@ -36,18 +36,22 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 bg-white border-x p-6 gap-4 border-b">
-            <div class="bg-gray-50 p-4 rounded-lg border">
+        <div class="grid grid-cols-1 md:grid-cols-4 bg-white border-x p-6 gap-4 border-b">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p class="text-xs text-gray-500 uppercase font-bold">Total Weight</p>
                 <p id="statGrams" class="text-2xl font-black">0.00g</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg border">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p class="text-xs text-gray-500 uppercase font-bold">Total Investment (Cost)</p>
-                <p id="statInvested" class="text-2xl font-black text-gray-700">QAR 0.00</p>
+                <p id="statInvested" class="text-2xl font-black text-gray-700">QAR 0</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg border">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p class="text-xs text-gray-500 uppercase font-bold">Net Profit/Loss</p>
-                <p id="statProfit" class="text-2xl font-black">QAR 0.00</p>
+                <p id="statProfit" class="text-2xl font-black">QAR 0</p>
+            </div>
+            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 shadow-sm">
+                <p class="text-xs text-yellow-700 uppercase font-bold tracking-tight">Investment Value (Market)</p>
+                <p id="statValue" class="text-2xl font-black text-yellow-800">QAR 0</p>
             </div>
         </div>
 
@@ -169,7 +173,6 @@
             let totalGrams = 0, totalInvested = 0;
 
             entries.sort((a,b) => b.id - a.id).forEach(entry => {
-                // Calculation safety for old data
                 const grams = entry.grams || 0;
                 const cost = entry.totalCost || (grams * (entry.buyPrice || 0) + (entry.makingCosts || 0));
                 const currentVal = grams * livePrice;
@@ -196,10 +199,14 @@
                     </tr>`;
             });
 
-            const totalProfit = (totalGrams * livePrice) - totalInvested;
+            const currentTotalValue = totalGrams * livePrice;
+            const totalProfit = currentTotalValue - totalInvested;
+
             document.getElementById('statGrams').innerText = totalGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + totalInvested.toLocaleString();
-            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString();
+            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 1});
+            document.getElementById('statValue').innerText = 'QAR ' + currentTotalValue.toLocaleString(); // Total Investment + Profit
+            
             document.getElementById('statProfit').className = `text-2xl font-black ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
         }
 
