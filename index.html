@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | Dark Dashboard</title>
+    <title>Samir's Gold Wallet | Gram Valuation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -100,8 +100,25 @@
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
+            
+            // TradingView Widget configured for Price per Gram (Gold/31.1035)
             new TradingView.widget({
-                "autosize": true, "symbol": "TVC:GOLD", "interval": "D", "timezone": "Etc/UTC", "theme": "dark", "style": "1", "locale": "en", "container_id": "tradingview_live", "studies": [], "backgroundColor": "#1f2937"
+                "autosize": true,
+                "symbol": "TVC:GOLD/31.1035",
+                "interval": "D",
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "container_id": "tradingview_live",
+                "studies": [],
+                "backgroundColor": "#1f2937",
+                "datafeed": null,
+                "library_path": "charting_library/",
+                "header_widget_buttons_mode": "adaptive",
+                "overrides": {
+                    "mainSeriesProperties.title": "Gold Price (per Gram)"
+                }
             });
             initCharts();
             loadEntries();
