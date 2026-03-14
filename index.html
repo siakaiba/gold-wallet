@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | Flex-Sync</title>
+    <title>Samir's Gold Wallet | Dynamic Flex-Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -55,7 +55,14 @@
         <div class="bg-gray-900 p-3 border-b border-gray-700 shrink-0">
             <div class="flex gap-3 items-end max-w-full">
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Date</label><input type="date" id="purchaseDate" class="w-full border p-1.5 rounded text-xs outline-none"></div>
-                <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Purity</label><select id="purity" class="w-full border p-1.5 rounded text-xs outline-none"><option value="24">24K</option><option value="22">22K</option><option value="21">21K</option></select></div>
+                <div class="flex-1">
+                    <label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Purity</label>
+                    <select id="purity" class="w-full border p-1.5 rounded text-xs outline-none" onchange="handlePurityChange(this.value)">
+                        <option value="24">24K</option>
+                        <option value="22">22K</option>
+                        <option value="21">21K</option>
+                    </select>
+                </div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Grams</label><input type="number" id="grams" placeholder="0.00" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <div class="flex-1">
                     <label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Market Price QAR/g (Opt)</label>
@@ -89,6 +96,13 @@
         const db = firebase.database();
         const walletRef = db.ref('samir_wallet');
 
+        // Current retail rates for March 2026 in Qatar
+        const defaultRates = {
+            "24": 599.50,
+            "22": 555.50,
+            "21": 530.25
+        };
+
         let livePrice24K = 599.50; 
         let barChart;
         let walletEntries = [];
@@ -99,6 +113,10 @@
                 "autosize": true, "symbol": "TVC:GOLD*FX_IDC:USDQAR/31.1035", "theme": "dark", "style": "1", "container_id": "tradingview_live"
             });
             initCharts();
+            
+            // Set initial placeholder/default for 24K
+            document.getElementById('currentMarketPrice').placeholder = `Default: ${defaultRates["24"]}`;
+
             walletRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 walletEntries = data ? Object.values(data) : [];
@@ -106,8 +124,19 @@
             });
         };
 
+        function handlePurityChange(purity) {
+            const marketPriceInput = document.getElementById('currentMarketPrice');
+            marketPriceInput.placeholder = `Default: ${defaultRates[purity]}`;
+            // If the user has manually entered a price, we don't clear it, 
+            // but we update the internal baseline for the overall portfolio valuation
+            livePrice24K = defaultRates[purity];
+            document.getElementById('headerLivePrice').innerText = livePrice24K.toFixed(2);
+            renderWallet();
+        }
+
         function updateLivePrice(val) {
-            livePrice24K = parseFloat(val) || 599.50;
+            const purity = document.getElementById('purity').value;
+            livePrice24K = parseFloat(val) || defaultRates[purity];
             document.getElementById('headerLivePrice').innerText = livePrice24K.toFixed(2);
             renderWallet();
         }
@@ -124,16 +153,21 @@
 
         function addEntry() {
             const grams = parseFloat(document.getElementById('grams').value);
-            // If Paid Rate is empty, use the current Market Price
+            const purity = document.getElementById('purity').value;
+            
+            // Check manual price first, then current market price, then the hardcoded default
             let pricePaid = parseFloat(document.getElementById('price').value);
-            if (!pricePaid) pricePaid = livePrice24K;
+            if (!pricePaid) {
+                const marketVal = parseFloat(document.getElementById('currentMarketPrice').value);
+                pricePaid = marketVal || defaultRates[purity];
+            }
 
             if (!grams) return alert("Please enter weight!");
 
             const newEntry = {
                 id: Date.now(),
                 dateStr: document.getElementById('purchaseDate').value,
-                purity: parseInt(document.getElementById('purity').value),
+                purity: parseInt(purity),
                 grams: grams,
                 totalCost: grams * pricePaid
             };
@@ -150,6 +184,8 @@
             let weights = { 24: 0, 22: 0, 21: 0 };
 
             walletEntries.sort((a,b) => b.id - a.id).forEach(e => {
+                // Valuation is based on the currently active purity type's market price
+                // but normalized to 24K for the global stats if needed, or simply per-entry
                 const currentVal = e.grams * (livePrice24K * (e.purity / 24));
                 const profitVal = currentVal - e.totalCost;
                 weights[e.purity] += e.grams;
@@ -165,15 +201,8 @@
             document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
             document.getElementById('statProfit').innerText = 'QAR ' + (tVal - tCost).toLocaleString(undefined, {maximumFractionDigits: 0});
             
-            updateCardColors(tVal, tCost);
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
             barChart.update();
-        }
-
-        function updateCardColors(tVal, tCost) {
-            const cardP = document.getElementById('cardProfit');
-            if (tVal > tCost) cardP.className = "p-3 text-center bg-green-900/20";
-            else if (tVal < tCost) cardP.className = "p-3 text-center bg-red-900/20";
         }
 
         function deleteEntry(id) {
@@ -186,7 +215,7 @@
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
-            doc.text("Synced Gold Portfolio Report", 14, 20);
+            doc.text("Gold Portfolio Sync Report", 14, 20);
             doc.autoTable({ startY: 30, html: '#reportTable' });
             doc.save("Gold_Sync_Report.pdf");
         }
