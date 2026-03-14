@@ -38,24 +38,24 @@
 
         <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b">
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight</p>
-                <p id="statGrams" class="text-xl font-black">0.00g</p>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Total Purchases</p>
                 <p id="statCount" class="text-xl font-black text-blue-700">0</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight</p>
+                <p id="statGrams" class="text-xl font-black text-gray-800">0.00g</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Total Investment</p>
                 <p id="statInvested" class="text-xl font-black text-gray-700">QAR 0</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p class="text-[10px] text-gray-500 uppercase font-bold">Net Profit/Loss</p>
-                <p id="statProfit" class="text-xl font-black">QAR 0</p>
-            </div>
             <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 shadow-sm">
                 <p class="text-[10px] text-yellow-700 uppercase font-bold">Investment Value</p>
                 <p id="statValue" class="text-xl font-black text-yellow-800">QAR 0</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Net Profit/Loss</p>
+                <p id="statProfit" class="text-xl font-black">QAR 0</p>
             </div>
         </div>
 
@@ -142,8 +142,6 @@
             if(!rawDate || grams <= 0 || price <= 0) return alert("Please fill all fields!");
 
             const totalCost = (grams * price) + costs;
-            const currentVal = grams * livePrice;
-            const profitVal = currentVal - totalCost;
 
             const entry = {
                 id: Date.now(),
@@ -202,12 +200,12 @@
             const currentTotalValue = totalGrams * livePrice;
             const totalProfit = currentTotalValue - totalInvested;
 
-            // Updated Summary Logic
+            // Updated Summary UI
+            document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = totalGrams.toFixed(2) + 'g';
-            document.getElementById('statCount').innerText = entries.length; // Total Purchases
             document.getElementById('statInvested').innerText = 'QAR ' + totalInvested.toLocaleString();
-            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 1});
             document.getElementById('statValue').innerText = 'QAR ' + currentTotalValue.toLocaleString();
+            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 1});
             
             document.getElementById('statProfit').className = `text-xl font-black ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
         }
