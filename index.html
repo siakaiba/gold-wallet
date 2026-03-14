@@ -32,13 +32,13 @@
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Total Investment</p>
                 <p id="statInvested" class="text-xl font-black text-gray-700">QAR 0</p>
             </div>
-            <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-colors duration-300">
-                <p id="labelValue" class="text-[10px] uppercase font-bold">Investment Value</p>
-                <p id="statValue" class="text-xl font-black">QAR 0</p>
+            <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-colors duration-300 bg-gray-50 border-gray-200">
+                <p id="labelValue" class="text-[10px] uppercase font-bold text-gray-500">Investment Value</p>
+                <p id="statValue" class="text-xl font-black text-gray-800">QAR 0</p>
             </div>
-            <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-colors duration-300">
-                <p id="labelProfit" class="text-[10px] uppercase font-bold">Net Profit/Loss</p>
-                <p id="statProfit" class="text-xl font-black">QAR 0</p>
+            <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-colors duration-300 bg-gray-50 border-gray-200">
+                <p id="labelProfit" class="text-[10px] uppercase font-bold text-gray-500">Net Profit/Loss</p>
+                <p id="statProfit" class="text-xl font-black text-gray-800">QAR 0</p>
             </div>
         </div>
 
@@ -79,12 +79,12 @@
             <table class="w-full text-left border-collapse" id="reportTable">
                 <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[10px]">
                     <tr>
-                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 transition-colors" onclick="handleSort('timestamp')">Date ↕</th>
-                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 transition-colors" onclick="handleSort('purity')">Type ↕</th>
-                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 text-center transition-colors" onclick="handleSort('grams')">Weight ↕</th>
+                        <th class="p-4 border-b">Date</th>
+                        <th class="p-4 border-b">Type</th>
+                        <th class="p-4 border-b text-center">Weight</th>
                         <th class="p-4 border-b text-center">Total Cost</th>
                         <th class="p-4 border-b text-center">Current Val.</th>
-                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 text-center transition-colors" onclick="handleSort('profitPct')">Profit (%) ↕</th>
+                        <th class="p-4 border-b text-center">Profit (%)</th>
                         <th class="p-4 border-b text-center">Profit (QAR)</th>
                         <th class="p-4 border-b text-right no-pdf">Action</th>
                     </tr>
@@ -97,7 +97,6 @@
     <script>
         const livePrice24K = 599.50;
         let lineChart, donutChart;
-        let currentSort = { key: 'timestamp', direction: 'desc' };
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
@@ -150,12 +149,6 @@
             lineChart.update();
         }
 
-        function handleSort(key) {
-            if (currentSort.key === key) currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            else { currentSort.key = key; currentSort.direction = 'desc'; }
-            loadEntries();
-        }
-
         function addEntry() {
             const rawDate = document.getElementById('purchaseDate').value;
             const purity = parseInt(document.getElementById('purity').value);
@@ -165,19 +158,19 @@
             
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
 
+            const totalCost = (grams * price) + costs;
             const entry = {
                 id: Date.now(),
                 timestamp: new Date(rawDate).getTime(),
                 dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
                 purity: purity,
                 grams: grams,
-                totalCost: (grams * price) + costs
+                totalCost: totalCost
             };
 
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
             entries.push(entry);
             localStorage.setItem('goldEntries', JSON.stringify(entries));
-            currentSort = { key: 'timestamp', direction: 'desc' };
             loadEntries();
             document.getElementById('grams').value = '';
         }
@@ -190,10 +183,8 @@
             const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
 
-            entries.sort((a, b) => {
-                let valA = a[currentSort.key]; let valB = b[currentSort.key];
-                return currentSort.direction === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
-            });
+            // Simple fixed sort: Newest Date First
+            entries.sort((a, b) => b.timestamp - a.timestamp);
 
             entries.forEach(e => {
                 const currentVal = e.grams * (livePrice24K * (e.purity / 24));
@@ -214,19 +205,19 @@
                         <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
                         <td class="p-4 text-center font-bold ${color}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
                         <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {maximumFractionDigits:1})}</td>
-                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold hover:text-red-600 transition-colors" onclick="deleteEntry(${e.id})">Delete</button></td>
+                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Delete</button></td>
                     </tr>`;
             });
 
-            // Update Stats (Count is now bold black)
+            const totalProfit = tVal - tCost;
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = tGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + tCost.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statProfit').innerText = 'QAR ' + (tVal - tCost).toLocaleString(undefined, {maximumFractionDigits: 0});
+            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
             
             updateCardColors('cardValue', 'labelValue', 'statValue', tVal, tCost);
-            updateCardColors('cardProfit', 'labelProfit', 'statProfit', (tVal - tCost), 0);
+            updateCardColors('cardProfit', 'labelProfit', 'statProfit', totalProfit, 0);
 
             donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21], weights[18]];
             donutChart.update();
