@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
 <body class="bg-gray-100 p-4 font-sans text-gray-900">
     <div class="max-w-7xl mx-auto">
@@ -47,14 +48,14 @@
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Market Trend</h2>
                     <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                        <button onclick="updateLineChart('1D')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1D</button>
-                        <button onclick="updateLineChart('1M')" class="px-3 py-1 text-[10px] font-bold rounded bg-white shadow-sm transition">1M</button>
+                        <button onclick="updateLineChart('1D')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white">1D</button>
+                        <button onclick="updateLineChart('1M')" class="px-3 py-1 text-[10px] font-bold rounded bg-white shadow-sm">1M</button>
                     </div>
                 </div>
                 <div style="height: 220px;"><canvas id="goldChart"></canvas></div>
             </div>
             <div class="border-l lg:pl-6">
-                <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Weight Breakdown (g)</h2>
+                <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Weight Breakdown (Grams)</h2>
                 <div style="height: 220px;"><canvas id="weightBarChart"></canvas></div>
             </div>
         </div>
@@ -94,6 +95,9 @@
     </div>
 
     <script>
+        // Register the datalabels plugin
+        Chart.register(ChartDataLabels);
+
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         const livePrice24K = 599.50;
         let lineChart, barChart;
@@ -105,7 +109,7 @@
         };
 
         function initCharts() {
-            // Line Chart Setup
+            // Line Chart
             const lineCtx = document.getElementById('goldChart').getContext('2d');
             lineChart = new Chart(lineCtx, {
                 type: 'line',
@@ -118,10 +122,17 @@
                         fill: true, tension: 0.4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: { display: false } // Hide labels on line chart
+                    } 
+                }
             });
 
-            // Bar Chart Setup (Replaces Donut)
+            // Bar Chart (Replaced Donut)
             const barCtx = document.getElementById('weightBarChart').getContext('2d');
             barChart = new Chart(barCtx, {
                 type: 'bar',
@@ -137,10 +148,23 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (value) => value > 0 ? value.toFixed(2) + 'g' : '',
+                            font: { weight: 'bold', size: 10 },
+                            color: '#444'
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: true, ticks: { font: { size: 10 } } },
-                        x: { ticks: { font: { size: 10, weight: 'bold' } } }
+                        y: { 
+                            beginAtZero: true,
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        },
+                        x: { grid: { display: false } }
                     }
                 }
             });
@@ -218,15 +242,16 @@
                         <td class="p-4 text-gray-600">${e.dayName}</td>
                         <td class="p-4 font-bold text-yellow-700">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center">0.85</td>
-                        <td class="p-4 text-center text-blue-600 font-bold">85%</td>
+                        <td class="p-4 text-center">---</td>
+                        <td class="p-4 text-center text-blue-600 font-bold">---</td>
                         <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {minimumFractionDigits:1})}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
                     </tr>`;
             });
 
             updateStats(entries.length, tGrams, tCost, tVal);
-            // Update Bar Chart Data
+            
+            // Update Bar Chart
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
             barChart.update();
         }
@@ -240,7 +265,8 @@
             document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString(undefined, {maximumFractionDigits:0});
             document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString(undefined, {maximumFractionDigits: 0});
 
-            // Color Highlighting Rules
+            // HIGHLIGHT RULES:
+            // 1. Investment Value > Total Investment
             const valCard = document.getElementById('cardValue');
             const valLabel = document.getElementById('labelValue');
             const valStat = document.getElementById('statValue');
@@ -254,6 +280,7 @@
                 valStat.className = "text-xl font-black text-gray-800";
             }
 
+            // 2. Net Profit/Loss > Total Investment
             const profitCard = document.getElementById('cardProfit');
             const profitLabel = document.getElementById('labelProfit');
             const profitStat = document.getElementById('statProfit');
