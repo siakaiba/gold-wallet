@@ -38,7 +38,7 @@
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Net Profit/Loss</p>
-                <p id="statProfit" class="text-xl font-black">QAR 0</p>
+                <p id="statProfit" class="text-xl font-black text-gray-800">QAR 0</p>
             </div>
         </div>
 
@@ -63,7 +63,7 @@
 
         <div class="bg-white p-6 shadow-md border-x">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
-                <input type="date" id="purchaseDate" class="border p-2 rounded text-sm outline-none">
+                <input type="date" id="purchaseDate" class="border p-2 rounded text-sm outline-none focus:ring-2 focus:ring-yellow-500">
                 <select id="purity" class="border p-2 rounded text-sm bg-white outline-none">
                     <option value="24">24K (Pure)</option><option value="22">22K</option>
                     <option value="21">21K</option><option value="18">18K</option>
@@ -79,12 +79,12 @@
             <table class="w-full text-left border-collapse" id="reportTable">
                 <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[10px]">
                     <tr>
-                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700" onclick="handleSort('timestamp')">Date ↕</th>
-                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700" onclick="handleSort('purity')">Type ↕</th>
-                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 text-center" onclick="handleSort('grams')">Weight ↕</th>
+                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 transition-colors" onclick="handleSort('timestamp')">Date ↕</th>
+                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 transition-colors" onclick="handleSort('purity')">Type ↕</th>
+                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 text-center transition-colors" onclick="handleSort('grams')">Weight ↕</th>
                         <th class="p-4 border-b text-center">Total Cost</th>
                         <th class="p-4 border-b text-center">Current Val.</th>
-                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 text-center" onclick="handleSort('profitPct')">Profit (%) ↕</th>
+                        <th class="p-4 border-b cursor-pointer hover:text-yellow-700 text-center transition-colors" onclick="handleSort('profitPct')">Profit (%) ↕</th>
                         <th class="p-4 border-b text-center">Profit (QAR)</th>
                         <th class="p-4 border-b text-right no-pdf">Action</th>
                     </tr>
@@ -97,6 +97,7 @@
     <script>
         const livePrice24K = 599.50;
         let lineChart, donutChart;
+        // Defaulting to sorting by timestamp descending (newest first)
         let currentSort = { key: 'timestamp', direction: 'desc' };
 
         window.onload = function() {
@@ -106,7 +107,6 @@
         };
 
         function initCharts() {
-            // Line Chart
             const lineCtx = document.getElementById('goldChart').getContext('2d');
             lineChart = new Chart(lineCtx, {
                 type: 'line',
@@ -122,7 +122,6 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
 
-            // Donut Chart
             const donutCtx = document.getElementById('weightDonut').getContext('2d');
             donutChart = new Chart(donutCtx, {
                 type: 'doughnut',
@@ -153,8 +152,12 @@
         }
 
         function handleSort(key) {
-            if (currentSort.key === key) currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            else { currentSort.key = key; currentSort.direction = 'desc'; }
+            if (currentSort.key === key) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.key = key;
+                currentSort.direction = 'desc';
+            }
             loadEntries();
         }
 
@@ -180,8 +183,13 @@
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
             entries.push(entry);
             localStorage.setItem('goldEntries', JSON.stringify(entries));
+            
+            // Re-apply newest sort as default after adding
+            currentSort = { key: 'timestamp', direction: 'desc' };
             loadEntries();
             document.getElementById('grams').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('costs').value = '';
         }
 
         function loadEntries() {
@@ -192,13 +200,22 @@
             const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
 
+            // Sorting logic
             entries.sort((a, b) => {
-                let valA = a[currentSort.key]; let valB = b[currentSort.key];
+                let valA = a[currentSort.key]; 
+                let valB = b[currentSort.key];
+                
+                // Special handling for Profit % sorting
                 if (currentSort.key === 'profitPct') {
                     valA = ((a.grams * (livePrice24K * (a.purity/24))) - a.totalCost) / (a.totalCost || 1);
                     valB = ((b.grams * (livePrice24K * (b.purity/24))) - b.totalCost) / (b.totalCost || 1);
                 }
-                return currentSort.direction === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+
+                if (currentSort.direction === 'asc') {
+                    return valA > valB ? 1 : -1;
+                } else {
+                    return valA < valB ? 1 : -1;
+                }
             });
 
             entries.forEach(e => {
@@ -207,7 +224,9 @@
                 const profitPct = e.totalCost > 0 ? ((profitVal / e.totalCost) * 100).toFixed(1) : "---";
 
                 weights[e.purity] += e.grams;
-                tGrams += e.grams; tCost += e.totalCost; tVal += e.currentVal = currentVal;
+                tGrams += e.grams; 
+                tCost += e.totalCost; 
+                tVal += currentVal;
 
                 const color = e.totalCost > 0 ? (profitVal >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
                 
@@ -220,39 +239,56 @@
                         <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
                         <td class="p-4 text-center font-bold ${color}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
                         <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {maximumFractionDigits:1})}</td>
-                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Delete</button></td>
+                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold hover:text-red-600 transition-colors" onclick="deleteEntry(${e.id})">Delete</button></td>
                     </tr>`;
             });
 
-            // Update Summary Stats
+            // Update Stats
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = tGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + tCost.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
             document.getElementById('statProfit').innerText = 'QAR ' + (tVal - tCost).toLocaleString(undefined, {maximumFractionDigits: 0});
             
-            // Update Donut Chart
+            // Update Donut
             donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21], weights[18]];
             donutChart.update();
 
             // Summary Colors
             const card = document.getElementById('cardValue');
-            if (tVal > tCost && tCost > 0) card.className = "p-4 rounded-lg border text-center shadow-sm bg-green-50 border-green-200";
-            else if (tVal < tCost) card.className = "p-4 rounded-lg border text-center shadow-sm bg-red-50 border-red-200";
+            const statProfit = document.getElementById('statProfit');
+            if (tVal > tCost && tCost > 0) {
+                card.className = "p-4 rounded-lg border text-center shadow-sm bg-green-50 border-green-200";
+                statProfit.className = "text-xl font-black text-green-600";
+            } else if (tVal < tCost) {
+                card.className = "p-4 rounded-lg border text-center shadow-sm bg-red-50 border-red-200";
+                statProfit.className = "text-xl font-black text-red-600";
+            } else {
+                card.className = "p-4 rounded-lg border text-center shadow-sm bg-gray-50 border-gray-200";
+                statProfit.className = "text-xl font-black text-gray-800";
+            }
         }
 
         function deleteEntry(id) {
-            let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            entries = entries.filter(e => e.id !== id);
-            localStorage.setItem('goldEntries', JSON.stringify(entries));
-            loadEntries();
+            if(confirm("Are you sure you want to delete this purchase?")) {
+                let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
+                entries = entries.filter(e => e.id !== id);
+                localStorage.setItem('goldEntries', JSON.stringify(entries));
+                loadEntries();
+            }
         }
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             doc.text("Gold Investment Report", 14, 15);
-            doc.autoTable({ html: '#reportTable', startY: 25, didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } });
+            doc.autoTable({ 
+                html: '#reportTable', 
+                startY: 25, 
+                didParseCell: (data) => {
+                    if (data.column.index === 7) data.cell.text = '';
+                }
+            });
             doc.save("Gold_Report.pdf");
         }
     </script>
