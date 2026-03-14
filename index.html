@@ -12,12 +12,16 @@
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #111827; }
         .app-viewport { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
         .table-container { flex: 1; overflow-y: auto; background-color: #1f2937; }
-        /* Dark Scrollbar */
+        /* Custom Scrollbar */
         .table-container::-webkit-scrollbar { width: 8px; }
         .table-container::-webkit-scrollbar-track { background: #111827; }
         .table-container::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
         .table-container::-webkit-scrollbar-thumb:hover { background: #ca8a04; }
         input, select { background-color: #374151 !important; color: white !important; border-color: #4b5563 !important; }
+        
+        /* Font increase for table */
+        #goldTable tr td { font-size: 14px; padding: 14px 12px; }
+        #reportTable thead th { font-size: 12px; }
     </style>
 </head>
 <body class="text-gray-100 font-sans">
@@ -38,7 +42,7 @@
             </div>
             <div class="border-r border-gray-800 p-3 text-center">
                 <p class="text-[9px] text-gray-500 uppercase font-bold">Total Weight</p>
-                <p id="statGrams" class="text-xl font-black text-yellow-500">0.00g</p>
+                <p id="statGrams" class="text-xl font-bold text-gray-100">0.00g</p>
             </div>
             <div class="border-r border-gray-800 p-3 text-center">
                 <p class="text-[9px] text-gray-500 uppercase font-bold">Invested Capital</p>
@@ -54,13 +58,13 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-3 bg-gray-800 border-b border-gray-700 h-[320px] shrink-0">
+        <div class="grid grid-cols-3 bg-gray-800 border-b border-gray-700 h-[300px] shrink-0">
             <div class="col-span-2 border-r border-gray-700 relative h-full">
                 <div id="tradingview_live" class="h-full w-full"></div>
             </div>
             <div class="p-4 text-center bg-gray-900">
                 <h2 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Asset Allocation</h2>
-                <div class="h-[240px] w-full"><canvas id="weightDonut"></canvas></div>
+                <div class="h-[220px] w-full"><canvas id="weightDonut"></canvas></div>
             </div>
         </div>
 
@@ -95,7 +99,7 @@
 
         <div class="table-container">
             <table class="w-full text-left border-collapse" id="reportTable">
-                <thead class="bg-gray-800 text-gray-400 uppercase font-bold text-[9px] sticky top-0 z-10 shadow-lg">
+                <thead class="bg-gray-800 text-gray-400 uppercase font-bold sticky top-0 z-10 shadow-lg">
                     <tr>
                         <th class="p-3 border-b border-gray-700">Date</th>
                         <th class="p-3 border-b border-gray-700">Type</th>
@@ -107,7 +111,7 @@
                         <th class="p-3 border-b border-gray-700 text-right no-pdf">Action</th>
                     </tr>
                 </thead>
-                <tbody id="goldTable" class="divide-y divide-gray-700 text-[11px]"></tbody>
+                <tbody id="goldTable" class="divide-y divide-gray-700 font-medium"></tbody>
             </table>
         </div>
     </div>
@@ -120,21 +124,20 @@
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
             
-            // Interactive TradingView Candles Widget
             new TradingView.widget({
                 "autosize": true,
                 "symbol": "TVC:GOLD",
                 "interval": "D",
                 "timezone": "Etc/UTC",
                 "theme": "dark",
-                "style": "1", // 1 = Candles view
+                "style": "1",
                 "locale": "en",
                 "enable_publishing": false,
                 "hide_top_toolbar": false,
                 "hide_legend": false,
                 "save_image": false,
                 "container_id": "tradingview_live",
-                "studies": [], // Removed Volume Indicator
+                "studies": [],
                 "backgroundColor": "rgba(31, 41, 55, 1)",
                 "gridColor": "rgba(75, 85, 99, 0.1)"
             });
@@ -169,7 +172,7 @@
             const grams = parseFloat(document.getElementById('grams').value) || 0;
             const price = parseFloat(document.getElementById('price').value) || 0;
             const costs = parseFloat(document.getElementById('costs').value) || 0;
-            if(!rawDate || grams <= 0) return alert("Please fill entry data!");
+            if(!rawDate || grams <= 0) return alert("Fill data!");
 
             const entry = { id: Date.now(), timestamp: new Date(rawDate).getTime(), dateStr: new Date(rawDate).toLocaleDateString('en-GB'), purity, grams, totalCost: (grams * price) + costs };
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
@@ -193,13 +196,13 @@
                 tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
 
                 const color = profitVal >= 0 ? 'text-green-400' : 'text-red-400';
-                tableBody.innerHTML += `<tr class="hover:bg-gray-700/50">
-                    <td class="p-3">${e.dateStr}</td><td class="p-3 font-bold text-yellow-600">${e.purity}K</td>
-                    <td class="p-3 text-center">${e.grams}g</td><td class="p-3 text-center">${e.totalCost.toLocaleString()}</td>
-                    <td class="p-3 text-center">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                    <td class="p-3 text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td>
-                    <td class="p-3 text-center font-bold ${color}">${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                    <td class="p-3 text-right"><button class="text-gray-500 hover:text-red-400 transition" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
+                tableBody.innerHTML += `<tr>
+                    <td class="p-3">${e.dateStr}</td><td class="font-bold text-yellow-600">${e.purity}K</td>
+                    <td class="text-center">${e.grams}g</td><td class="text-center">${e.totalCost.toLocaleString()}</td>
+                    <td class="text-center font-semibold text-gray-100">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td class="text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td>
+                    <td class="text-center font-bold ${color}">${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td class="text-right"><button class="text-gray-500 hover:text-red-400 transition" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
             });
 
             const netProfit = tVal - tCost;
@@ -222,7 +225,6 @@
             const statValue = document.getElementById('statValue');
             const statProfit = document.getElementById('statProfit');
 
-            // Logic for Current Value card
             if (tVal > tCost) {
                 cardValue.className = "border-r border-gray-800 p-3 text-center bg-green-950/30";
                 statValue.className = "text-xl font-black text-green-400";
@@ -233,7 +235,6 @@
                 labelValue.className = "text-[9px] uppercase font-bold text-red-500";
             }
 
-            // Logic for Profit card
             if (netProfit > 0) {
                 cardProfit.className = "p-3 text-center bg-green-950/30";
                 statProfit.className = "text-xl font-black text-green-400";
@@ -245,14 +246,14 @@
             }
         }
 
-        function deleteEntry(id) { if(confirm("Permanently remove?")) { let entries = JSON.parse(localStorage.getItem('goldEntries')) || []; entries = entries.filter(e => e.id !== id); localStorage.setItem('goldEntries', JSON.stringify(entries)); loadEntries(); } }
+        function deleteEntry(id) { if(confirm("Remove?")) { let entries = JSON.parse(localStorage.getItem('goldEntries')) || []; entries = entries.filter(e => e.id !== id); localStorage.setItem('goldEntries', JSON.stringify(entries)); loadEntries(); } }
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             doc.text("Gold Investment Report", 14, 15);
             doc.autoTable({ html: '#reportTable', startY: 20, theme: 'striped' });
-            doc.save("Gold_Portfolio_Report.pdf");
+            doc.save("Gold_Portfolio.pdf");
         }
     </script>
 </body>
