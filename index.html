@@ -38,7 +38,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 bg-white border-x p-6 gap-4 border-b">
             <div class="bg-gray-50 p-4 rounded-lg border">
-                <p class="text-xs text-gray-500 uppercase font-bold">Total Grams</p>
+                <p class="text-xs text-gray-500 uppercase font-bold">Total Weight</p>
                 <p id="statGrams" class="text-2xl font-black">0.00g</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border">
@@ -70,8 +70,7 @@
                         <th class="p-4 border-b text-center">Weight</th>
                         <th class="p-4 border-b text-center">Total Cost</th>
                         <th class="p-4 border-b text-center">Current Val.</th>
-                        <th class="p-4 border-b text-center">Prob.</th>
-                        <th class="p-4 border-b text-center">% Pos. Prob.</th>
+                        <th class="p-4 border-b text-center">Profit (%)</th>
                         <th class="p-4 border-b text-center">Profit (QAR)</th>
                         <th class="p-4 border-b text-right no-pdf">Action</th>
                     </tr>
@@ -138,6 +137,7 @@
             const totalCostPaid = (grams * price) + costs;
             const currentVal = grams * livePrice;
             const netProfitVal = currentVal - totalCostPaid;
+            const profitPct = ((netProfitVal / totalCostPaid) * 100).toFixed(1);
 
             const entry = {
                 id: Date.now(),
@@ -149,15 +149,13 @@
                 totalCost: totalCostPaid,
                 currentValue: currentVal,
                 netProfit: netProfitVal,
-                prob: (livePrice / price).toFixed(2),
-                posProb: ((netProfitVal / totalCostPaid) * 100).toFixed(1)
+                profitPercent: profitPct
             };
 
             saveToLocal(entry);
             renderRow(entry);
             updateSummary();
 
-            // Clear inputs
             document.getElementById('grams').value = '';
             document.getElementById('price').value = '';
             document.getElementById('costs').value = '';
@@ -172,8 +170,7 @@
                     <td class="p-4 text-center font-bold">${entry.grams}g</td>
                     <td class="p-4 text-center">QAR ${entry.totalCost.toLocaleString()}</td>
                     <td class="p-4 text-center font-semibold">QAR ${entry.currentValue.toLocaleString()}</td>
-                    <td class="p-4 text-center font-mono">${entry.prob}</td>
-                    <td class="p-4 text-center font-bold ${colorClass}">${entry.posProb}%</td>
+                    <td class="p-4 text-center font-bold ${colorClass}">${entry.profitPercent}%</td>
                     <td class="p-4 text-center font-bold ${colorClass}">QAR ${entry.netProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     <td class="p-4 text-right no-pdf">
                         <button class="text-red-400 font-bold hover:text-red-600" onclick="deleteEntry(${entry.id})">Delete</button>
@@ -222,13 +219,13 @@
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4'); // 'l' for Landscape
+            const doc = new jsPDF('l', 'mm', 'a4'); 
             doc.text("Gold Investment Report", 14, 15);
             doc.autoTable({ 
                 html: '#reportTable', 
                 startY: 25, 
                 theme: 'striped',
-                didParseCell: (d) => { if(d.column.index === 8) d.cell.text = ''; } 
+                didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } 
             });
             doc.save("Gold_Report.pdf");
         }
