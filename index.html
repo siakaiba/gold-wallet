@@ -54,8 +54,8 @@
                 <div style="height: 220px;"><canvas id="goldChart"></canvas></div>
             </div>
             <div class="border-l lg:pl-6">
-                <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Weight Breakdown</h2>
-                <div style="height: 220px;"><canvas id="weightDonut"></canvas></div>
+                <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Weight Breakdown (g)</h2>
+                <div style="height: 220px;"><canvas id="weightBarChart"></canvas></div>
             </div>
         </div>
 
@@ -66,7 +66,7 @@
                     <option value="24">24K (Pure)</option>
                     <option value="22">22K</option>
                     <option value="21">21K</option>
-                    </select>
+                </select>
                 <input type="number" id="grams" placeholder="Grams" class="border p-2 rounded text-sm outline-none">
                 <input type="number" id="price" placeholder="Price/g" class="border p-2 rounded text-sm outline-none">
                 <input type="number" id="costs" placeholder="Making" class="border p-2 rounded text-sm outline-none">
@@ -96,7 +96,7 @@
     <script>
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         const livePrice24K = 599.50;
-        let lineChart, donutChart;
+        let lineChart, barChart;
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
@@ -105,6 +105,7 @@
         };
 
         function initCharts() {
+            // Line Chart Setup
             const lineCtx = document.getElementById('goldChart').getContext('2d');
             lineChart = new Chart(lineCtx, {
                 type: 'line',
@@ -120,22 +121,27 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
 
-            const donutCtx = document.getElementById('weightDonut').getContext('2d');
-            donutChart = new Chart(donutCtx, {
-                type: 'doughnut',
+            // Bar Chart Setup (Replaces Donut)
+            const barCtx = document.getElementById('weightBarChart').getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
                 data: {
-                    labels: ['24K', '22K', '21K'], // 18K Removed
+                    labels: ['24K', '22K', '21K'],
                     datasets: [{
+                        label: 'Grams',
                         data: [0, 0, 0],
                         backgroundColor: ['#ca8a04', '#eab308', '#facc15'],
-                        borderWidth: 0
+                        borderRadius: 5
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } },
-                    cutout: '70%'
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+                        x: { ticks: { font: { size: 10, weight: 'bold' } } }
+                    }
                 }
             });
         }
@@ -194,7 +200,7 @@
             const entries = Object.keys(data).map(key => ({ id: key, ...data[key] }));
             entries.sort((a, b) => b.timestamp - a.timestamp);
 
-            const weights = { 24: 0, 22: 0, 21: 0 }; // 18 Removed
+            const weights = { 24: 0, 22: 0, 21: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
 
             entries.forEach(e => {
@@ -202,7 +208,6 @@
                 const profitVal = currentVal - e.totalCost;
                 const color = profitVal >= 0 ? 'text-green-600' : 'text-red-600';
 
-                // Track weights (Safely ignoring 18K if any old data exists)
                 if(weights.hasOwnProperty(e.purity)) weights[e.purity] += e.grams;
                 
                 tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
@@ -221,8 +226,9 @@
             });
 
             updateStats(entries.length, tGrams, tCost, tVal);
-            donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
-            donutChart.update();
+            // Update Bar Chart Data
+            barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
+            barChart.update();
         }
 
         function updateStats(count, grams, invested, value) {
@@ -234,7 +240,7 @@
             document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString(undefined, {maximumFractionDigits:0});
             document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString(undefined, {maximumFractionDigits: 0});
 
-            // Rules for Color Highlighting
+            // Color Highlighting Rules
             const valCard = document.getElementById('cardValue');
             const valLabel = document.getElementById('labelValue');
             const valStat = document.getElementById('statValue');
