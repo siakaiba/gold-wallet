@@ -11,12 +11,31 @@
 </head>
 <body class="bg-gray-100 p-4 font-sans text-gray-900">
     <div class="max-w-7xl mx-auto">
-        <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
-            <div>
+        <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col xl:flex-row justify-between items-center gap-6">
+            <div class="flex-shrink-0">
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
+                <p class="text-yellow-100">Market Price Source: <span class="font-bold">Qatar Live</span></p>
+                <button onclick="downloadPDF()" class="mt-3 bg-white text-yellow-700 px-4 py-1.5 rounded-lg text-xs font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
             </div>
-            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full xl:w-auto">
+                <div class="bg-yellow-700/40 p-3 rounded-lg border border-yellow-500/50 text-center min-w-[120px]">
+                    <p class="text-[10px] uppercase font-bold text-yellow-200">24K Pure</p>
+                    <p class="text-sm font-black">599.50 <span class="text-[10px]">QAR</span></p>
+                </div>
+                <div class="bg-yellow-700/40 p-3 rounded-lg border border-yellow-500/50 text-center min-w-[120px]">
+                    <p class="text-[10px] uppercase font-bold text-yellow-200">22K Standard</p>
+                    <p class="text-sm font-black">549.54 <span class="text-[10px]">QAR</span></p>
+                </div>
+                <div class="bg-yellow-700/40 p-3 rounded-lg border border-yellow-500/50 text-center min-w-[120px]">
+                    <p class="text-[10px] uppercase font-bold text-yellow-200">21K Jewelry</p>
+                    <p class="text-sm font-black">524.56 <span class="text-[10px]">QAR</span></p>
+                </div>
+                <div class="bg-yellow-700/40 p-3 rounded-lg border border-yellow-500/50 text-center min-w-[120px]">
+                    <p class="text-[10px] uppercase font-bold text-yellow-200">18K Simple</p>
+                    <p class="text-sm font-black">449.63 <span class="text-[10px]">QAR</span></p>
+                </div>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b text-center">
@@ -55,7 +74,7 @@
                 </div>
                 <div style="height: 220px;"><canvas id="goldChart"></canvas></div>
             </div>
-            <div class="border-l lg:pl-6">
+            <div class="border-l lg:pl-6 text-center">
                 <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Weight Breakdown</h2>
                 <div style="height: 220px;"><canvas id="weightDonut"></canvas></div>
             </div>
@@ -134,7 +153,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
                     cutout: '70%'
                 }
             });
@@ -183,7 +202,6 @@
             const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
 
-            // Simple fixed sort: Newest Date First
             entries.sort((a, b) => b.timestamp - a.timestamp);
 
             entries.forEach(e => {
@@ -201,10 +219,10 @@
                         <td class="p-4 font-medium">${e.dateStr}</td>
                         <td class="p-4 font-bold text-yellow-700">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center">QAR ${e.totalCost.toLocaleString()}</td>
-                        <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                        <td class="p-4 text-center font-bold ${color}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
-                        <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {maximumFractionDigits:1})}</td>
+                        <td class="p-4 text-center font-mono">QAR ${e.totalCost.toLocaleString()}</td>
+                        <td class="p-4 text-center font-semibold font-mono">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                        <td class="p-4 text-center font-bold ${color}">${profitPct}%</td>
+                        <td class="p-4 text-center font-bold font-mono ${color}">QAR ${profitVal.toLocaleString(undefined, {maximumFractionDigits:1})}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Delete</button></td>
                     </tr>`;
             });
