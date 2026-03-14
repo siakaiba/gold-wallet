@@ -16,7 +16,7 @@
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                 <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
-            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
+            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition mt-4 md:mt-0">Download PDF Report</button>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b text-center">
@@ -45,17 +45,17 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 bg-white border-x p-6 gap-6 border-b">
             <div class="lg:col-span-2">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Market Trend</h2>
+                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Gold Price Trends (QAR/g)</h2>
                     <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                        <button onclick="updateLineChart('1D')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1D</button>
-                        <button onclick="updateLineChart('1W')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1W</button>
-                        <button onclick="updateLineChart('1M')" class="px-3 py-1 text-[10px] font-bold rounded bg-white shadow-sm transition">1M</button>
-                        <button onclick="updateLineChart('1Y')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1Y</button>
+                        <button onclick="updateMarketChart('1D')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1D</button>
+                        <button onclick="updateMarketChart('1W')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1W</button>
+                        <button onclick="updateMarketChart('1M')" class="px-3 py-1 text-[10px] font-bold rounded bg-white shadow-sm transition">1M</button>
+                        <button onclick="updateMarketChart('1Y')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1Y</button>
                     </div>
                 </div>
-                <div style="height: 220px;"><canvas id="goldChart"></canvas></div>
+                <div style="height: 220px;"><canvas id="marketChart"></canvas></div>
             </div>
-            <div class="border-l lg:pl-6">
+            <div class="border-l lg:pl-6 text-center">
                 <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Weight Breakdown</h2>
                 <div style="height: 220px;"><canvas id="weightDonut"></canvas></div>
             </div>
@@ -95,8 +95,8 @@
     </div>
 
     <script>
-        const livePrice24K = 599.50;
-        let lineChart, donutChart;
+        const livePrices = { 24: 599.50, 22: 549.54, 21: 524.56, 18: 449.63 };
+        let marketChart, donutChart;
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
@@ -105,19 +105,24 @@
         };
 
         function initCharts() {
-            const lineCtx = document.getElementById('goldChart').getContext('2d');
-            lineChart = new Chart(lineCtx, {
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            marketChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['W1', 'W2', 'W3', 'Today'],
-                    datasets: [{
-                        data: [580, 592, 588, 599.50],
-                        borderColor: '#ca8a04',
-                        backgroundColor: 'rgba(202, 138, 4, 0.1)',
-                        fill: true, tension: 0.4
-                    }]
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Today'],
+                    datasets: [
+                        { label: '24K', data: [580, 592, 588, 599.5], borderColor: '#ca8a04', tension: 0.3, pointRadius: 2 },
+                        { label: '22K', data: [530, 542, 538, 549.5], borderColor: '#eab308', tension: 0.3, pointRadius: 2 },
+                        { label: '21K', data: [505, 517, 513, 524.5], borderColor: '#facc15', tension: 0.3, pointRadius: 2 },
+                        { label: '18K', data: [430, 442, 438, 449.6], borderColor: '#9ca3af', tension: 0.3, pointRadius: 2 }
+                    ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
+                    scales: { y: { ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+                }
             });
 
             const donutCtx = document.getElementById('weightDonut').getContext('2d');
@@ -134,19 +139,37 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
                     cutout: '70%'
                 }
             });
         }
 
-        function updateLineChart(range) {
-            const dataMap = {
-                '1D': [598, 597, 599, 599.5], '1W': [590, 595, 592, 599.5],
-                '1M': [580, 592, 588, 599.5], '1Y': [510, 540, 570, 599.5]
+        function updateMarketChart(range) {
+            const multiData = {
+                '1D': {
+                    labels: ['Morning', 'Noon', 'Afternoon', 'Evening'],
+                    datasets: [ [598.5, 597.2, 599.0, 599.5], [548.6, 547.4, 549.1, 549.5], [523.7, 522.6, 524.1, 524.5], [448.9, 447.9, 449.2, 449.6] ]
+                },
+                '1W': {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [ [590, 595, 592, 598, 596, 599, 599.5], [540, 545, 542, 548, 546, 549, 549.5], [515, 520, 517, 523, 521, 524, 524.5], [440, 445, 442, 448, 446, 449, 449.6] ]
+                },
+                '1M': {
+                    labels: ['W1', 'W2', 'W3', 'W4'],
+                    datasets: [ [580, 592, 588, 599.5], [530, 542, 538, 549.5], [505, 517, 513, 524.5], [430, 442, 438, 449.6] ]
+                },
+                '1Y': {
+                    labels: ['Jan', 'Apr', 'Jul', 'Oct', 'Today'],
+                    datasets: [ [510, 540, 570, 585, 599.5], [467, 495, 522, 536, 549.5], [446, 473, 499, 512, 524.5], [382, 405, 428, 439, 449.6] ]
+                }
             };
-            lineChart.data.datasets[0].data = dataMap[range];
-            lineChart.update();
+            
+            marketChart.data.labels = multiData[range].labels;
+            marketChart.data.datasets.forEach((dataset, i) => {
+                dataset.data = multiData[range].datasets[i];
+            });
+            marketChart.update();
         }
 
         function addEntry() {
@@ -155,19 +178,9 @@
             const grams = parseFloat(document.getElementById('grams').value) || 0;
             const price = parseFloat(document.getElementById('price').value) || 0;
             const costs = parseFloat(document.getElementById('costs').value) || 0;
-            
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
-
             const totalCost = (grams * price) + costs;
-            const entry = {
-                id: Date.now(),
-                timestamp: new Date(rawDate).getTime(),
-                dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
-                purity: purity,
-                grams: grams,
-                totalCost: totalCost
-            };
-
+            const entry = { id: Date.now(), timestamp: new Date(rawDate).getTime(), dateStr: new Date(rawDate).toLocaleDateString('en-GB'), purity, grams, totalCost };
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
             entries.push(entry);
             localStorage.setItem('goldEntries', JSON.stringify(entries));
@@ -179,84 +192,40 @@
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-
             const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
-
-            // Simple fixed sort: Newest Date First
-            entries.sort((a, b) => b.timestamp - a.timestamp);
-
-            entries.forEach(e => {
-                const currentVal = e.grams * (livePrice24K * (e.purity / 24));
+            entries.sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
+                const currentVal = e.grams * livePrices[e.purity];
                 const profitVal = currentVal - e.totalCost;
                 const profitPct = e.totalCost > 0 ? ((profitVal / e.totalCost) * 100).toFixed(1) : "---";
-
-                weights[e.purity] += e.grams;
-                tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
-
+                weights[e.purity] += e.grams; tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
                 const color = e.totalCost > 0 ? (profitVal >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
-                
-                tableBody.innerHTML += `
-                    <tr class="hover:bg-gray-50 border-b">
-                        <td class="p-4 font-medium">${e.dateStr}</td>
-                        <td class="p-4 font-bold text-yellow-700">${e.purity}K</td>
-                        <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center">QAR ${e.totalCost.toLocaleString()}</td>
-                        <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                        <td class="p-4 text-center font-bold ${color}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
-                        <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {maximumFractionDigits:1})}</td>
-                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Delete</button></td>
-                    </tr>`;
+                tableBody.innerHTML += `<tr class="hover:bg-gray-50 border-b"><td class="p-4 font-medium">${e.dateStr}</td><td class="p-4 font-bold text-yellow-700">${e.purity}K</td><td class="p-4 text-center font-bold">${e.grams}g</td><td class="p-4 text-center">QAR ${e.totalCost.toLocaleString()}</td><td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="p-4 text-center font-bold ${color}">${profitPct}%</td><td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {maximumFractionDigits:1})}</td><td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Delete</button></td></tr>`;
             });
-
-            const totalProfit = tVal - tCost;
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = tGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + tCost.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
-            
+            document.getElementById('statProfit').innerText = 'QAR ' + (tVal - tCost).toLocaleString(undefined, {maximumFractionDigits: 0});
             updateCardColors('cardValue', 'labelValue', 'statValue', tVal, tCost);
-            updateCardColors('cardProfit', 'labelProfit', 'statProfit', totalProfit, 0);
-
+            updateCardColors('cardProfit', 'labelProfit', 'statProfit', (tVal - tCost), 0);
             donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21], weights[18]];
             donutChart.update();
         }
 
         function updateCardColors(cardId, labelId, statId, current, compare) {
-            const card = document.getElementById(cardId);
-            const label = document.getElementById(labelId);
-            const stat = document.getElementById(statId);
-
-            if (current > compare) {
-                card.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm transition-colors duration-300";
-                stat.className = "text-xl font-black text-green-700";
-                label.className = "text-[10px] uppercase font-bold text-green-600";
-            } else if (current < compare) {
-                card.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm transition-colors duration-300";
-                stat.className = "text-xl font-black text-red-700";
-                label.className = "text-[10px] uppercase font-bold text-red-600";
-            } else {
-                card.className = "bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm";
-                stat.className = "text-xl font-black text-gray-800";
-                label.className = "text-[10px] uppercase font-bold text-gray-500";
-            }
+            const card = document.getElementById(cardId), label = document.getElementById(labelId), stat = document.getElementById(statId);
+            if (current > compare) { card.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm transition-colors duration-300"; stat.className = "text-xl font-black text-green-700"; label.className = "text-[10px] uppercase font-bold text-green-600"; }
+            else if (current < compare) { card.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm transition-colors duration-300"; stat.className = "text-xl font-black text-red-700"; label.className = "text-[10px] uppercase font-bold text-red-600"; }
         }
 
-        function deleteEntry(id) {
-            if(confirm("Are you sure?")) {
-                let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-                entries = entries.filter(e => e.id !== id);
-                localStorage.setItem('goldEntries', JSON.stringify(entries));
-                loadEntries();
-            }
-        }
+        function deleteEntry(id) { if(confirm("Are you sure?")) { let entries = JSON.parse(localStorage.getItem('goldEntries')) || []; entries = entries.filter(e => e.id !== id); localStorage.setItem('goldEntries', JSON.stringify(entries)); loadEntries(); } }
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             doc.text("Gold Investment Report", 14, 15);
-            doc.autoTable({ html: '#reportTable', startY: 25, didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } });
+            doc.autoTable({ html: '#reportTable', startY: 25 });
             doc.save("Gold_Report.pdf");
         }
     </script>
