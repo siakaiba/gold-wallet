@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | Split View</title>
+    <title>Samir's Gold Wallet | Bar Chart View</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #111827; }
         .app-viewport { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
@@ -61,12 +62,12 @@
             </div>
             
             <div class="w-1/2 p-6 flex items-start justify-around bg-gray-900 shrink-0">
-                <div class="w-1/2 flex flex-col items-center">
-                    <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-6">Asset Allocation</h2>
-                    <div class="h-[220px] w-full"><canvas id="weightDonut"></canvas></div>
+                <div class="w-7/12 flex flex-col items-center">
+                    <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-6">Asset Allocation (Grams)</h2>
+                    <div class="h-[220px] w-full"><canvas id="allocationBarChart"></canvas></div>
                 </div>
                 
-                <div class="w-5/12 self-center">
+                <div class="w-4/12 self-center">
                     <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-4 text-center">Purity Summary</h2>
                     <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-2xl">
                         <table class="w-full text-center text-[13px]">
@@ -113,7 +114,7 @@
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
         const livePrice24K = 599.50;
-        let donutChart;
+        let barChart;
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
@@ -125,18 +126,43 @@
         };
 
         function initCharts() {
-            const donutCtx = document.getElementById('weightDonut').getContext('2d');
-            donutChart = new Chart(donutCtx, {
-                type: 'doughnut',
-                data: { 
-                    labels: ['24K', '22K', '21K'], 
-                    datasets: [{ 
-                        data: [0, 0, 0], 
-                        backgroundColor: ['#ca8a04', '#b45309', '#92400e'], 
-                        borderWidth: 0 
-                    }] 
+            const ctx = document.getElementById('allocationBarChart').getContext('2d');
+            Chart.register(ChartDataLabels);
+            
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['24K', '22K', '21K'],
+                    datasets: [{
+                        label: 'Grams',
+                        data: [0, 0, 0],
+                        backgroundColor: ['#ca8a04', '#b45309', '#92400e'],
+                        borderRadius: 6,
+                        barThickness: 40
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', boxWidth: 10, font: { size: 10 } } } }, cutout: '80%' }
+                options: {
+                    indexAxis: 'y', // Makes it horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'right',
+                            color: '#e5e7eb',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: (value) => value.toFixed(2) + 'g'
+                        }
+                    },
+                    scales: {
+                        x: { display: false, grid: { display: false } },
+                        y: { 
+                            grid: { display: false }, 
+                            ticks: { color: '#9ca3af', font: { size: 12, weight: 'bold' } } 
+                        }
+                    }
+                }
             });
         }
 
@@ -146,7 +172,7 @@
             const grams = parseFloat(document.getElementById('grams').value) || 0;
             const price = parseFloat(document.getElementById('price').value) || 0;
             const costs = parseFloat(document.getElementById('costs').value) || 0;
-            if(!rawDate || grams <= 0) return alert("Fill entry data!");
+            if(!rawDate || grams <= 0) return alert("Fill data!");
             const entry = { id: Date.now(), timestamp: new Date(rawDate).getTime(), dateStr: new Date(rawDate).toLocaleDateString('en-GB'), purity, grams, totalCost: (grams * price) + costs };
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
             entries.push(entry);
@@ -186,8 +212,9 @@
             document.getElementById('sum21').innerText = weights[21].toFixed(2) + 'g';
 
             updateCardColors(tVal, tCost, netProfit);
-            donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
-            donutChart.update();
+            
+            barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
+            barChart.update();
         }
 
         function updateCardColors(tVal, tCost, netProfit) {
