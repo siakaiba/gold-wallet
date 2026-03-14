@@ -16,25 +16,10 @@
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                 <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
-            <div class="mt-4 md:mt-0 flex gap-3">
+            <div class="mt-4 md:mt-0">
                 <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
             </div>
         </header>
-
-        <div class="bg-white border-x p-6 border-b">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-gray-700">Market Trend</h2>
-                <div class="flex gap-2 bg-gray-100 p-1 rounded-lg">
-                    <button onclick="updateChartRange('1D')" class="chart-btn px-3 py-1 text-xs font-bold rounded hover:bg-white transition">1D</button>
-                    <button onclick="updateChartRange('1W')" class="chart-btn px-3 py-1 text-xs font-bold rounded hover:bg-white transition">1W</button>
-                    <button onclick="updateChartRange('1M')" class="chart-btn px-3 py-1 text-xs font-bold rounded bg-white shadow-sm transition">1M</button>
-                    <button onclick="updateChartRange('1Y')" class="chart-btn px-4 py-1 text-xs font-bold rounded hover:bg-white transition">1Y</button>
-                </div>
-            </div>
-            <div style="height: 250px;">
-                <canvas id="goldChart"></canvas>
-            </div>
-        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b">
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -42,7 +27,7 @@
                 <p id="statCount" class="text-xl font-black text-blue-700">0</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight</p>
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight (Mixed)</p>
                 <p id="statGrams" class="text-xl font-black text-gray-800">0.00g</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -60,21 +45,45 @@
         </div>
 
         <div class="bg-white p-6 shadow-md border-x">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <input type="date" id="purchaseDate" class="border p-2 rounded text-sm focus:ring-2 focus:ring-yellow-500 outline-none">
-                <input type="number" id="grams" placeholder="Grams" class="border p-2 rounded text-sm outline-none">
-                <input type="number" id="price" placeholder="Price/g (QAR)" class="border p-2 rounded text-sm outline-none">
-                <input type="number" id="costs" placeholder="Making Costs" class="border p-2 rounded text-sm outline-none">
-                <button onclick="addEntry()" class="bg-yellow-600 text-white py-2 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Date</label>
+                    <input type="date" id="purchaseDate" class="border p-2 rounded text-sm outline-none">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Type</label>
+                    <select id="purity" class="border p-2 rounded text-sm outline-none bg-white">
+                        <option value="24">24K (Pure)</option>
+                        <option value="22">22K</option>
+                        <option value="21">21K</option>
+                        <option value="18">18K</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Grams</label>
+                    <input type="number" id="grams" placeholder="Weight" class="border p-2 rounded text-sm outline-none">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Price/g (Optional)</label>
+                    <input type="number" id="price" placeholder="Unknown = 0" class="border p-2 rounded text-sm outline-none">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Making (Optional)</label>
+                    <input type="number" id="costs" placeholder="Unknown = 0" class="border p-2 rounded text-sm outline-none">
+                </div>
+                <div class="flex flex-col justify-end">
+                    <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
+                </div>
             </div>
+            <p class="text-[10px] text-gray-400 mt-2">* If you don't remember the price/costs, leave them blank. The app will track weight only.</p>
         </div>
 
         <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-sm border-x border-b">
             <table class="w-full text-left border-collapse" id="reportTable">
-                <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[11px]">
+                <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[10px]">
                     <tr>
                         <th class="p-4 border-b">Date</th>
-                        <th class="p-4 border-b">Day</th>
+                        <th class="p-4 border-b">Type</th>
                         <th class="p-4 border-b text-center">Weight</th>
                         <th class="p-4 border-b text-center">Total Cost</th>
                         <th class="p-4 border-b text-center">Current Val.</th>
@@ -89,57 +98,21 @@
     </div>
 
     <script>
-        const livePrice = 599.50;
-        let myChart;
+        const livePrice24K = 599.50;
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
             loadEntries();
-            initChart();
         };
-
-        function initChart() {
-            const ctx = document.getElementById('goldChart').getContext('2d');
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['W1', 'W2', 'W3', 'Today'],
-                    datasets: [{
-                        data: [580, 592, 588, 599.50],
-                        borderColor: '#ca8a04',
-                        backgroundColor: 'rgba(202, 138, 4, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
-        function updateChartRange(range) {
-            const dataMap = {
-                '1D': [598, 597, 599, 599.50],
-                '1W': [590, 595, 592, 599.50],
-                '1M': [580, 592, 588, 599.50],
-                '1Y': [510, 540, 570, 599.50]
-            };
-            myChart.data.datasets[0].data = dataMap[range];
-            myChart.update();
-            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('bg-white', 'shadow-sm'));
-            event.target.classList.add('bg-white', 'shadow-sm');
-        }
 
         function addEntry() {
             const rawDate = document.getElementById('purchaseDate').value;
+            const purity = parseInt(document.getElementById('purity').value);
             const grams = parseFloat(document.getElementById('grams').value) || 0;
             const price = parseFloat(document.getElementById('price').value) || 0;
             const costs = parseFloat(document.getElementById('costs').value) || 0;
             
-            if(!rawDate || grams <= 0 || price <= 0) return alert("Please fill all fields!");
+            if(!rawDate || grams <= 0) return alert("Please enter the Date and Grams!");
 
             const totalCost = (grams * price) + costs;
 
@@ -147,6 +120,7 @@
                 id: Date.now(),
                 dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
                 day: new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long' }),
+                purity: purity,
                 grams: grams,
                 buyPrice: price,
                 makingCosts: costs,
@@ -158,6 +132,7 @@
             localStorage.setItem('goldEntries', JSON.stringify(entries));
             loadEntries();
 
+            // Reset
             document.getElementById('grams').value = '';
             document.getElementById('price').value = '';
             document.getElementById('costs').value = '';
@@ -168,68 +143,61 @@
             tableBody.innerHTML = '';
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
             
-            let totalGrams = 0, totalInvested = 0;
+            let totalGrams = 0, totalInvested = 0, currentPortfolioValue = 0;
 
             entries.sort((a,b) => b.id - a.id).forEach(entry => {
-                const grams = entry.grams || 0;
-                const cost = entry.totalCost || 0;
-                const currentVal = grams * livePrice;
-                const profitVal = currentVal - cost;
-                const profitPct = cost > 0 ? ((profitVal / cost) * 100).toFixed(1) : "0.0";
+                const purityFactor = entry.purity / 24;
+                const currentUnitPrice = livePrice24K * purityFactor;
+                const currentVal = entry.grams * currentUnitPrice;
+                const profitVal = currentVal - entry.totalCost;
+                
+                // If price was unknown (0), we don't show a misleading 1000% profit
+                const profitPct = entry.totalCost > 0 ? ((profitVal / entry.totalCost) * 100).toFixed(1) : "---";
 
-                totalGrams += grams;
-                totalInvested += cost;
+                totalGrams += entry.grams;
+                totalInvested += entry.totalCost;
+                currentPortfolioValue += currentVal;
 
-                const colorClass = profitVal >= 0 ? 'text-green-600' : 'text-red-600';
+                const colorClass = profitVal >= 0 && entry.totalCost > 0 ? 'text-green-600' : (entry.totalCost > 0 ? 'text-red-600' : 'text-gray-400');
                 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 border-b">
                         <td class="p-4 font-medium">${entry.dateStr}</td>
-                        <td class="p-4">${entry.day}</td>
-                        <td class="p-4 text-center font-bold">${grams}g</td>
-                        <td class="p-4 text-center">QAR ${cost.toLocaleString()}</td>
-                        <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString()}</td>
-                        <td class="p-4 text-center font-bold ${colorClass}">${profitPct}%</td>
-                        <td class="p-4 text-center font-bold ${colorClass}">QAR ${profitVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td class="p-4 font-bold text-yellow-700">${entry.purity}K</td>
+                        <td class="p-4 text-center font-bold">${entry.grams}g</td>
+                        <td class="p-4 text-center">${entry.totalCost > 0 ? 'QAR ' + entry.totalCost.toLocaleString() : 'Unknown'}</td>
+                        <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                        <td class="p-4 text-center font-bold ${colorClass}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
+                        <td class="p-4 text-center font-bold ${colorClass}">${entry.totalCost > 0 ? 'QAR ' + profitVal.toLocaleString(undefined, {minimumFractionDigits: 1}) : '---'}</td>
                         <td class="p-4 text-right no-pdf">
                             <button class="text-red-400 font-bold hover:text-red-600" onclick="deleteEntry(${entry.id})">Delete</button>
                         </td>
                     </tr>`;
             });
 
-            const currentTotalValue = totalGrams * livePrice;
-            const totalProfit = currentTotalValue - totalInvested;
+            const totalProfit = currentPortfolioValue - totalInvested;
 
-            // Summary UI Logic
+            // Summary UI
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = totalGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + totalInvested.toLocaleString();
-            document.getElementById('statValue').innerText = 'QAR ' + currentTotalValue.toLocaleString();
-            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 1});
+            document.getElementById('statValue').innerText = 'QAR ' + currentPortfolioValue.toLocaleString(undefined, {maximumFractionDigits:0});
+            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 0});
             
-            // Dynamic Color Logic for Investment Value Card
+            // Card Color Logic
             const cardValue = document.getElementById('cardValue');
-            const statValue = document.getElementById('statValue');
-            const labelValue = document.getElementById('labelValue');
-
-            if (currentTotalValue > totalInvested) {
-                // Profit Look (Green)
-                cardValue.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm transition-colors duration-500";
-                statValue.className = "text-xl font-black text-green-800";
-                labelValue.className = "text-[10px] uppercase font-bold text-green-700";
-            } else if (currentTotalValue < totalInvested) {
-                // Loss Look (Red)
-                cardValue.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm transition-colors duration-500";
-                statValue.className = "text-xl font-black text-red-800";
-                labelValue.className = "text-[10px] uppercase font-bold text-red-700";
+            const statProfit = document.getElementById('statProfit');
+            
+            if (currentPortfolioValue > totalInvested && totalInvested > 0) {
+                cardValue.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm transition-colors";
+                statProfit.className = "text-xl font-black text-green-600";
+            } else if (currentPortfolioValue < totalInvested) {
+                cardValue.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm transition-colors";
+                statProfit.className = "text-xl font-black text-red-600";
             } else {
-                // Neutral/Empty Look
-                cardValue.className = "bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm transition-colors duration-500";
-                statValue.className = "text-xl font-black text-gray-800";
-                labelValue.className = "text-[10px] uppercase font-bold text-gray-500";
+                cardValue.className = "bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm";
+                statProfit.className = "text-xl font-black text-gray-800";
             }
-
-            document.getElementById('statProfit').className = `text-xl font-black ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
         }
 
         function deleteEntry(id) {
