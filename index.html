@@ -23,7 +23,7 @@
                 <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="bg-yellow-700 hover:bg-yellow-800 p-2 rounded-full transition shadow-inner" title="Toggle Dark/Light Mode">
+                <button onclick="toggleTheme()" class="bg-yellow-700 hover:bg-yellow-800 p-2 rounded-full transition shadow-inner">
                     <span id="themeIcon" class="text-xl">🌙</span>
                 </button>
                 <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
@@ -125,22 +125,19 @@
             localStorage.theme = isDark ? 'dark' : 'light';
             document.getElementById('themeIcon').innerText = isDark ? '☀️' : '🌙';
             
-            // Update chart colors for dark mode
-            const gridColor = isDark ? '#374151' : '#e5e7eb';
-            const textColor = isDark ? '#9ca3af' : '#6b7280';
-            
-            [lineChart, barChart].forEach(chart => {
-                chart.options.scales.x.ticks.color = textColor;
-                chart.options.scales.y.ticks.color = textColor;
-                if(chart.options.scales.y.grid) chart.options.scales.y.grid.color = gridColor;
-                chart.update();
-            });
+            // Re-render charts to update grid and label colors
+            lineChart.destroy();
+            barChart.destroy();
+            initCharts();
+            fetchEntries();
         }
 
         function initCharts() {
             const isDark = document.documentElement.classList.contains('dark');
             const textColor = isDark ? '#9ca3af' : '#6b7280';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
 
+            // Line Chart
             const lineCtx = document.getElementById('goldChart').getContext('2d');
             lineChart = new Chart(lineCtx, {
                 type: 'line',
@@ -158,11 +155,12 @@
                     plugins: { legend: { display: false }, datalabels: { display: false } },
                     scales: {
                         x: { ticks: { color: textColor }, grid: { display: false } },
-                        y: { ticks: { color: textColor }, grid: { color: isDark ? '#374151' : '#e5e7eb' } }
+                        y: { ticks: { color: textColor }, grid: { color: gridColor } }
                     }
                 }
             });
 
+            // Bar Chart - Values INSIDE Bars
             const barCtx = document.getElementById('weightBarChart').getContext('2d');
             barChart = new Chart(barCtx, {
                 type: 'bar',
@@ -179,14 +177,17 @@
                     plugins: { 
                         legend: { display: false },
                         datalabels: {
-                            anchor: 'end', align: 'top',
+                            anchor: 'center', // Put label in the center of the bar
+                            align: 'center',
                             formatter: (v) => v > 0 ? v.toFixed(2) + 'g' : '',
-                            font: { weight: 'bold', size: 10 },
-                            color: isDark ? '#f3f4f6' : '#444'
+                            font: { weight: 'bold', size: 12 },
+                            color: '#ffffff', // White text usually looks best inside gold/yellow bars
+                            textShadowColor: 'rgba(0, 0, 0, 0.5)',
+                            textShadowBlur: 4
                         }
                     },
                     scales: {
-                        y: { beginAtZero: true, display: false },
+                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
                         x: { ticks: { color: textColor }, grid: { display: false } }
                     }
                 }
