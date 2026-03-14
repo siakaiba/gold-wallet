@@ -55,11 +55,12 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-3 bg-gray-800 border-b border-gray-700 h-[350px] shrink-0">
-            <div class="col-span-2 border-r border-gray-700 relative h-full">
+        <div class="flex bg-gray-800 border-b border-gray-700 h-[380px] shrink-0">
+            <div class="flex-grow border-r border-gray-700 relative h-full">
                 <div id="tradingview_live" class="h-full w-full"></div>
             </div>
-            <div class="p-4 flex flex-col items-center justify-between bg-gray-900">
+            
+            <div class="w-[350px] p-4 flex flex-col items-center justify-between bg-gray-900 shrink-0">
                 <div class="w-full">
                     <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-3 text-center">Asset Allocation</h2>
                     <div class="h-[180px] w-full"><canvas id="weightDonut"></canvas></div>
@@ -69,14 +70,14 @@
                     <table class="w-full text-center text-[11px]">
                         <thead class="bg-gray-700 text-gray-400 uppercase text-[9px]">
                             <tr>
-                                <th class="py-1 px-2 border-r border-gray-600">Type</th>
-                                <th class="py-1 px-2">Total Weight</th>
+                                <th class="py-1.5 px-2 border-r border-gray-600">Type</th>
+                                <th class="py-1.5 px-2">Total Weight</th>
                             </tr>
                         </thead>
-                        <tbody id="summaryTableBody" class="font-bold text-yellow-500">
-                            <tr class="border-t border-gray-700"><td class="py-1 px-2 border-r border-gray-600">24K</td><td id="sum24" class="text-gray-100">0.00g</td></tr>
-                            <tr class="border-t border-gray-700"><td class="py-1 px-2 border-r border-gray-600">22K</td><td id="sum22" class="text-gray-100">0.00g</td></tr>
-                            <tr class="border-t border-gray-700"><td class="py-1 px-2 border-r border-gray-600">21K</td><td id="sum21" class="text-gray-100">0.00g</td></tr>
+                        <tbody id="summaryTableBody" class="font-bold">
+                            <tr class="border-t border-gray-700"><td class="py-1.5 px-2 border-r border-gray-600 text-yellow-600">24K</td><td id="sum24" class="text-gray-100">0.00g</td></tr>
+                            <tr class="border-t border-gray-700"><td class="py-1.5 px-2 border-r border-gray-600 text-yellow-600">22K</td><td id="sum22" class="text-gray-100">0.00g</td></tr>
+                            <tr class="border-t border-gray-700"><td class="py-1.5 px-2 border-r border-gray-600 text-yellow-600">21K</td><td id="sum21" class="text-gray-100">0.00g</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -155,7 +156,6 @@
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            // Remove any old 18K entries from display/calcs
             entries = entries.filter(e => e.purity !== 18);
             
             const weights = { 24: 0, 22: 0, 21: 0 };
@@ -190,10 +190,10 @@
         function updateCardColors(tVal, tCost, netProfit) {
             const cardValue = document.getElementById('cardValue');
             const cardProfit = document.getElementById('cardProfit');
-            if (tVal > tCost) cardValue.className = "border-r border-gray-800 p-3 text-center bg-green-950/30";
-            else if (tVal < tCost && tVal > 0) cardValue.className = "border-r border-gray-800 p-3 text-center bg-red-950/30";
-            if (netProfit > 0) cardProfit.className = "p-3 text-center bg-green-950/30";
-            else if (netProfit < 0) cardProfit.className = "p-3 text-center bg-red-950/30";
+            if (tVal > tCost) cardValue.className = "border-r border-gray-800 p-3 text-center bg-green-900/20";
+            else if (tVal < tCost && tVal > 0) cardValue.className = "border-r border-gray-800 p-3 text-center bg-red-900/20";
+            if (netProfit > 0) cardProfit.className = "p-3 text-center bg-green-900/20";
+            else if (netProfit < 0) cardProfit.className = "p-3 text-center bg-red-900/20";
         }
 
         function deleteEntry(id) { if(confirm("Remove?")) { let entries = JSON.parse(localStorage.getItem('goldEntries')) || []; entries = entries.filter(e => e.id !== id); localStorage.setItem('goldEntries', JSON.stringify(entries)); loadEntries(); } }
