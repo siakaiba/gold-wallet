@@ -9,17 +9,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-100 p-4 font-sans text-gray-900">
-    <div class="max-w-7xl mx-auto">
-        <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
+<body class="bg-gray-100 font-sans text-gray-900 overflow-x-hidden">
+    <div class="w-full min-h-screen">
+        <header class="bg-yellow-600 text-white p-6 shadow-lg flex flex-col md:flex-row justify-between items-center w-full">
             <div>
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                 <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
-            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
+            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition mt-4 md:mt-0">Download PDF Report</button>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b text-center">
+        <div class="grid grid-cols-1 md:grid-cols-5 bg-white p-6 gap-3 border-b text-center w-full">
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Total Purchases</p>
                 <p id="statCount" class="text-xl font-black text-gray-800">0</p>
@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 bg-white border-x p-6 gap-6 border-b">
+        <div class="grid grid-cols-1 lg:grid-cols-3 bg-white p-6 gap-6 border-b w-full">
             <div class="lg:col-span-2">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Market Trend</h2>
@@ -53,15 +53,15 @@
                         <button onclick="updateLineChart('1Y')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white transition">1Y</button>
                     </div>
                 </div>
-                <div style="height: 220px;"><canvas id="goldChart"></canvas></div>
+                <div style="height: 300px;"><canvas id="goldChart"></canvas></div>
             </div>
             <div class="border-l lg:pl-6">
                 <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Weight Breakdown</h2>
-                <div style="height: 220px;"><canvas id="weightDonut"></canvas></div>
+                <div style="height: 300px;"><canvas id="weightDonut"></canvas></div>
             </div>
         </div>
 
-        <div class="bg-white p-6 shadow-md border-x">
+        <div class="bg-white p-6 shadow-md w-full border-b">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
                 <input type="date" id="purchaseDate" class="border p-2 rounded text-sm outline-none">
                 <select id="purity" class="border p-2 rounded text-sm bg-white outline-none">
@@ -75,7 +75,7 @@
             </div>
         </div>
 
-        <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-sm border-x border-b">
+        <div class="bg-white shadow-md overflow-x-auto text-sm w-full">
             <table class="w-full text-left border-collapse" id="reportTable">
                 <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[10px]">
                     <tr>
@@ -183,7 +183,6 @@
             const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
 
-            // Simple fixed sort: Newest Date First
             entries.sort((a, b) => b.timestamp - a.timestamp);
 
             entries.forEach(e => {
