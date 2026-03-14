@@ -1,34 +1,282 @@
-function updateStats(count, grams, invested, value) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samir's Gold Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 p-4 font-sans text-gray-900">
+    <div class="max-w-7xl mx-auto">
+        <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
+                <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
+            </div>
+            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b text-center">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Purchases</p>
+                <p id="statCount" class="text-xl font-black text-gray-800">0</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight</p>
+                <p id="statGrams" class="text-xl font-black text-gray-800">0.00g</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Investment</p>
+                <p id="statInvested" class="text-xl font-black text-gray-700">QAR 0</p>
+            </div>
+            <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-all duration-300">
+                <p id="labelValue" class="text-[10px] uppercase font-bold">Investment Value</p>
+                <p id="statValue" class="text-xl font-black">QAR 0</p>
+            </div>
+            <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-all duration-300">
+                <p id="labelProfit" class="text-[10px] uppercase font-bold">Net Profit/Loss</p>
+                <p id="statProfit" class="text-xl font-black">QAR 0</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 bg-white border-x p-6 gap-6 border-b">
+            <div class="lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Market Trend</h2>
+                    <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                        <button onclick="updateLineChart('1D')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white">1D</button>
+                        <button onclick="updateLineChart('1M')" class="px-3 py-1 text-[10px] font-bold rounded bg-white shadow-sm">1M</button>
+                    </div>
+                </div>
+                <div style="height: 220px;"><canvas id="goldChart"></canvas></div>
+            </div>
+            <div class="border-l lg:pl-6">
+                <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Weight Breakdown</h2>
+                <div style="height: 220px;"><canvas id="weightDonut"></canvas></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 shadow-md border-x">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                <input type="date" id="purchaseDate" class="border p-2 rounded text-sm outline-none">
+                <select id="purity" class="border p-2 rounded text-sm bg-white outline-none">
+                    <option value="24">24K (Pure)</option>
+                    <option value="22">22K</option>
+                    <option value="21">21K</option>
+                    <option value="18">18K</option>
+                </select>
+                <input type="number" id="grams" placeholder="Grams" class="border p-2 rounded text-sm outline-none">
+                <input type="number" id="price" placeholder="Price/g" class="border p-2 rounded text-sm outline-none">
+                <input type="number" id="costs" placeholder="Making" class="border p-2 rounded text-sm outline-none">
+                <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-sm border-x border-b">
+            <table class="w-full text-left border-collapse" id="reportTable">
+                <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[10px]">
+                    <tr>
+                        <th class="p-4 border-b">Date</th>
+                        <th class="p-4 border-b">Day Name</th>
+                        <th class="p-4 border-b">Type</th>
+                        <th class="p-4 border-b text-center">Weight</th>
+                        <th class="p-4 border-b text-center">Prob.</th>
+                        <th class="p-4 border-b text-center">% Positive Prob.</th>
+                        <th class="p-4 border-b text-center">Profit (QAR)</th>
+                        <th class="p-4 border-b text-right no-pdf">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="goldTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
+        const livePrice24K = 599.50;
+        let lineChart, donutChart;
+
+        window.onload = function() {
+            document.getElementById('purchaseDate').valueAsDate = new Date();
+            initCharts();
+            fetchEntries();
+        };
+
+        function initCharts() {
+            const lineCtx = document.getElementById('goldChart').getContext('2d');
+            lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['W1', 'W2', 'W3', 'Today'],
+                    datasets: [{
+                        data: [580, 592, 588, 599.50],
+                        borderColor: '#ca8a04',
+                        backgroundColor: 'rgba(202, 138, 4, 0.1)',
+                        fill: true, tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const donutCtx = document.getElementById('weightDonut').getContext('2d');
+            donutChart = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['24K', '22K', '21K', '18K'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#ca8a04', '#eab308', '#facc15', '#fef08a'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        async function fetchEntries() {
+            try {
+                const response = await fetch(DB_URL);
+                const data = await response.json();
+                renderTable(data);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        async function addEntry() {
+            const rawDate = document.getElementById('purchaseDate').value;
+            const purity = parseInt(document.getElementById('purity').value);
+            const grams = parseFloat(document.getElementById('grams').value) || 0;
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const costs = parseFloat(document.getElementById('costs').value) || 0;
+            
+            if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
+
+            const dateObj = new Date(rawDate);
+            const totalCost = (grams * price) + costs;
+            
+            const entry = {
+                timestamp: dateObj.getTime(),
+                dateStr: dateObj.toLocaleDateString('en-GB'),
+                dayName: dateObj.toLocaleDateString('en-GB', { weekday: 'long' }),
+                purity: purity,
+                grams: grams,
+                totalCost: totalCost
+            };
+
+            await fetch(DB_URL, {
+                method: 'POST',
+                body: JSON.stringify(entry)
+            });
+
+            fetchEntries();
+            document.getElementById('grams').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('costs').value = '';
+        }
+
+        function renderTable(data) {
+            const tableBody = document.getElementById('goldTable');
+            tableBody.innerHTML = '';
+            
+            if (!data) {
+                updateStats(0, 0, 0, 0);
+                return;
+            }
+
+            const entries = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+            entries.sort((a, b) => b.timestamp - a.timestamp);
+
+            const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
+            let tGrams = 0, tCost = 0, tVal = 0;
+
+            entries.forEach(e => {
+                const currentVal = e.grams * (livePrice24K * (e.purity / 24));
+                const profitVal = currentVal - e.totalCost;
+                const color = profitVal >= 0 ? 'text-green-600' : 'text-red-600';
+
+                weights[e.purity] += e.grams;
+                tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
+
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50 border-b">
+                        <td class="p-4 font-medium">${e.dateStr}</td>
+                        <td class="p-4 text-gray-600">${e.dayName}</td>
+                        <td class="p-4 font-bold text-yellow-700">${e.purity}K</td>
+                        <td class="p-4 text-center font-bold">${e.grams}g</td>
+                        <td class="p-4 text-center">0.85</td>
+                        <td class="p-4 text-center text-blue-600 font-bold">85%</td>
+                        <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {minimumFractionDigits:1})}</td>
+                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
+                    </tr>`;
+            });
+
+            updateStats(entries.length, tGrams, tCost, tVal);
+            donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21], weights[18]];
+            donutChart.update();
+        }
+
+        function updateStats(count, grams, invested, value) {
             const profit = value - invested;
             
-            // Elements
-            const valStat = document.getElementById('statValue');
-            const valCard = document.getElementById('cardValue');
-            const profitStat = document.getElementById('statProfit');
-            const profitCard = document.getElementById('cardProfit');
-
-            // Update Text
             document.getElementById('statCount').innerText = count;
             document.getElementById('statGrams').innerText = grams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + invested.toLocaleString();
-            valStat.innerText = 'QAR ' + value.toLocaleString(undefined, {maximumFractionDigits:0});
-            profitStat.innerText = 'QAR ' + profit.toLocaleString(undefined, {maximumFractionDigits: 0});
+            document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString(undefined, {maximumFractionDigits:0});
+            document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString(undefined, {maximumFractionDigits: 0});
 
             // Rule 1: Investment Value > Total Investment
+            const valCard = document.getElementById('cardValue');
+            const valLabel = document.getElementById('labelValue');
+            const valStat = document.getElementById('statValue');
             if (value > invested && invested > 0) {
-                valStat.classList.replace('text-gray-800', 'text-green-600');
-                valCard.classList.add('bg-green-50', 'border-green-200');
+                valCard.className = "p-4 rounded-lg border shadow-sm bg-green-50 border-green-200";
+                valLabel.className = "text-[10px] uppercase font-bold text-green-600";
+                valStat.className = "text-xl font-black text-green-700";
             } else {
-                valStat.classList.replace('text-green-600', 'text-gray-800');
-                valCard.classList.remove('bg-green-50', 'border-green-200');
+                valCard.className = "p-4 rounded-lg border shadow-sm bg-gray-50 border-gray-200";
+                valLabel.className = "text-[10px] uppercase font-bold text-gray-500";
+                valStat.className = "text-xl font-black text-gray-800";
             }
 
             // Rule 2: Net Profit/Loss > Total Investment
+            const profitCard = document.getElementById('cardProfit');
+            const profitLabel = document.getElementById('labelProfit');
+            const profitStat = document.getElementById('statProfit');
             if (profit > invested && invested > 0) {
-                profitStat.classList.replace('text-gray-800', 'text-green-600');
-                profitCard.classList.add('bg-green-50', 'border-green-200');
+                profitCard.className = "p-4 rounded-lg border shadow-sm bg-green-50 border-green-200";
+                profitLabel.className = "text-[10px] uppercase font-bold text-green-600";
+                profitStat.className = "text-xl font-black text-green-700";
             } else {
-                profitStat.classList.replace('text-green-600', 'text-gray-800');
-                profitCard.classList.remove('bg-green-50', 'border-green-200');
+                profitCard.className = "p-4 rounded-lg border shadow-sm bg-gray-50 border-gray-200";
+                profitLabel.className = "text-[10px] uppercase font-bold text-gray-500";
+                profitStat.className = "text-xl font-black text-gray-800";
             }
         }
+
+        async function deleteEntry(id) {
+            if(confirm("Delete this entry?")) {
+                const deleteUrl = `https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`;
+                await fetch(deleteUrl, { method: 'DELETE' });
+                fetchEntries();
+            }
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            doc.text("Gold Investment Report", 14, 15);
+            doc.autoTable({ html: '#reportTable', startY: 25 });
+            doc.save("Gold_Wallet_Report.pdf");
+        }
+    </script>
+</body>
+</html>
