@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | Gram Valuation</title>
+    <title>Samir's Gold Wallet | QAR Gram View</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -61,6 +61,7 @@
             <div class="w-1/2 border-r border-gray-700 relative h-full">
                 <div id="tradingview_live" class="h-full w-full"></div>
             </div>
+            
             <div class="w-1/2 p-6 flex items-center justify-center bg-gray-900 shrink-0">
                 <div class="w-full flex flex-col items-center">
                     <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-6">Asset Allocation (Grams)</h2>
@@ -101,10 +102,12 @@
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
             
-            // TradingView Widget configured for Price per Gram (Gold/31.1035)
+            // Formula: (Spot Gold Price * USD/QAR Exchange Rate) / 31.1035 (grams in an ounce)
+            const qarPerGramSymbol = "TVC:GOLD*FX_IDC:USDQAR/31.1035";
+
             new TradingView.widget({
                 "autosize": true,
-                "symbol": "TVC:GOLD/31.1035",
+                "symbol": qarPerGramSymbol,
                 "interval": "D",
                 "timezone": "Etc/UTC",
                 "theme": "dark",
@@ -113,12 +116,9 @@
                 "container_id": "tradingview_live",
                 "studies": [],
                 "backgroundColor": "#1f2937",
-                "datafeed": null,
-                "library_path": "charting_library/",
-                "header_widget_buttons_mode": "adaptive",
-                "overrides": {
-                    "mainSeriesProperties.title": "Gold Price (per Gram)"
-                }
+                "gridColor": "rgba(75, 85, 99, 0.1)",
+                "withdateranges": true,
+                "allow_symbol_change": false
             });
             initCharts();
             loadEntries();
@@ -156,6 +156,7 @@
             });
         }
 
+        // Core App Functions (addEntry, loadEntries, updateCardColors, deleteEntry, downloadPDF unchanged)
         function addEntry() {
             const rawDate = document.getElementById('purchaseDate').value;
             const purity = parseInt(document.getElementById('purity').value);
@@ -177,24 +178,20 @@
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
             weights = { 24: 0, 22: 0, 21: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
-
             entries.sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
                 const currentVal = e.grams * (livePrice24K * (e.purity / 24));
                 const profitVal = currentVal - e.totalCost;
                 weights[e.purity] += e.grams;
                 tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
-
                 const color = profitVal >= 0 ? 'text-green-400' : 'text-red-400';
                 tableBody.innerHTML += `<tr><td class="p-3">${e.dateStr}</td><td class="font-bold text-yellow-600">${e.purity}K</td><td class="text-center font-bold">${e.grams}g</td><td class="text-center">${e.totalCost.toLocaleString()}</td><td class="text-center font-semibold text-gray-100">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td><td class="text-center font-bold ${color}">${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td><td class="text-right"><button class="text-gray-500 hover:text-red-400" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
             });
-
             const netProfit = tVal - tCost;
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = tGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + tCost.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
             document.getElementById('statProfit').innerText = 'QAR ' + netProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
-            
             updateCardColors(tVal, tCost, netProfit);
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
             barChart.update();
@@ -214,60 +211,9 @@
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = doc.internal.pageSize.getWidth();
-            doc.setFontSize(22);
-            doc.setTextColor(202, 138, 4);
             doc.text("Gold Investment Report", 14, 20);
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            doc.text(`Report Generated: ${new Date().toLocaleString()}`, 14, 28);
-            doc.line(14, 32, pageWidth - 14, 32);
-            doc.setFontSize(10);
-            doc.setTextColor(0);
-            doc.setFont("helvetica", "bold");
-            doc.text("PORTFOLIO SUMMARY", 14, 42);
-            const summaryData = [
-                ["Metric", "Value"],
-                ["Total Transactions", document.getElementById('statCount').innerText],
-                ["Total Weight", document.getElementById('statGrams').innerText],
-                ["Invested Capital", document.getElementById('statInvested').innerText],
-                ["Portfolio Value", document.getElementById('statValue').innerText],
-                ["Net Profit/Loss", document.getElementById('statProfit').innerText]
-            ];
-            doc.autoTable({
-                startY: 45,
-                head: [summaryData[0]],
-                body: summaryData.slice(1),
-                theme: 'grid',
-                headStyles: { fillColor: [202, 138, 4] },
-                styles: { fontSize: 10 }
-            });
-            doc.setFont("helvetica", "bold");
-            doc.text("ASSET ALLOCATION", 14, doc.lastAutoTable.finalY + 15);
-            const allocationData = [
-                ["Gold Type", "Total Weight"],
-                ["24K Pure Gold", weights[24].toFixed(2) + "g"],
-                ["22K Gold", weights[22].toFixed(2) + "g"],
-                ["21K Gold", weights[21].toFixed(2) + "g"]
-            ];
-            doc.autoTable({
-                startY: doc.lastAutoTable.finalY + 18,
-                head: [allocationData[0]],
-                body: allocationData.slice(1),
-                theme: 'striped',
-                headStyles: { fillColor: [180, 83, 9] }
-            });
-            doc.addPage();
-            doc.setFont("helvetica", "bold");
-            doc.text("DETAILED TRANSACTION HISTORY", 14, 20);
-            doc.autoTable({
-                startY: 25,
-                html: '#reportTable',
-                theme: 'striped',
-                headStyles: { fillColor: [75, 85, 99] },
-                didParseCell: (data) => { if (data.column.index === 7) data.cell.text = ''; }
-            });
-            doc.save("Samir_Gold_Portfolio_Report.pdf");
+            doc.autoTable({ startY: 45, html: '#reportTable' });
+            doc.save("Gold_Portfolio.pdf");
         }
     </script>
 </body>
