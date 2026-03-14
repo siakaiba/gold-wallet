@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | Summary Edition</title>
+    <title>Samir's Gold Wallet | Optimized Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -77,7 +77,6 @@
                             <tr class="border-t border-gray-700"><td class="py-1 px-2 border-r border-gray-600">24K</td><td id="sum24" class="text-gray-100">0.00g</td></tr>
                             <tr class="border-t border-gray-700"><td class="py-1 px-2 border-r border-gray-600">22K</td><td id="sum22" class="text-gray-100">0.00g</td></tr>
                             <tr class="border-t border-gray-700"><td class="py-1 px-2 border-r border-gray-600">21K</td><td id="sum21" class="text-gray-100">0.00g</td></tr>
-                            <tr class="border-t border-gray-700"><td class="py-1 px-2 border-r border-gray-600">18K</td><td id="sum18" class="text-gray-100">0.00g</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -87,7 +86,7 @@
         <div class="bg-gray-900 p-3 border-b border-gray-700 shrink-0">
             <div class="flex gap-3 items-end max-w-full">
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Date</label><input type="date" id="purchaseDate" class="w-full border p-1.5 rounded text-xs outline-none"></div>
-                <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Purity</label><select id="purity" class="w-full border p-1.5 rounded text-xs outline-none"><option value="24">24K</option><option value="22">22K</option><option value="21">21K</option><option value="18">18K</option></select></div>
+                <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Purity</label><select id="purity" class="w-full border p-1.5 rounded text-xs outline-none"><option value="24">24K</option><option value="22">22K</option><option value="21">21K</option></select></div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Grams</label><input type="number" id="grams" placeholder="0.00" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Rate (QAR/g)</label><input type="number" id="price" placeholder="Price" class="w-full border p-1.5 rounded text-xs outline-none"></div>
                 <div class="flex-1"><label class="text-[11px] font-bold uppercase text-gray-400 block mb-1">Making Cost</label><input type="number" id="costs" placeholder="Optional" class="w-full border p-1.5 rounded text-xs outline-none"></div>
@@ -125,7 +124,14 @@
             const donutCtx = document.getElementById('weightDonut').getContext('2d');
             donutChart = new Chart(donutCtx, {
                 type: 'doughnut',
-                data: { labels: ['24K', '22K', '21K', '18K'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#ca8a04', '#b45309', '#92400e', '#78350f'], borderWidth: 0 }] },
+                data: { 
+                    labels: ['24K', '22K', '21K'], 
+                    datasets: [{ 
+                        data: [0, 0, 0], 
+                        backgroundColor: ['#ca8a04', '#b45309', '#92400e'], 
+                        borderWidth: 0 
+                    }] 
+                },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '80%' }
             });
         }
@@ -149,7 +155,10 @@
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
+            // Remove any old 18K entries from display/calcs
+            entries = entries.filter(e => e.purity !== 18);
+            
+            const weights = { 24: 0, 22: 0, 21: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
 
             entries.sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
@@ -172,10 +181,9 @@
             document.getElementById('sum24').innerText = weights[24].toFixed(2) + 'g';
             document.getElementById('sum22').innerText = weights[22].toFixed(2) + 'g';
             document.getElementById('sum21').innerText = weights[21].toFixed(2) + 'g';
-            document.getElementById('sum18').innerText = weights[18].toFixed(2) + 'g';
 
             updateCardColors(tVal, tCost, netProfit);
-            donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21], weights[18]];
+            donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
             donutChart.update();
         }
 
