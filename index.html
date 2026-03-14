@@ -56,13 +56,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b">
             <div class="lg:col-span-2">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Market Trend</h2>
-                    <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                        <button onclick="updateLineChart('1D')" class="px-3 py-1 text-[10px] font-bold rounded hover:bg-white dark:hover:bg-gray-600">1D</button>
-                        <button onclick="updateLineChart('1M')" class="px-3 py-1 text-[10px] font-bold rounded bg-white dark:bg-gray-600 shadow-sm">1M</button>
-                    </div>
+                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Wallet Behavior (Growth)</h2>
                 </div>
-                <div style="height: 220px;"><canvas id="goldChart"></canvas></div>
+                <div style="height: 220px;"><canvas id="walletBehaviorChart"></canvas></div>
             </div>
             <div class="border-l dark:border-gray-700 lg:pl-6">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Weight Breakdown (G)</h2>
@@ -108,7 +104,7 @@
         Chart.register(ChartDataLabels);
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         const livePrice24K = 599.50;
-        let lineChart, barChart;
+        let walletChart, barChart;
 
         window.onload = function() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -124,9 +120,7 @@
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.theme = isDark ? 'dark' : 'light';
             document.getElementById('themeIcon').innerText = isDark ? '☀️' : '🌙';
-            
-            // Re-render charts to update grid and label colors
-            lineChart.destroy();
+            walletChart.destroy();
             barChart.destroy();
             initCharts();
             fetchEntries();
@@ -137,21 +131,13 @@
             const textColor = isDark ? '#9ca3af' : '#6b7280';
             const gridColor = isDark ? '#374151' : '#e5e7eb';
 
-            // Line Chart
-            const lineCtx = document.getElementById('goldChart').getContext('2d');
-            lineChart = new Chart(lineCtx, {
+            // Line Chart - Wallet Behavior
+            const walletCtx = document.getElementById('walletBehaviorChart').getContext('2d');
+            walletChart = new Chart(walletCtx, {
                 type: 'line',
-                data: {
-                    labels: ['W1', 'W2', 'W3', 'Today'],
-                    datasets: [{
-                        data: [580, 592, 588, 599.50],
-                        borderColor: '#ca8a04',
-                        backgroundColor: 'rgba(202, 138, 4, 0.1)',
-                        fill: true, tension: 0.4
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
+                data: { labels: [], datasets: [{ label: 'Total Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false }, datalabels: { display: false } },
                     scales: {
                         x: { ticks: { color: textColor }, grid: { display: false } },
@@ -160,31 +146,16 @@
                 }
             });
 
-            // Bar Chart - Values INSIDE Bars
+            // Bar Chart - Inside values
             const barCtx = document.getElementById('weightBarChart').getContext('2d');
             barChart = new Chart(barCtx, {
                 type: 'bar',
-                data: {
-                    labels: ['24K', '22K', '21K'],
-                    datasets: [{
-                        data: [0, 0, 0],
-                        backgroundColor: ['#ca8a04', '#eab308', '#facc15'],
-                        borderRadius: 5
-                    }]
-                },
+                data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        datalabels: {
-                            anchor: 'center', // Put label in the center of the bar
-                            align: 'center',
-                            formatter: (v) => v > 0 ? v.toFixed(2) + 'g' : '',
-                            font: { weight: 'bold', size: 12 },
-                            color: '#ffffff', // White text usually looks best inside gold/yellow bars
-                            textShadowColor: 'rgba(0, 0, 0, 0.5)',
-                            textShadowBlur: 4
-                        }
+                        datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(2) + 'g' : '', font: { weight: 'bold', size: 11 }, color: '#fff' }
                     },
                     scales: {
                         y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
@@ -229,18 +200,36 @@
             if (!data) { updateStats(0, 0, 0, 0); return; }
 
             const entries = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-            entries.sort((a, b) => b.timestamp - a.timestamp);
+            entries.sort((a, b) => a.timestamp - b.timestamp); // Sort oldest to newest for behavior chart
 
             const weights = { 24: 0, 22: 0, 21: 0 };
-            let tGrams = 0, tCost = 0, tVal = 0;
+            let cumulativeGrams = 0, cumulativeValue = 0, tCost = 0;
+            let chartLabels = [], chartData = [];
 
             entries.forEach(e => {
                 const currentVal = e.grams * (livePrice24K * (e.purity / 24));
                 const profitVal = currentVal - e.totalCost;
-                const color = profitVal >= 0 ? 'text-green-500' : 'text-red-500';
-
+                
                 if(weights.hasOwnProperty(e.purity)) weights[e.purity] += e.grams;
-                tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
+                cumulativeGrams += e.grams;
+                tCost += e.totalCost;
+                
+                // Track cumulative value for the behavior chart
+                cumulativeValue += currentVal;
+                chartLabels.push(e.dateStr);
+                chartData.push(cumulativeValue.toFixed(0));
+            });
+
+            // Update Wallet Behavior Chart
+            walletChart.data.labels = chartLabels;
+            walletChart.data.datasets[0].data = chartData;
+            walletChart.update();
+
+            // Reverse for display in table (newest first)
+            [...entries].sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
+                const currentVal = e.grams * (livePrice24K * (e.purity / 24));
+                const profitVal = currentVal - e.totalCost;
+                const color = profitVal >= 0 ? 'text-green-500' : 'text-red-500';
 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
@@ -255,7 +244,7 @@
                     </tr>`;
             });
 
-            updateStats(entries.length, tGrams, tCost, tVal);
+            updateStats(entries.length, cumulativeGrams, tCost, cumulativeValue);
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]];
             barChart.update();
         }
@@ -300,12 +289,7 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             doc.text("Gold Investment Report", 14, 15);
-            doc.autoTable({ 
-                html: '#reportTable', 
-                startY: 25,
-                headStyles: { fillColor: [202, 138, 4] },
-                styles: { fontSize: 8 }
-            });
+            doc.autoTable({ html: '#reportTable', startY: 25, headStyles: { fillColor: [202, 138, 4] } });
             doc.save("Gold_Wallet_Report.pdf");
         }
     </script>
