@@ -14,7 +14,7 @@
         <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold">Gold Investment Wallet</h1>
-                <p class="text-yellow-100">Live 24K Price: <span class="font-bold">599.50 QAR/g</span></p>
+                <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
             <div class="mt-4 md:mt-0 flex gap-3">
                 <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
@@ -25,13 +25,13 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-gray-700">Market Trend</h2>
                 <div class="flex gap-2 bg-gray-100 p-1 rounded-lg">
-                    <button onclick="updateChartRange('1D')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm transition">1D</button>
-                    <button onclick="updateChartRange('1W')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm transition">1W</button>
-                    <button onclick="updateChartRange('1M')" class="px-3 py-1 text-xs font-bold rounded bg-white shadow-sm transition">1M</button>
-                    <button onclick="updateChartRange('1Y')" class="px-3 py-1 text-xs font-bold rounded hover:bg-white hover:shadow-sm transition">1Y</button>
+                    <button onclick="updateChartRange('1D')" class="chart-btn px-3 py-1 text-xs font-bold rounded hover:bg-white transition">1D</button>
+                    <button onclick="updateChartRange('1W')" class="chart-btn px-3 py-1 text-xs font-bold rounded hover:bg-white transition">1W</button>
+                    <button onclick="updateChartRange('1M')" class="chart-btn px-3 py-1 text-xs font-bold rounded bg-white shadow-sm transition">1M</button>
+                    <button onclick="updateChartRange('1Y')" class="chart-btn px-4 py-1 text-xs font-bold rounded hover:bg-white transition">1Y</button>
                 </div>
             </div>
-            <div class="h-64">
+            <div style="height: 250px;">
                 <canvas id="goldChart"></canvas>
             </div>
         </div>
@@ -42,7 +42,7 @@
                 <p id="statGrams" class="text-2xl font-black">0.00g</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border">
-                <p class="text-xs text-gray-500 uppercase font-bold">Total Invested (Cost)</p>
+                <p class="text-xs text-gray-500 uppercase font-bold">Total Investment (Cost)</p>
                 <p id="statInvested" class="text-2xl font-black text-gray-700">QAR 0.00</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border">
@@ -97,7 +97,6 @@
                 data: {
                     labels: ['W1', 'W2', 'W3', 'Today'],
                     datasets: [{
-                        label: 'Gold Price (QAR)',
                         data: [580, 592, 588, 599.50],
                         borderColor: '#ca8a04',
                         backgroundColor: 'rgba(202, 138, 4, 0.1)',
@@ -108,8 +107,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: false } }
+                    plugins: { legend: { display: false } }
                 }
             });
         }
@@ -123,6 +121,8 @@
             };
             myChart.data.datasets[0].data = dataMap[range];
             myChart.update();
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('bg-white', 'shadow-sm'));
+            event.target.classList.add('bg-white', 'shadow-sm');
         }
 
         function addEntry() {
@@ -131,83 +131,76 @@
             const price = parseFloat(document.getElementById('price').value) || 0;
             const costs = parseFloat(document.getElementById('costs').value) || 0;
             
-            if(!rawDate || grams <= 0 || price <= 0) return alert("Fill all fields with valid numbers!");
+            if(!rawDate || grams <= 0 || price <= 0) return alert("Please fill all fields!");
 
-            const selectedDate = new Date(rawDate);
-            const totalCostPaid = (grams * price) + costs;
+            const totalCost = (grams * price) + costs;
             const currentVal = grams * livePrice;
-            const netProfitVal = currentVal - totalCostPaid;
-            const profitPct = ((netProfitVal / totalCostPaid) * 100).toFixed(1);
+            const profitVal = currentVal - totalCost;
+            const profitPct = ((profitVal / totalCost) * 100).toFixed(1);
 
             const entry = {
                 id: Date.now(),
-                dateStr: selectedDate.toLocaleDateString('en-GB'),
-                day: selectedDate.toLocaleDateString('en-US', { weekday: 'long' }),
+                dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
+                day: new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long' }),
                 grams: grams,
                 buyPrice: price,
                 makingCosts: costs,
-                totalCost: totalCostPaid,
+                totalCost: totalCost,
                 currentValue: currentVal,
-                netProfit: netProfitVal,
+                netProfit: profitVal,
                 profitPercent: profitPct
             };
 
-            saveToLocal(entry);
-            renderRow(entry);
-            updateSummary();
+            let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
+            entries.push(entry);
+            localStorage.setItem('goldEntries', JSON.stringify(entries));
+            loadEntries();
 
             document.getElementById('grams').value = '';
             document.getElementById('price').value = '';
             document.getElementById('costs').value = '';
         }
 
-        function renderRow(entry) {
-            const colorClass = entry.netProfit >= 0 ? 'text-green-600' : 'text-red-600';
-            const row = `
-                <tr id="row-${entry.id}" class="hover:bg-gray-50 border-b">
-                    <td class="p-4 font-medium">${entry.dateStr}</td>
-                    <td class="p-4">${entry.day}</td>
-                    <td class="p-4 text-center font-bold">${entry.grams}g</td>
-                    <td class="p-4 text-center">QAR ${entry.totalCost.toLocaleString()}</td>
-                    <td class="p-4 text-center font-semibold">QAR ${entry.currentValue.toLocaleString()}</td>
-                    <td class="p-4 text-center font-bold ${colorClass}">${entry.profitPercent}%</td>
-                    <td class="p-4 text-center font-bold ${colorClass}">QAR ${entry.netProfit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    <td class="p-4 text-right no-pdf">
-                        <button class="text-red-400 font-bold hover:text-red-600" onclick="deleteEntry(${entry.id})">Delete</button>
-                    </td>
-                </tr>`;
-            document.getElementById('goldTable').insertAdjacentHTML('afterbegin', row);
-        }
-
-        function updateSummary() {
+        function loadEntries() {
+            const tableBody = document.getElementById('goldTable');
+            tableBody.innerHTML = '';
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            let totalGrams = 0, totalInvested = 0;
             
-            entries.forEach(e => {
-                totalGrams += e.grams;
-                totalInvested += e.totalCost;
+            let totalGrams = 0, totalInvested = 0;
+
+            entries.sort((a,b) => b.id - a.id).forEach(entry => {
+                // Calculation safety for old data
+                const grams = entry.grams || 0;
+                const cost = entry.totalCost || (grams * (entry.buyPrice || 0) + (entry.makingCosts || 0));
+                const currentVal = grams * livePrice;
+                const profitVal = currentVal - cost;
+                const profitPct = cost > 0 ? ((profitVal / cost) * 100).toFixed(1) : "0.0";
+
+                totalGrams += grams;
+                totalInvested += cost;
+
+                const colorClass = profitVal >= 0 ? 'text-green-600' : 'text-red-600';
+                
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50 border-b">
+                        <td class="p-4 font-medium">${entry.dateStr}</td>
+                        <td class="p-4">${entry.day}</td>
+                        <td class="p-4 text-center font-bold">${grams}g</td>
+                        <td class="p-4 text-center">QAR ${cost.toLocaleString()}</td>
+                        <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString()}</td>
+                        <td class="p-4 text-center font-bold ${colorClass}">${profitPct}%</td>
+                        <td class="p-4 text-center font-bold ${colorClass}">QAR ${profitVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td class="p-4 text-right no-pdf">
+                            <button class="text-red-400 font-bold hover:text-red-600" onclick="deleteEntry(${entry.id})">Delete</button>
+                        </td>
+                    </tr>`;
             });
 
-            const currentTotalValue = totalGrams * livePrice;
-            const totalProfit = currentTotalValue - totalInvested;
-
+            const totalProfit = (totalGrams * livePrice) - totalInvested;
             document.getElementById('statGrams').innerText = totalGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + totalInvested.toLocaleString();
             document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString();
             document.getElementById('statProfit').className = `text-2xl font-black ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
-        }
-
-        function saveToLocal(entry) {
-            let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            entries.push(entry);
-            localStorage.setItem('goldEntries', JSON.stringify(entries));
-        }
-
-        function loadEntries() {
-            document.getElementById('goldTable').innerHTML = '';
-            let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            entries.forEach(renderRow);
-            updateSummary();
         }
 
         function deleteEntry(id) {
@@ -219,14 +212,9 @@
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4'); 
+            const doc = new jsPDF('l', 'mm', 'a4');
             doc.text("Gold Investment Report", 14, 15);
-            doc.autoTable({ 
-                html: '#reportTable', 
-                startY: 25, 
-                theme: 'striped',
-                didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } 
-            });
+            doc.autoTable({ html: '#reportTable', startY: 25, didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } });
             doc.save("Gold_Report.pdf");
         }
     </script>
