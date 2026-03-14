@@ -9,113 +9,155 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-100 p-2 md:p-4 font-sans text-gray-900">
-    <div class="max-w-7xl mx-auto">
-        <header class="bg-yellow-600 text-white p-4 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                <p class="text-yellow-100 text-xs">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
-            </div>
-            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg text-sm font-bold shadow hover:bg-yellow-50 transition mt-2 md:mt-0">Download PDF</button>
-        </header>
+<body class="bg-gray-100 font-sans text-gray-900 overflow-x-hidden">
 
-        <div class="grid grid-cols-2 md:grid-cols-5 bg-white border-x p-3 gap-2 border-b text-center">
-            <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                <p class="text-[9px] text-gray-500 uppercase font-bold">Purchases</p>
-                <p id="statCount" class="text-lg font-black text-gray-800">0</p>
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <aside class="w-full lg:w-48 bg-gray-800 text-white p-3 flex flex-row lg:flex-col gap-2 shadow-2xl overflow-x-auto">
+            <h2 class="text-[9px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-700 pb-1 hidden lg:block">Live /g</h2>
+            <div class="bg-gray-700/50 p-2 rounded border-l-2 border-yellow-500 flex-1 lg:flex-none">
+                <p class="text-[8px] uppercase font-bold text-yellow-500">24K</p>
+                <p class="text-sm font-black">599.50 <span class="text-[8px] text-gray-400">QAR</span></p>
             </div>
-            <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                <p class="text-[9px] text-gray-500 uppercase font-bold">Total Weight</p>
-                <p id="statGrams" class="text-lg font-black text-gray-800">0.00g</p>
+            <div class="bg-gray-700/50 p-2 rounded border-l-2 border-yellow-600 flex-1 lg:flex-none">
+                <p class="text-[8px] uppercase font-bold text-yellow-600">22K</p>
+                <p class="text-sm font-black">555.50 <span class="text-[8px] text-gray-400">QAR</span></p>
             </div>
-            <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                <p class="text-[9px] text-gray-500 uppercase font-bold">Investment</p>
-                <p id="statInvested" class="text-lg font-black text-gray-700">QAR 0</p>
+            <div class="bg-gray-700/50 p-2 rounded border-l-2 border-yellow-700 flex-1 lg:flex-none">
+                <p class="text-[8px] uppercase font-bold text-yellow-700">21K</p>
+                <p class="text-sm font-black">527.00 <span class="text-[8px] text-gray-400">QAR</span></p>
             </div>
-            <div id="cardValue" class="p-2 rounded-lg border shadow-sm transition-colors duration-300 bg-gray-50 border-gray-200">
-                <p class="text-[9px] uppercase font-bold text-gray-500">Value</p>
-                <p id="statValue" class="text-lg font-black text-gray-800">QAR 0</p>
+            <div class="bg-gray-700/50 p-2 rounded border-l-2 border-yellow-800 flex-1 lg:flex-none">
+                <p class="text-[8px] uppercase font-bold text-yellow-800">18K</p>
+                <p class="text-sm font-black">454.50 <span class="text-[8px] text-gray-400">QAR</span></p>
             </div>
-            <div id="cardProfit" class="p-2 rounded-lg border shadow-sm transition-colors duration-300 bg-gray-50 border-gray-200">
-                <p class="text-[9px] uppercase font-bold text-gray-500">Profit/Loss</p>
-                <p id="statProfit" class="text-lg font-black text-gray-800">QAR 0</p>
-            </div>
-        </div>
+        </aside>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 bg-white border-x p-4 gap-4 border-b">
-            <div class="lg:col-span-2">
-                <div class="flex justify-between items-center mb-2">
-                    <h2 class="text-xs font-bold text-gray-700 uppercase tracking-wider">Historical Price (QAR/g)</h2>
-                    <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                        <button onclick="updateMainChart('1D')" class="px-2 py-0.5 text-[9px] font-bold rounded hover:bg-white transition">1D</button>
-                        <button onclick="updateMainChart('MAX')" class="px-2 py-0.5 text-[9px] font-bold rounded bg-white shadow-sm transition">MAX</button>
+        <main class="flex-1 p-2 lg:p-4 overflow-y-auto">
+            <div class="max-w-5xl mx-auto">
+                <header class="bg-yellow-600 text-white p-3 rounded-t-xl shadow-lg flex justify-between items-center">
+                    <div>
+                        <h1 class="text-base font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
+                        <p class="text-yellow-100 text-[9px]">Live 24K Price: <span class="font-bold">599.50 QAR/g</span></p>
+                    </div>
+                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-3 py-1 rounded text-[10px] font-bold shadow hover:bg-yellow-50 transition">PDF Report</button>
+                </header>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 bg-white border-x p-2 gap-2 border-b text-center">
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <p class="text-[8px] text-gray-500 uppercase font-bold">Purchases</p>
+                        <p id="statCount" class="text-base font-black">0</p>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <p class="text-[8px] text-gray-500 uppercase font-bold">Weight</p>
+                        <p id="statGrams" class="text-base font-black">0.00g</p>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <p class="text-[8px] text-gray-500 uppercase font-bold">Investment</p>
+                        <p id="statInvested" class="text-sm font-black">QAR 0</p>
+                    </div>
+                    <div id="cardValue" class="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <p class="text-[8px] uppercase font-bold text-gray-500">Value</p>
+                        <p id="statValue" class="text-sm font-black">QAR 0</p>
+                    </div>
+                    <div id="cardProfit" class="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <p class="text-[8px] uppercase font-bold text-gray-500">Gain</p>
+                        <p id="statProfit" class="text-sm font-black">QAR 0</p>
                     </div>
                 </div>
-                <div style="height: 180px;"><canvas id="historyChart"></canvas></div>
-            </div>
-            <div class="border-l lg:pl-4 text-center">
-                <h2 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Allocation</h2>
-                <div style="height: 180px;"><canvas id="weightDonut"></canvas></div>
-            </div>
-        </div>
 
-        <div class="bg-white p-4 shadow-md border-x">
-            <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
-                <input type="date" id="purchaseDate" class="border p-1.5 rounded text-xs outline-none">
-                <select id="purity" class="border p-1.5 rounded text-xs bg-white outline-none">
-                    <option value="24">24K</option><option value="22">22K</option>
-                    <option value="21">21K</option><option value="18">18K</option>
-                </select>
-                <input type="number" id="grams" placeholder="Grams" class="border p-1.5 rounded text-xs outline-none">
-                <input type="number" id="price" placeholder="Price/g" class="border p-1.5 rounded text-xs outline-none">
-                <input type="number" id="costs" placeholder="Making" class="border p-1.5 rounded text-xs outline-none">
-                <button onclick="addEntry()" class="bg-yellow-600 text-white h-8 rounded font-bold hover:bg-yellow-700 transition uppercase text-[10px]">Add Entry</button>
-            </div>
-        </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 bg-white border-x p-4 gap-4 border-b">
+                    <div class="lg:col-span-2">
+                        <div class="flex justify-between items-center mb-2">
+                            <h2 class="text-[10px] font-bold text-gray-700 uppercase tracking-wider">Market Trend</h2>
+                            <div class="flex gap-1 bg-gray-100 p-0.5 rounded shadow-inner">
+                                <button onclick="updateLineChart('1D')" class="px-2 py-0.5 text-[8px] font-bold rounded hover:bg-white transition">1D</button>
+                                <button onclick="updateLineChart('1W')" class="px-2 py-0.5 text-[8px] font-bold rounded hover:bg-white transition">1W</button>
+                                <button onclick="updateLineChart('1M')" class="px-2 py-0.5 text-[8px] font-bold rounded bg-white shadow-sm transition">1M</button>
+                            </div>
+                        </div>
+                        <div style="height: 160px;"><canvas id="goldChart"></canvas></div>
+                    </div>
+                    <div class="border-l lg:pl-4 text-center">
+                        <h2 class="text-[10px] font-bold text-gray-700 uppercase tracking-wider mb-2">Allocation</h2>
+                        <div style="height: 160px;"><canvas id="weightDonut"></canvas></div>
+                    </div>
+                </div>
 
-        <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-xs border-x border-b">
-            <table class="w-full text-left border-collapse" id="reportTable">
-                <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[9px]">
-                    <tr>
-                        <th class="p-3 border-b">Date</th><th class="p-3 border-b">Type</th>
-                        <th class="p-3 border-b text-center">Weight</th><th class="p-3 border-b text-center">Total Cost</th>
-                        <th class="p-3 border-b text-center">Value</th><th class="p-3 border-b text-center">Profit %</th>
-                        <th class="p-3 border-b text-center">Gain</th><th class="p-3 border-b text-right no-pdf">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="goldTable"></tbody>
-            </table>
-        </div>
+                <div class="bg-white p-3 shadow-md border-x">
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                        <input type="date" id="purchaseDate" class="border p-1 rounded text-[10px] outline-none">
+                        <select id="purity" class="border p-1 rounded text-[10px] bg-white">
+                            <option value="24">24K</option><option value="22">22K</option>
+                            <option value="21">21K</option><option value="18">18K</option>
+                        </select>
+                        <input type="number" id="grams" placeholder="Grams" class="border p-1 rounded text-[10px]">
+                        <input type="number" id="price" placeholder="Price/g" class="border p-1 rounded text-[10px]">
+                        <input type="number" id="costs" placeholder="Making" class="border p-1 rounded text-[10px]">
+                        <button onclick="addEntry()" class="bg-yellow-600 text-white h-7 rounded font-bold uppercase text-[9px]">Add</button>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-[10px] border-x border-b">
+                    <table class="w-full text-left border-collapse" id="reportTable">
+                        <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[8px]">
+                            <tr>
+                                <th class="p-2 border-b">Date</th><th class="p-2 border-b">Type</th>
+                                <th class="p-2 border-b text-center">Weight</th><th class="p-2 border-b text-center">Cost</th>
+                                <th class="p-2 border-b text-center">Value</th><th class="p-2 border-b text-center">Profit %</th>
+                                <th class="p-2 border-b text-right no-pdf">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="goldTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <aside class="w-full lg:w-72 bg-gray-50 border-l p-4 flex flex-col gap-4 overflow-y-auto">
+            <h2 class="text-[9px] font-bold text-gray-500 uppercase tracking-widest border-b pb-1">TV Live Insights</h2>
+            <div id="tv_24k" class="rounded overflow-hidden border shadow-sm" style="height: 140px;"></div>
+            <div id="tv_22k" class="rounded overflow-hidden border shadow-sm" style="height: 140px;"></div>
+            <div id="tv_21k" class="rounded overflow-hidden border shadow-sm" style="height: 140px;"></div>
+            <div id="tv_18k" class="rounded overflow-hidden border shadow-sm" style="height: 140px;"></div>
+        </aside>
     </div>
 
+    <script src="https://s3.tradingview.com/tv.js"></script>
     <script>
         const livePrice24K = 599.50;
-        let historyChart, donutChart;
-        const years = ['2000', '2010', '2020', '2026'];
-        const histData = {
-            '24K': [32, 140, 220, 599.50],
-            '22K': [29, 128, 201, 555.50],
-            '21K': [28, 122, 192, 524.30],
-            '18K': [24, 105, 165, 449.60]
-        };
+        let lineChart, donutChart;
+
+        function createTVWidget(containerId, symbol) {
+            new TradingView.widget({
+                "autosize": true, "symbol": symbol, "interval": "D", "timezone": "Etc/UTC",
+                "theme": "light", "style": "3", "locale": "en", "hide_top_toolbar": true,
+                "save_image": false, "container_id": containerId
+            });
+        }
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
+            createTVWidget("tv_24k", "OANDA:XAUUSD");
+            createTVWidget("tv_22k", "COMEX:GC1!");
+            createTVWidget("tv_21k", "FX_IDC:XAUEUR");
+            createTVWidget("tv_18k", "TVC:DXY");
             initCharts();
             loadEntries();
         };
 
         function initCharts() {
-            const histCtx = document.getElementById('historyChart').getContext('2d');
-            historyChart = new Chart(histCtx, {
+            const lineCtx = document.getElementById('goldChart').getContext('2d');
+            lineChart = new Chart(lineCtx, {
                 type: 'line',
                 data: {
-                    labels: years,
-                    datasets: Object.keys(histData).map(k => ({
-                        label: k, data: histData[k], borderColor: '#ca8a04', borderWidth: 2, pointRadius: 0, tension: 0.3
-                    }))
+                    labels: ['W1', 'W2', 'W3', 'Today'],
+                    datasets: [{
+                        data: [580, 592, 588, 599.50],
+                        borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)',
+                        fill: true, tension: 0.4, pointRadius: 2
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 9 } } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
 
             const donutCtx = document.getElementById('weightDonut').getContext('2d');
@@ -126,18 +168,10 @@
             });
         }
 
-        function updateMainChart(range) {
-            if (range === 'MAX') {
-                historyChart.data.labels = years;
-                historyChart.data.datasets.forEach(ds => { ds.data = histData[ds.label]; });
-            } else {
-                historyChart.data.labels = ['M', 'T', 'W', 'T', 'F'];
-                historyChart.data.datasets.forEach(ds => {
-                    const last = histData[ds.label][histData[ds.label].length-1];
-                    ds.data = [last-5, last-2, last+1, last-1, last];
-                });
-            }
-            historyChart.update();
+        function updateLineChart(range) {
+            const dataMap = { '1D': [598, 597, 599, 599.5], '1W': [590, 595, 592, 599.5], '1M': [580, 592, 588, 599.5] };
+            lineChart.data.datasets[0].data = dataMap[range];
+            lineChart.update();
         }
 
         function addEntry() {
@@ -166,7 +200,7 @@
                 const profitVal = currentVal - e.totalCost;
                 weights[e.purity] += e.grams; tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
                 const color = profitVal >= 0 ? 'text-green-600' : 'text-red-600';
-                tableBody.innerHTML += `<tr class="border-b"><td class="p-3">${e.dateStr}</td><td class="p-3 font-bold">${e.purity}K</td><td class="p-3 text-center">${e.grams}g</td><td class="p-3 text-center">${e.totalCost.toLocaleString()}</td><td class="p-3 text-center">${currentVal.toLocaleString(undefined,{maximumFractionDigits:0})}</td><td class="p-3 text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td><td class="p-3 text-center font-bold ${color}">${profitVal.toLocaleString(undefined,{maximumFractionDigits:0})}</td><td class="p-3 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
+                tableBody.innerHTML += `<tr class="border-b"><td class="p-2">${e.dateStr}</td><td class="p-2 font-bold">${e.purity}K</td><td class="p-2 text-center">${e.grams}g</td><td class="p-2 text-center">${e.totalCost.toLocaleString()}</td><td class="p-2 text-center">${currentVal.toLocaleString(undefined,{maximumFractionDigits:0})}</td><td class="p-2 text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td><td class="p-2 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
             });
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = tGrams.toFixed(2) + 'g';
@@ -184,14 +218,7 @@
             else if (tVal < tCost) cardProfit.className = "p-2 rounded-lg border border-red-200 bg-red-50 shadow-sm";
         }
 
-        function deleteEntry(id) {
-            if(confirm("Are you sure?")) {
-                let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-                entries = entries.filter(e => e.id !== id);
-                localStorage.setItem('goldEntries', JSON.stringify(entries));
-                loadEntries();
-            }
-        }
+        function deleteEntry(id) { if(confirm("Are you sure?")) { let entries = JSON.parse(localStorage.getItem('goldEntries')) || []; entries = entries.filter(e => e.id !== id); localStorage.setItem('goldEntries', JSON.stringify(entries)); loadEntries(); } }
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
