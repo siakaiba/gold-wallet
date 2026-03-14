@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samir's Gold Wallet | Optimized Edition</title>
+    <title>Samir's Gold Wallet | Split View</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -56,30 +56,33 @@
         </div>
 
         <div class="flex bg-gray-800 border-b border-gray-700 h-[380px] shrink-0">
-            <div class="flex-grow border-r border-gray-700 relative h-full">
+            <div class="w-1/2 border-r border-gray-700 relative h-full">
                 <div id="tradingview_live" class="h-full w-full"></div>
             </div>
             
-            <div class="w-[350px] p-4 flex flex-col items-center justify-between bg-gray-900 shrink-0">
-                <div class="w-full">
-                    <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-3 text-center">Asset Allocation</h2>
-                    <div class="h-[180px] w-full"><canvas id="weightDonut"></canvas></div>
+            <div class="w-1/2 p-6 flex items-start justify-around bg-gray-900 shrink-0">
+                <div class="w-1/2 flex flex-col items-center">
+                    <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-6">Asset Allocation</h2>
+                    <div class="h-[220px] w-full"><canvas id="weightDonut"></canvas></div>
                 </div>
                 
-                <div class="w-full mt-4 bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-inner">
-                    <table class="w-full text-center text-[11px]">
-                        <thead class="bg-gray-700 text-gray-400 uppercase text-[9px]">
-                            <tr>
-                                <th class="py-1.5 px-2 border-r border-gray-600">Type</th>
-                                <th class="py-1.5 px-2">Total Weight</th>
-                            </tr>
-                        </thead>
-                        <tbody id="summaryTableBody" class="font-bold">
-                            <tr class="border-t border-gray-700"><td class="py-1.5 px-2 border-r border-gray-600 text-yellow-600">24K</td><td id="sum24" class="text-gray-100">0.00g</td></tr>
-                            <tr class="border-t border-gray-700"><td class="py-1.5 px-2 border-r border-gray-600 text-yellow-600">22K</td><td id="sum22" class="text-gray-100">0.00g</td></tr>
-                            <tr class="border-t border-gray-700"><td class="py-1.5 px-2 border-r border-gray-600 text-yellow-600">21K</td><td id="sum21" class="text-gray-100">0.00g</td></tr>
-                        </tbody>
-                    </table>
+                <div class="w-5/12 self-center">
+                    <h2 class="text-[13px] font-bold text-gray-300 uppercase tracking-widest mb-4 text-center">Purity Summary</h2>
+                    <div class="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 shadow-2xl">
+                        <table class="w-full text-center text-[13px]">
+                            <thead class="bg-gray-700 text-gray-400 uppercase text-[10px]">
+                                <tr>
+                                    <th class="py-3 px-2 border-r border-gray-600">Type</th>
+                                    <th class="py-3 px-2">Total Weight</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryTableBody" class="font-bold">
+                                <tr class="border-t border-gray-700"><td class="py-3 px-2 border-r border-gray-600 text-yellow-600">24K</td><td id="sum24" class="text-gray-100">0.00g</td></tr>
+                                <tr class="border-t border-gray-700"><td class="py-3 px-2 border-r border-gray-600 text-yellow-600">22K</td><td id="sum22" class="text-gray-100">0.00g</td></tr>
+                                <tr class="border-t border-gray-700"><td class="py-3 px-2 border-r border-gray-600 text-yellow-600">21K</td><td id="sum21" class="text-gray-100">0.00g</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -133,7 +136,7 @@
                         borderWidth: 0 
                     }] 
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '80%' }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', boxWidth: 10, font: { size: 10 } } } }, cutout: '80%' }
             });
         }
 
