@@ -7,10 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        th.sortable { cursor: pointer; transition: background 0.2s; }
-        th.sortable:hover { background-color: #f3f4f6; }
-    </style>
 </head>
 <body class="bg-gray-100 p-4 font-sans text-gray-900">
     <div class="max-w-7xl mx-auto">
@@ -19,83 +15,65 @@
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                 <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
-            <div class="mt-4 md:mt-0">
-                <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
-            </div>
+            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b">
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Total Purchases</p>
                 <p id="statCount" class="text-xl font-black text-blue-700">0</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight</p>
-                <p id="statGrams" class="text-xl font-black text-gray-800">0.00g</p>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight (All)</p>
+                <p id="statGrams" class="text-xl font-black">0.00g</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Total Investment</p>
                 <p id="statInvested" class="text-xl font-black text-gray-700">QAR 0</p>
             </div>
-            <div id="cardValue" class="p-4 rounded-lg border shadow-sm bg-gray-50 border-gray-200">
+            <div id="cardValue" class="p-4 rounded-lg border text-center shadow-sm bg-gray-50 border-gray-200">
                 <p id="labelValue" class="text-[10px] uppercase font-bold text-gray-500">Investment Value</p>
                 <p id="statValue" class="text-xl font-black">QAR 0</p>
             </div>
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
                 <p class="text-[10px] text-gray-500 uppercase font-bold">Net Profit/Loss</p>
-                <p id="statProfit" class="text-xl font-black">QAR 0</p>
+                <p id="statProfit" class="text-xl font-black text-gray-800">QAR 0</p>
             </div>
+        </div>
+
+        <div class="bg-white border-x p-4 flex flex-wrap gap-4 justify-center border-b italic text-sm">
+            <span class="font-bold not-italic uppercase text-[10px] text-gray-400 mr-2">Weight Breakdown:</span>
+            <div id="breakdown24" class="text-yellow-700">24K: 0g</div>
+            <div id="breakdown22" class="text-yellow-600">22K: 0g</div>
+            <div id="breakdown21" class="text-yellow-500">21K: 0g</div>
+            <div id="breakdown18" class="text-yellow-400">18K: 0g</div>
         </div>
 
         <div class="bg-white p-6 shadow-md border-x">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Date</label>
-                    <input type="date" id="purchaseDate" class="border p-2 rounded text-sm outline-none">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Type</label>
-                    <select id="purity" class="border p-2 rounded text-sm outline-none bg-white">
-                        <option value="24">24K (Pure)</option>
-                        <option value="22">22K</option>
-                        <option value="21">21K</option>
-                        <option value="18">18K</option>
-                    </select>
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Grams</label>
-                    <input type="number" id="grams" placeholder="Weight" class="border p-2 rounded text-sm outline-none">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Price/g (Opt)</label>
-                    <input type="number" id="price" placeholder="0" class="border p-2 rounded text-sm outline-none">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1">Making (Opt)</label>
-                    <input type="number" id="costs" placeholder="0" class="border p-2 rounded text-sm outline-none">
-                </div>
-                <div class="flex flex-col justify-end">
-                    <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
-                </div>
+                <input type="date" id="purchaseDate" class="border p-2 rounded text-sm outline-none">
+                <select id="purity" class="border p-2 rounded text-sm bg-white outline-none">
+                    <option value="24">24K</option><option value="22">22K</option>
+                    <option value="21">21K</option><option value="18">18K</option>
+                </select>
+                <input type="number" id="grams" placeholder="Grams" class="border p-2 rounded text-sm outline-none">
+                <input type="number" id="price" placeholder="Price/g (Opt)" class="border p-2 rounded text-sm outline-none">
+                <input type="number" id="costs" placeholder="Making (Opt)" class="border p-2 rounded text-sm outline-none">
+                <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
             </div>
-        </div>
-
-        <div class="bg-gray-50 border-x p-4 flex justify-between items-center border-b">
-            <h2 class="font-bold text-gray-700 uppercase text-xs">Transaction History</h2>
-            <p class="text-[9px] text-gray-400 uppercase">Click headers to sort</p>
         </div>
 
         <div class="bg-white shadow-md rounded-b-xl overflow-x-auto text-sm border-x border-b">
             <table class="w-full text-left border-collapse" id="reportTable">
                 <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[10px]">
                     <tr>
-                        <th class="p-4 border-b sortable" onclick="handleSort('timestamp')">Date ↕</th>
-                        <th class="p-4 border-b sortable" onclick="handleSort('purity')">Type ↕</th>
-                        <th class="p-4 border-b sortable text-center" onclick="handleSort('grams')">Weight ↕</th>
-                        <th class="p-4 border-b sortable text-center" onclick="handleSort('totalCost')">Total Cost ↕</th>
+                        <th class="p-4 border-b cursor-pointer hover:bg-gray-200" onclick="handleSort('timestamp')">Date ↕</th>
+                        <th class="p-4 border-b cursor-pointer hover:bg-gray-200" onclick="handleSort('purity')">Type ↕</th>
+                        <th class="p-4 border-b cursor-pointer hover:bg-gray-200 text-center" onclick="handleSort('grams')">Weight ↕</th>
+                        <th class="p-4 border-b text-center">Total Cost</th>
                         <th class="p-4 border-b text-center">Current Val.</th>
-                        <th class="p-4 border-b sortable text-center" onclick="handleSort('profitPct')">Profit (%) ↕</th>
-                        <th class="p-4 border-b sortable text-center" onclick="handleSort('profitVal')">Profit (QAR) ↕</th>
+                        <th class="p-4 border-b text-center">Profit (%)</th>
+                        <th class="p-4 border-b text-center">Profit (QAR)</th>
                         <th class="p-4 border-b text-right no-pdf">Action</th>
                     </tr>
                 </thead>
@@ -106,7 +84,7 @@
 
     <script>
         const livePrice24K = 599.50;
-        let currentSort = { key: 'timestamp', direction: 'desc' }; // Default sort by latest date
+        let currentSort = { key: 'timestamp', direction: 'desc' };
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
@@ -118,7 +96,7 @@
                 currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
             } else {
                 currentSort.key = key;
-                currentSort.direction = 'desc'; // Default to newest/highest when switching keys
+                currentSort.direction = 'desc';
             }
             loadEntries();
         }
@@ -130,27 +108,15 @@
             const price = parseFloat(document.getElementById('price').value) || 0;
             const costs = parseFloat(document.getElementById('costs').value) || 0;
             
-            if(!rawDate || grams <= 0) return alert("Please enter Date and Grams!");
-
-            const totalCost = (grams * price) + costs;
-            const timestamp = new Date(rawDate).getTime();
-            
-            // Calculate profit values for sorting
-            const currentVal = grams * (livePrice24K * (purity/24));
-            const profitVal = currentVal - totalCost;
-            const profitPct = totalCost > 0 ? (profitVal / totalCost) * 100 : 0;
+            if(!rawDate || grams <= 0) return alert("Please fill Date and Grams!");
 
             const entry = {
                 id: Date.now(),
-                timestamp: timestamp,
+                timestamp: new Date(rawDate).getTime(),
                 dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
                 purity: purity,
                 grams: grams,
-                buyPrice: price,
-                makingCosts: costs,
-                totalCost: totalCost,
-                profitVal: profitVal,
-                profitPct: profitPct
+                totalCost: (grams * price) + costs
             };
 
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
@@ -166,22 +132,18 @@
         function loadEntries() {
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
-            
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-            
-            // Sorting Logic
+
+            // Reset Breakdowns
+            const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
+            let totalGrams = 0, totalInvested = 0, currentPortfolioValue = 0;
+
+            // Sorting
             entries.sort((a, b) => {
                 let valA = a[currentSort.key];
                 let valB = b[currentSort.key];
-                
-                if (currentSort.direction === 'asc') {
-                    return valA > valB ? 1 : -1;
-                } else {
-                    return valA < valB ? 1 : -1;
-                }
+                return currentSort.direction === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
             });
-
-            let totalGrams = 0, totalInvested = 0, currentPortfolioValue = 0;
 
             entries.forEach(entry => {
                 const purityFactor = entry.purity / 24;
@@ -189,46 +151,51 @@
                 const profitVal = currentVal - entry.totalCost;
                 const profitPct = entry.totalCost > 0 ? ((profitVal / entry.totalCost) * 100).toFixed(1) : "---";
 
+                // Update Breakdowns
+                weights[entry.purity] += entry.grams;
                 totalGrams += entry.grams;
                 totalInvested += entry.totalCost;
                 currentPortfolioValue += currentVal;
 
-                const colorClass = profitVal >= 0 && entry.totalCost > 0 ? 'text-green-600' : (entry.totalCost > 0 ? 'text-red-600' : 'text-gray-400');
+                const color = entry.totalCost > 0 ? (profitVal >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
                 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 border-b">
                         <td class="p-4 font-medium">${entry.dateStr}</td>
                         <td class="p-4 font-bold text-yellow-700">${entry.purity}K</td>
                         <td class="p-4 text-center font-bold">${entry.grams}g</td>
-                        <td class="p-4 text-center">${entry.totalCost > 0 ? 'QAR ' + entry.totalCost.toLocaleString() : 'Unknown'}</td>
+                        <td class="p-4 text-center">${entry.totalCost > 0 ? 'QAR ' + entry.totalCost.toLocaleString() : '---'}</td>
                         <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                        <td class="p-4 text-center font-bold ${colorClass}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
-                        <td class="p-4 text-center font-bold ${colorClass}">${entry.totalCost > 0 ? 'QAR ' + profitVal.toLocaleString(undefined, {minimumFractionDigits: 1}) : '---'}</td>
-                        <td class="p-4 text-right no-pdf">
-                            <button class="text-red-400 font-bold hover:text-red-600" onclick="deleteEntry(${entry.id})">Delete</button>
-                        </td>
+                        <td class="p-4 text-center font-bold ${color}">${profitPct}${profitPct !== "---" ? "%" : ""}</td>
+                        <td class="p-4 text-center font-bold ${color}">${entry.totalCost > 0 ? 'QAR ' + profitVal.toLocaleString(undefined, {maximumFractionDigits:1}) : '---'}</td>
+                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${entry.id})">Delete</button></td>
                     </tr>`;
             });
 
-            // Update Summary Stats
-            const totalProfit = currentPortfolioValue - totalInvested;
+            // Update UI
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = totalGrams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + totalInvested.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + currentPortfolioValue.toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 0});
+            const totalProfit = currentPortfolioValue - totalInvested;
+            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
             
-            // Dynamic UI colors
+            // Update Breakdown Displays
+            document.getElementById('breakdown24').innerText = `24K: ${weights[24].toFixed(2)}g`;
+            document.getElementById('breakdown22').innerText = `22K: ${weights[22].toFixed(2)}g`;
+            document.getElementById('breakdown21').innerText = `21K: ${weights[21].toFixed(2)}g`;
+            document.getElementById('breakdown18').innerText = `18K: ${weights[18].toFixed(2)}g`;
+
             const cardValue = document.getElementById('cardValue');
             const statProfit = document.getElementById('statProfit');
             if (currentPortfolioValue > totalInvested && totalInvested > 0) {
-                cardValue.className = "bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm";
+                cardValue.className = "p-4 rounded-lg border text-center shadow-sm bg-green-50 border-green-200";
                 statProfit.className = "text-xl font-black text-green-600";
             } else if (currentPortfolioValue < totalInvested) {
-                cardValue.className = "bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm";
+                cardValue.className = "p-4 rounded-lg border text-center shadow-sm bg-red-50 border-red-200";
                 statProfit.className = "text-xl font-black text-red-600";
             } else {
-                cardValue.className = "bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm";
+                cardValue.className = "p-4 rounded-lg border text-center shadow-sm bg-gray-50 border-gray-200";
                 statProfit.className = "text-xl font-black text-gray-800";
             }
         }
