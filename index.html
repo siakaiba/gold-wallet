@@ -8,36 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .price-tooltip { position: relative; cursor: help; }
-        .price-tooltip:hover::after {
-            content: attr(data-tip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1f2937;
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            white-space: pre;
-            z-index: 50;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            line-height: 1.4;
-            text-align: left;
-        }
-        .price-tooltip:hover::before {
-            content: '';
-            position: absolute;
-            bottom: 115%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 6px solid transparent;
-            border-top-color: #1f2937;
-            z-index: 50;
-        }
-    </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-900">
 
@@ -50,26 +20,26 @@
             
             <div class="bg-gray-700/50 p-4 rounded-xl border-l-4 border-yellow-500 shadow-lg">
                 <p class="text-[10px] text-yellow-500 font-black uppercase">24K Pure Gold</p>
-                <p id="live24" class="text-lg font-black mt-1">599.50 <span class="text-[10px] text-gray-400">QAR</span></p>
+                <p class="text-lg font-black mt-1">599.50 <span class="text-[10px] text-gray-400">QAR</span></p>
             </div>
 
             <div class="bg-gray-700/50 p-4 rounded-xl border-l-4 border-yellow-600">
                 <p class="text-[10px] text-yellow-600 font-black uppercase">22K Gold</p>
-                <p id="live22" class="text-lg font-black mt-1">555.50 <span class="text-[10px] text-gray-400">QAR</span></p>
+                <p class="text-lg font-black mt-1">555.50 <span class="text-[10px] text-gray-400">QAR</span></p>
             </div>
 
             <div class="bg-gray-700/50 p-4 rounded-xl border-l-4 border-yellow-700">
                 <p class="text-[10px] text-yellow-700 font-black uppercase">21K Gold</p>
-                <p id="live21" class="text-lg font-black mt-1">530.25 <span class="text-[10px] text-gray-400">QAR</span></p>
+                <p class="text-lg font-black mt-1">530.25 <span class="text-[10px] text-gray-400">QAR</span></p>
             </div>
 
             <div class="bg-gray-700/50 p-4 rounded-xl border-l-4 border-yellow-800">
                 <p class="text-[10px] text-yellow-800 font-black uppercase">18K Gold</p>
-                <p id="live18" class="text-lg font-black mt-1">454.50 <span class="text-[10px] text-gray-400">QAR</span></p>
+                <p class="text-lg font-black mt-1">454.50 <span class="text-[10px] text-gray-400">QAR</span></p>
             </div>
 
-            <div class="mt-auto p-4 bg-yellow-600/10 rounded-lg border border-yellow-600/20">
-                <p class="text-[10px] text-yellow-600 font-bold text-center">Market Status: <span class="animate-pulse">● LIVE</span></p>
+            <div class="mt-auto p-4 bg-yellow-600/10 rounded-lg border border-yellow-600/20 text-center">
+                <p class="text-[10px] text-yellow-600 font-bold uppercase tracking-tighter">Market: <span class="animate-pulse">● LIVE</span></p>
             </div>
         </aside>
 
@@ -80,18 +50,7 @@
                         <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                         <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
                     </div>
-                    <div class="flex flex-col items-end gap-3 mt-4 md:mt-0">
-                        <div class="flex items-center gap-2 bg-yellow-700/30 p-1 px-2 rounded-lg border border-yellow-500/50">
-                            <label class="text-[10px] font-bold uppercase">Currency:</label>
-                            <select id="currencySelector" onchange="changeCurrency()" class="bg-yellow-600 text-white text-xs font-bold p-1 rounded outline-none cursor-pointer">
-                                <option value="QAR">QAR (Riyal)</option>
-                                <option value="USD">USD (Dollar)</option>
-                                <option value="JOD">JOD (Dinar)</option>
-                                <option value="EUR">EUR (Euro)</option>
-                            </select>
-                        </div>
-                        <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
-                    </div>
+                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition mt-4 md:mt-0">Download PDF Report</button>
                 </header>
 
                 <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b text-center">
@@ -149,10 +108,10 @@
                                 <th class="p-4 border-b">Date</th>
                                 <th class="p-4 border-b">Type</th>
                                 <th class="p-4 border-b text-center">Weight</th>
-                                <th class="p-4 border-b text-center">Cost (<span class="cur-label">QAR</span>)</th>
-                                <th class="p-4 border-b text-center">Market (<span class="cur-label">QAR</span>)</th>
+                                <th class="p-4 border-b text-center">Total Cost (QAR)</th>
+                                <th class="p-4 border-b text-center">Market (QAR)</th>
                                 <th class="p-4 border-b text-center">Profit (%)</th>
-                                <th class="p-4 border-b text-center">Gain (<span class="cur-label">QAR</span>)</th>
+                                <th class="p-4 border-b text-center">Gain (QAR)</th>
                                 <th class="p-4 border-b text-right no-pdf">Action</th>
                             </tr>
                         </thead>
@@ -165,7 +124,6 @@
 
     <script>
         const livePricesQAR = { 24: 599.50, 22: 555.50, 21: 530.25, 18: 454.50 };
-        const rates = { QAR: 1, USD: 0.274, JOD: 0.194, EUR: 0.252 };
         let lineChart, donutChart;
 
         window.onload = function() {
@@ -173,20 +131,6 @@
             initCharts();
             loadEntries();
         };
-
-        function changeCurrency() {
-            const currency = document.getElementById('currencySelector').value;
-            const rate = rates[currency];
-            
-            // Update Sidebar Prices
-            document.getElementById('live24').innerHTML = `${(livePricesQAR[24] * rate).toFixed(2)} <span class="text-[10px] text-gray-400">${currency}</span>`;
-            document.getElementById('live22').innerHTML = `${(livePricesQAR[22] * rate).toFixed(2)} <span class="text-[10px] text-gray-400">${currency}</span>`;
-            document.getElementById('live21').innerHTML = `${(livePricesQAR[21] * rate).toFixed(2)} <span class="text-[10px] text-gray-400">${currency}</span>`;
-            document.getElementById('live18').innerHTML = `${(livePricesQAR[18] * rate).toFixed(2)} <span class="text-[10px] text-gray-400">${currency}</span>`;
-            
-            document.querySelectorAll('.cur-label').forEach(el => el.innerText = currency);
-            loadEntries();
-        }
 
         function initCharts() {
             const lineCtx = document.getElementById('goldChart').getContext('2d');
@@ -223,11 +167,6 @@
             });
         }
 
-        function getMultiCurrencyTip(qarValue) {
-            if (!qarValue || qarValue === 0) return "";
-            return `USD: $${(qarValue * rates.USD).toFixed(2)}\nEUR: €${(qarValue * rates.EUR).toFixed(2)}\nJOD: ${(qarValue * rates.JOD).toFixed(2)}`;
-        }
-
         function addEntry() {
             const rawDate = document.getElementById('purchaseDate').value;
             const purity = parseInt(document.getElementById('purity').value);
@@ -254,55 +193,47 @@
         }
 
         function loadEntries() {
-            const currency = document.getElementById('currencySelector').value;
-            const rate = rates[currency];
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
 
             const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
-            let tGrams = 0, tCostQAR = 0, tValQAR = 0;
+            let tGrams = 0, tCost = 0, tVal = 0;
 
             entries.sort((a, b) => b.timestamp - a.timestamp);
 
             entries.forEach(e => {
-                const currentValQAR = e.grams * (livePricesQAR[e.purity]);
-                const profitValQAR = currentValQAR - e.costQAR;
-                const profitPct = e.costQAR > 0 ? ((profitValQAR / e.costQAR) * 100).toFixed(1) : "---";
+                const currentVal = e.grams * (livePricesQAR[e.purity]);
+                const profitVal = currentVal - e.costQAR;
+                const profitPct = e.costQAR > 0 ? ((profitVal / e.costQAR) * 100).toFixed(1) : "---";
 
                 weights[e.purity] += e.grams;
-                tGrams += e.grams; tCostQAR += e.costQAR; tValQAR += currentValQAR;
+                tGrams += e.grams; tCost += e.costQAR; tVal += currentVal;
 
-                const color = e.costQAR > 0 ? (profitValQAR >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
+                const color = e.costQAR > 0 ? (profitVal >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-400';
                 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 border-b">
                         <td class="p-4 font-medium">${e.dateStr}</td>
                         <td class="p-4 font-bold text-yellow-700">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center font-mono price-tooltip" data-tip="${getMultiCurrencyTip(e.costQAR)}">
-                            ${e.costQAR > 0 ? (e.costQAR * rate).toLocaleString(undefined,{maximumFractionDigits:1}) : '---'}
-                        </td>
-                        <td class="p-4 text-center font-semibold font-mono price-tooltip" data-tip="${getMultiCurrencyTip(currentValQAR)}">
-                            ${(currentValQAR * rate).toLocaleString(undefined, {maximumFractionDigits:1})}
-                        </td>
+                        <td class="p-4 text-center font-mono">${e.costQAR > 0 ? e.costQAR.toLocaleString() : '---'}</td>
+                        <td class="p-4 text-center font-semibold font-mono">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
                         <td class="p-4 text-center font-bold ${color}">${profitPct}%</td>
-                        <td class="p-4 text-center font-bold font-mono ${color} price-tooltip" data-tip="${getMultiCurrencyTip(profitValQAR)}">
-                            ${e.costQAR > 0 ? (profitValQAR * rate).toLocaleString(undefined, {maximumFractionDigits:1}) : '---'}
-                        </td>
+                        <td class="p-4 text-center font-bold font-mono ${color}">${e.costQAR > 0 ? profitVal.toLocaleString(undefined, {maximumFractionDigits:1}) : '---'}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Delete</button></td>
                     </tr>`;
             });
 
-            const totalProfitQAR = tValQAR - tCostQAR;
+            const totalProfit = tVal - tCost;
             document.getElementById('statCount').innerText = entries.length;
             document.getElementById('statGrams').innerText = tGrams.toFixed(2) + 'g';
-            document.getElementById('statInvested').innerText = currency + ' ' + (tCostQAR * rate).toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statValue').innerText = currency + ' ' + (tValQAR * rate).toLocaleString(undefined, {maximumFractionDigits:0});
-            document.getElementById('statProfit').innerText = currency + ' ' + (totalProfitQAR * rate).toLocaleString(undefined, {maximumFractionDigits:0});
+            document.getElementById('statInvested').innerText = 'QAR ' + tCost.toLocaleString();
+            document.getElementById('statValue').innerText = 'QAR ' + tVal.toLocaleString(undefined, {maximumFractionDigits:0});
+            document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
             
-            updateCardColors('cardValue', 'labelValue', 'statValue', tValQAR, tCostQAR);
-            updateCardColors('cardProfit', 'labelProfit', 'statProfit', totalProfitQAR, 0);
+            updateCardColors('cardValue', 'labelValue', 'statValue', tVal, tCost);
+            updateCardColors('cardProfit', 'labelProfit', 'statProfit', totalProfit, 0);
 
             donutChart.data.datasets[0].data = [weights[24], weights[22], weights[21], weights[18]];
             donutChart.update();
@@ -340,9 +271,9 @@
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
-            doc.text("Gold Investment Report", 14, 15);
+            doc.text("Gold Investment Report (QAR)", 14, 15);
             doc.autoTable({ html: '#reportTable', startY: 25, didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } });
-            doc.save("Gold_Report.pdf");
+            doc.save("Gold_Report_QAR.pdf");
         }
     </script>
 </body>
