@@ -10,10 +10,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100 p-4 font-sans text-gray-900">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
         <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold">Gold Investment Wallet</h1>
+                <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                 <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
             <div class="mt-4 md:mt-0 flex gap-3">
@@ -36,22 +36,26 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 bg-white border-x p-6 gap-4 border-b">
+        <div class="grid grid-cols-1 md:grid-cols-5 bg-white border-x p-6 gap-3 border-b">
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p class="text-xs text-gray-500 uppercase font-bold">Total Weight</p>
-                <p id="statGrams" class="text-2xl font-black">0.00g</p>
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Weight</p>
+                <p id="statGrams" class="text-xl font-black">0.00g</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p class="text-xs text-gray-500 uppercase font-bold">Total Investment (Cost)</p>
-                <p id="statInvested" class="text-2xl font-black text-gray-700">QAR 0</p>
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Purchases</p>
+                <p id="statCount" class="text-xl font-black text-blue-700">0</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p class="text-xs text-gray-500 uppercase font-bold">Net Profit/Loss</p>
-                <p id="statProfit" class="text-2xl font-black">QAR 0</p>
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Total Investment</p>
+                <p id="statInvested" class="text-xl font-black text-gray-700">QAR 0</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Net Profit/Loss</p>
+                <p id="statProfit" class="text-xl font-black">QAR 0</p>
             </div>
             <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 shadow-sm">
-                <p class="text-xs text-yellow-700 uppercase font-bold tracking-tight">Investment Value (Market)</p>
-                <p id="statValue" class="text-2xl font-black text-yellow-800">QAR 0</p>
+                <p class="text-[10px] text-yellow-700 uppercase font-bold">Investment Value</p>
+                <p id="statValue" class="text-xl font-black text-yellow-800">QAR 0</p>
             </div>
         </div>
 
@@ -140,7 +144,6 @@
             const totalCost = (grams * price) + costs;
             const currentVal = grams * livePrice;
             const profitVal = currentVal - totalCost;
-            const profitPct = ((profitVal / totalCost) * 100).toFixed(1);
 
             const entry = {
                 id: Date.now(),
@@ -149,10 +152,7 @@
                 grams: grams,
                 buyPrice: price,
                 makingCosts: costs,
-                totalCost: totalCost,
-                currentValue: currentVal,
-                netProfit: profitVal,
-                profitPercent: profitPct
+                totalCost: totalCost
             };
 
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
@@ -174,7 +174,7 @@
 
             entries.sort((a,b) => b.id - a.id).forEach(entry => {
                 const grams = entry.grams || 0;
-                const cost = entry.totalCost || (grams * (entry.buyPrice || 0) + (entry.makingCosts || 0));
+                const cost = entry.totalCost || 0;
                 const currentVal = grams * livePrice;
                 const profitVal = currentVal - cost;
                 const profitPct = cost > 0 ? ((profitVal / cost) * 100).toFixed(1) : "0.0";
@@ -202,12 +202,14 @@
             const currentTotalValue = totalGrams * livePrice;
             const totalProfit = currentTotalValue - totalInvested;
 
+            // Updated Summary Logic
             document.getElementById('statGrams').innerText = totalGrams.toFixed(2) + 'g';
+            document.getElementById('statCount').innerText = entries.length; // Total Purchases
             document.getElementById('statInvested').innerText = 'QAR ' + totalInvested.toLocaleString();
             document.getElementById('statProfit').innerText = 'QAR ' + totalProfit.toLocaleString(undefined, {minimumFractionDigits: 1});
-            document.getElementById('statValue').innerText = 'QAR ' + currentTotalValue.toLocaleString(); // Total Investment + Profit
+            document.getElementById('statValue').innerText = 'QAR ' + currentTotalValue.toLocaleString();
             
-            document.getElementById('statProfit').className = `text-2xl font-black ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            document.getElementById('statProfit').className = `text-xl font-black ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`;
         }
 
         function deleteEntry(id) {
