@@ -12,7 +12,6 @@
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
         .app-viewport { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
         .table-container { flex: 1; overflow-y: auto; }
-        /* Custom Scrollbar */
         .table-container::-webkit-scrollbar { width: 8px; }
         .table-container::-webkit-scrollbar-track { background: #f1f1f1; }
         .table-container::-webkit-scrollbar-thumb { background: #ca8a04; border-radius: 4px; }
@@ -21,134 +20,123 @@
 <body class="bg-gray-100 font-sans text-gray-900">
 
     <div class="app-viewport">
-        <header class="bg-yellow-600 text-white px-6 py-4 shadow-lg flex justify-between items-center shrink-0">
+        <header class="bg-yellow-600 text-white px-6 py-3 shadow-lg flex justify-between items-center shrink-0">
             <div>
-                <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                <p class="text-yellow-100 text-xs">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
+                <h1 class="text-xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
+                <p class="text-yellow-100 text-[10px]">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
             </div>
-            <div class="flex gap-4 items-center">
-                <div class="text-right mr-4 hidden md:block">
-                    <p class="text-[10px] uppercase opacity-80">Market Status</p>
-                    <p class="text-xs font-bold">● OPEN (Doha Time)</p>
-                </div>
-                <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-6 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition text-sm uppercase">Download PDF Report</button>
-            </div>
+            <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-5 py-1.5 rounded-lg font-bold shadow hover:bg-yellow-50 transition text-xs uppercase">Download PDF Report</button>
         </header>
 
         <div class="grid grid-cols-5 bg-white border-b shrink-0">
-            <div class="border-r p-4 text-center">
-                <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Purchases</p>
-                <p id="statCount" class="text-2xl font-black text-gray-800">0</p>
+            <div class="border-r p-3 text-center">
+                <p class="text-[9px] text-gray-500 uppercase font-bold">Purchases</p>
+                <p id="statCount" class="text-xl font-black">0</p>
             </div>
-            <div class="border-r p-4 text-center">
-                <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Weight</p>
-                <p id="statGrams" class="text-2xl font-black text-gray-800">0.00g</p>
+            <div class="border-r p-3 text-center">
+                <p class="text-[9px] text-gray-500 uppercase font-bold">Total Weight</p>
+                <p id="statGrams" class="text-xl font-black">0.00g</p>
             </div>
-            <div class="border-r p-4 text-center">
-                <p class="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Invested</p>
-                <p id="statInvested" class="text-2xl font-black text-gray-700">QAR 0</p>
+            <div class="border-r p-3 text-center">
+                <p class="text-[9px] text-gray-500 uppercase font-bold">Investment</p>
+                <p id="statInvested" class="text-xl font-black">QAR 0</p>
             </div>
-            <div id="cardValue" class="border-r p-4 text-center bg-gray-50">
-                <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Current Value</p>
-                <p id="statValue" class="text-2xl font-black text-gray-800">QAR 0</p>
+            <div id="cardValue" class="border-r p-3 text-center bg-gray-50">
+                <p class="text-[9px] uppercase font-bold text-gray-500">Market Value</p>
+                <p id="statValue" class="text-xl font-black">QAR 0</p>
             </div>
-            <div id="cardProfit" class="p-4 text-center bg-gray-50">
-                <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Net Profit/Loss</p>
-                <p id="statProfit" class="text-2xl font-black text-gray-800">QAR 0</p>
+            <div id="cardProfit" class="p-3 text-center bg-gray-50">
+                <p class="text-[9px] uppercase font-bold text-gray-500">Net Profit</p>
+                <p id="statProfit" class="text-xl font-black">QAR 0</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-3 bg-white border-b h-[280px] shrink-0">
-            <div class="col-span-2 p-6 border-r relative">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-widest">Market Trend Performance</h2>
-                    <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                        <button onclick="updateLineChart('1W')" class="px-4 py-1 text-[10px] font-bold rounded hover:bg-white transition">1W</button>
-                        <button onclick="updateLineChart('1M')" class="px-4 py-1 text-[10px] font-bold rounded bg-white shadow-sm">1M</button>
-                    </div>
+        <div class="grid grid-cols-3 bg-white border-b h-[300px] shrink-0">
+            <div class="col-span-2 border-r relative h-full">
+                <div class="tradingview-widget-container h-full">
+                    <div id="tradingview_live" class="h-full"></div>
                 </div>
-                <div class="h-[180px] w-full"><canvas id="goldChart"></canvas></div>
             </div>
-            <div class="p-6 text-center">
-                <h2 class="text-sm font-bold text-gray-700 uppercase tracking-widest mb-4">Portfolio Distribution</h2>
-                <div class="h-[180px] w-full"><canvas id="weightDonut"></canvas></div>
+            <div class="p-4 text-center">
+                <h2 class="text-[10px] font-bold text-gray-700 uppercase tracking-widest mb-2">Portfolio Breakdown</h2>
+                <div class="h-[220px] w-full"><canvas id="weightDonut"></canvas></div>
             </div>
         </div>
 
-        <div class="bg-gray-50 p-4 border-b shrink-0 shadow-inner">
-            <div class="flex flex-wrap md:flex-nowrap gap-4 items-end">
+        <div class="bg-gray-50 p-3 border-b shrink-0 shadow-inner">
+            <div class="flex gap-3 items-end">
                 <div class="flex-1 min-w-[120px]">
-                    <label class="text-[9px] font-bold uppercase text-gray-400 block mb-1 ml-1">Date</label>
-                    <input type="date" id="purchaseDate" class="w-full border p-2 rounded text-sm focus:ring-2 focus:ring-yellow-500 outline-none">
+                    <label class="text-[8px] font-bold uppercase text-gray-400 block mb-1">Date</label>
+                    <input type="date" id="purchaseDate" class="w-full border p-1.5 rounded text-xs outline-none">
                 </div>
-                <div class="flex-1 min-w-[100px]">
-                    <label class="text-[9px] font-bold uppercase text-gray-400 block mb-1 ml-1">Purity</label>
-                    <select id="purity" class="w-full border p-2 rounded text-sm bg-white outline-none">
-                        <option value="24">24K (Pure)</option><option value="22">22K</option>
+                <div class="flex-1">
+                    <label class="text-[8px] font-bold uppercase text-gray-400 block mb-1">Purity</label>
+                    <select id="purity" class="w-full border p-1.5 rounded text-xs bg-white">
+                        <option value="24">24K</option><option value="22">22K</option>
                         <option value="21">21K</option><option value="18">18K</option>
                     </select>
                 </div>
                 <div class="flex-1">
-                    <label class="text-[9px] font-bold uppercase text-gray-400 block mb-1 ml-1">Grams</label>
-                    <input type="number" id="grams" placeholder="0.00" class="w-full border p-2 rounded text-sm outline-none">
+                    <label class="text-[8px] font-bold uppercase text-gray-400 block mb-1">Grams</label>
+                    <input type="number" id="grams" placeholder="0.00" class="w-full border p-1.5 rounded text-xs">
                 </div>
                 <div class="flex-1">
-                    <label class="text-[9px] font-bold uppercase text-gray-400 block mb-1 ml-1">Price/g (QAR)</label>
-                    <input type="number" id="price" placeholder="Price" class="w-full border p-2 rounded text-sm outline-none">
+                    <label class="text-[8px] font-bold uppercase text-gray-400 block mb-1">Price/g (QAR)</label>
+                    <input type="number" id="price" placeholder="Rate" class="w-full border p-1.5 rounded text-xs">
                 </div>
                 <div class="flex-1">
-                    <label class="text-[9px] font-bold uppercase text-gray-400 block mb-1 ml-1">Making Cost</label>
-                    <input type="number" id="costs" placeholder="Optional" class="w-full border p-2 rounded text-sm outline-none">
+                    <label class="text-[8px] font-bold uppercase text-gray-400 block mb-1">Making Cost</label>
+                    <input type="number" id="costs" placeholder="Optional" class="w-full border p-1.5 rounded text-xs">
                 </div>
-                <button onclick="addEntry()" class="bg-yellow-600 text-white px-8 h-10 rounded-lg font-bold hover:bg-yellow-700 transition uppercase text-xs shadow-md">Add to Wallet</button>
+                <button onclick="addEntry()" class="bg-yellow-600 text-white px-6 h-9 rounded font-bold hover:bg-yellow-700 transition uppercase text-[10px] shadow">Add Entry</button>
             </div>
         </div>
 
         <div class="table-container bg-white">
             <table class="w-full text-left border-collapse" id="reportTable">
-                <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[10px] sticky top-0 z-10 shadow-sm">
+                <thead class="bg-gray-100 text-gray-700 uppercase font-bold text-[9px] sticky top-0 z-10 shadow-sm">
                     <tr>
-                        <th class="p-4 border-b">Date</th>
-                        <th class="p-4 border-b">Purity</th>
-                        <th class="p-4 border-b text-center">Weight</th>
-                        <th class="p-4 border-b text-center">Total Cost</th>
-                        <th class="p-4 border-b text-center">Current Valuation</th>
-                        <th class="p-4 border-b text-center">Return %</th>
-                        <th class="p-4 border-b text-center">Profit (QAR)</th>
-                        <th class="p-4 border-b text-right no-pdf">Actions</th>
+                        <th class="p-3 border-b">Date</th><th class="p-3 border-b">Type</th>
+                        <th class="p-3 border-b text-center">Weight</th><th class="p-3 border-b text-center">Cost</th>
+                        <th class="p-3 border-b text-center">Value</th><th class="p-3 border-b text-center">Return %</th>
+                        <th class="p-3 border-b text-center">Profit (QAR)</th><th class="p-3 border-b text-right no-pdf">Action</th>
                     </tr>
                 </thead>
-                <tbody id="goldTable" class="divide-y text-sm"></tbody>
+                <tbody id="goldTable" class="divide-y text-[11px]"></tbody>
             </table>
         </div>
     </div>
 
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
         const livePrice24K = 599.50;
-        let lineChart, donutChart;
+        let donutChart;
 
         window.onload = function() {
             document.getElementById('purchaseDate').valueAsDate = new Date();
-            initCharts();
+            
+            // Initialize TradingView Widget
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": "TVC:GOLD",
+                "interval": "D",
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "3",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_top_toolbar": false,
+                "hide_legend": false,
+                "save_image": false,
+                "container_id": "tradingview_live"
+            });
+
+            initLocalCharts();
             loadEntries();
         };
 
-        function initCharts() {
-            const lineCtx = document.getElementById('goldChart').getContext('2d');
-            lineChart = new Chart(lineCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Week 1', 'Week 2', 'Week 3', 'Today'],
-                    datasets: [{
-                        data: [580, 592, 588, 599.50],
-                        borderColor: '#ca8a04',
-                        backgroundColor: 'rgba(202, 138, 4, 0.1)',
-                        fill: true, tension: 0.4, pointRadius: 3
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
+        function initLocalCharts() {
             const donutCtx = document.getElementById('weightDonut').getContext('2d');
             donutChart = new Chart(donutCtx, {
                 type: 'doughnut',
@@ -160,19 +148,13 @@
                         borderWidth: 0
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } },
                     cutout: '75%'
                 }
             });
-        }
-
-        function updateLineChart(range) {
-            const data = range === '1W' ? [590, 595, 592, 599.5] : [580, 592, 588, 599.5];
-            lineChart.data.datasets[0].data = data;
-            lineChart.update();
         }
 
         function addEntry() {
@@ -181,12 +163,10 @@
             const grams = parseFloat(document.getElementById('grams').value) || 0;
             const price = parseFloat(document.getElementById('price').value) || 0;
             const costs = parseFloat(document.getElementById('costs').value) || 0;
-            
-            if(!rawDate || grams <= 0) return alert("Please enter valid weight!");
+            if(!rawDate || grams <= 0) return alert("Fill required data");
 
             const totalCost = (grams * price) + costs;
             const entry = { id: Date.now(), timestamp: new Date(rawDate).getTime(), dateStr: new Date(rawDate).toLocaleDateString('en-GB'), purity, grams, totalCost };
-
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
             entries.push(entry);
             localStorage.setItem('goldEntries', JSON.stringify(entries));
@@ -198,27 +178,23 @@
             const tableBody = document.getElementById('goldTable');
             tableBody.innerHTML = '';
             let entries = JSON.parse(localStorage.getItem('goldEntries')) || [];
-
             const weights = { 24: 0, 22: 0, 21: 0, 18: 0 };
             let tGrams = 0, tCost = 0, tVal = 0;
 
             entries.sort((a, b) => b.timestamp - a.timestamp).forEach(e => {
                 const currentVal = e.grams * (livePrice24K * (e.purity / 24));
                 const profitVal = currentVal - e.totalCost;
-                const profitPct = e.totalCost > 0 ? ((profitVal / e.totalCost) * 100).toFixed(1) : "---";
                 weights[e.purity] += e.grams;
                 tGrams += e.grams; tCost += e.totalCost; tVal += currentVal;
 
                 const color = profitVal >= 0 ? 'text-green-600' : 'text-red-600';
                 tableBody.innerHTML += `<tr class="hover:bg-gray-50 border-b">
-                    <td class="p-4 font-medium">${e.dateStr}</td>
-                    <td class="p-4 font-bold text-yellow-700">${e.purity}K</td>
-                    <td class="p-4 text-center font-bold">${e.grams}g</td>
-                    <td class="p-4 text-center">QAR ${e.totalCost.toLocaleString()}</td>
-                    <td class="p-4 text-center font-semibold">QAR ${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                    <td class="p-4 text-center font-bold ${color}">${profitPct}%</td>
-                    <td class="p-4 text-center font-bold ${color}">QAR ${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
-                    <td class="p-4 text-right"><button class="text-red-400 font-bold hover:underline" onclick="deleteEntry(${e.id})">Remove</button></td></tr>`;
+                    <td class="p-3">${e.dateStr}</td><td class="p-3 font-bold">${e.purity}K</td>
+                    <td class="p-3 text-center font-bold">${e.grams}g</td><td class="p-3 text-center">${e.totalCost.toLocaleString()}</td>
+                    <td class="p-3 text-center">${currentVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td class="p-3 text-center font-bold ${color}">${((profitVal/e.totalCost)*100).toFixed(1)}%</td>
+                    <td class="p-3 text-center font-bold ${color}">${profitVal.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                    <td class="p-3 text-right"><button class="text-red-400 font-bold" onclick="deleteEntry(${e.id})">Del</button></td></tr>`;
             });
 
             document.getElementById('statCount').innerText = entries.length;
@@ -234,17 +210,17 @@
 
         function updateCardColors(tVal, tCost) {
             const cardProfit = document.getElementById('cardProfit');
-            if (tVal > tCost) cardProfit.className = "p-4 text-center bg-green-50 text-green-700";
-            else if (tVal < tCost) cardProfit.className = "p-4 text-center bg-red-50 text-red-700";
+            if (tVal > tCost) cardProfit.className = "p-3 text-center bg-green-50 text-green-700";
+            else if (tVal < tCost) cardProfit.className = "p-3 text-center bg-red-50 text-red-700";
         }
 
-        function deleteEntry(id) { if(confirm("Confirm deletion?")) { let entries = JSON.parse(localStorage.getItem('goldEntries')) || []; entries = entries.filter(e => e.id !== id); localStorage.setItem('goldEntries', JSON.stringify(entries)); loadEntries(); } }
+        function deleteEntry(id) { if(confirm("Remove?")) { let entries = JSON.parse(localStorage.getItem('goldEntries')) || []; entries = entries.filter(e => e.id !== id); localStorage.setItem('goldEntries', JSON.stringify(entries)); loadEntries(); } }
 
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             doc.text("Gold Investment Report", 14, 15);
-            doc.autoTable({ html: '#reportTable', startY: 25 });
+            doc.autoTable({ html: '#reportTable', startY: 20 });
             doc.save("Gold_Report.pdf");
         }
     </script>
