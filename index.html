@@ -20,7 +20,7 @@
         <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">599.50 QAR/g</span></p>
+                <p class="text-yellow-100">Live 24K Price (Qatar): <span class="font-bold">600 QAR/g</span></p>
             </div>
             <div class="flex items-center gap-3">
                 <button onclick="toggleTheme()" class="bg-yellow-700 hover:bg-yellow-800 p-2 rounded-full transition shadow-inner">
@@ -43,13 +43,13 @@
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Total Investment</p>
                 <p id="statInvested" class="text-xl font-black text-gray-700 dark:text-gray-200">QAR 0</p>
             </div>
-            <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-all duration-300 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                <p id="labelValue" class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Investment Value</p>
-                <p id="statValue" class="text-xl font-black text-gray-800 dark:text-white">QAR 0</p>
+            <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-all duration-300">
+                <p id="labelValue" class="text-[10px] uppercase font-bold">Investment Value</p>
+                <p id="statValue" class="text-xl font-black">QAR 0</p>
             </div>
-            <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-all duration-300 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                <p id="labelProfit" class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Net Profit/Loss</p>
-                <p id="statProfit" class="text-xl font-black text-gray-800 dark:text-white">QAR 0</p>
+            <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-all duration-300">
+                <p id="labelProfit" class="text-[10px] uppercase font-bold">Net Profit/Loss</p>
+                <p id="statProfit" class="text-xl font-black">QAR 0</p>
             </div>
         </div>
 
@@ -101,7 +101,7 @@
     <script>
         Chart.register(ChartDataLabels);
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
-        const livePrice24K = 599.50;
+        const livePrice24K = 600; // Updated to whole number
         let walletChart, barChart;
 
         window.onload = function() {
@@ -135,7 +135,7 @@
                     plugins: { legend: { display: false }, datalabels: { display: false } },
                     scales: {
                         x: { ticks: { color: textColor }, grid: { display: false } },
-                        y: { ticks: { color: textColor }, grid: { color: gridColor } }
+                        y: { ticks: { color: textColor, callback: (v) => 'QAR ' + v }, grid: { color: gridColor } }
                     }
                 }
             });
@@ -147,10 +147,10 @@
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(2) + 'g' : '', font: { weight: 'bold', size: 11 }, color: '#fff' }
+                        datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold' }, color: '#fff' }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+                        y: { beginAtZero: true, display: false },
                         x: { ticks: { color: textColor }, grid: { display: false } }
                     }
                 }
@@ -167,8 +167,9 @@
             const rawDate = document.getElementById('purchaseDate').value;
             const purity = parseInt(document.getElementById('purity').value);
             const grams = parseFloat(document.getElementById('grams').value) || 0;
-            const price = parseFloat(document.getElementById('price').value) || 0;
-            const costs = parseFloat(document.getElementById('costs').value) || 0;
+            const price = Math.round(parseFloat(document.getElementById('price').value) || 0);
+            const costs = Math.round(parseFloat(document.getElementById('costs').value) || 0);
+            
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
 
             const entry = {
@@ -195,17 +196,18 @@
             let cLabels = [], cData = [];
 
             entries.forEach(e => {
-                const curVal = e.grams * (livePrice24K * (e.purity / 24));
+                const curVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 weights[e.purity] += e.grams;
                 tGrams += e.grams; tCost += e.totalCost; cumulativeValue += curVal;
-                cLabels.push(e.dateStr); cData.push(cumulativeValue.toFixed(0));
+                cLabels.push(e.dateStr); cData.push(cumulativeValue);
             });
 
             walletChart.data.labels = cLabels; walletChart.data.datasets[0].data = cData; walletChart.update();
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]]; barChart.update();
 
             [...entries].reverse().forEach(e => {
-                const profit = (e.grams * (livePrice24K * (e.purity / 24))) - e.totalCost;
+                const curVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
+                const profit = curVal - Math.round(e.totalCost);
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
                         <td class="p-4">${e.dateStr}</td>
@@ -214,20 +216,40 @@
                         <td class="p-4 text-center">${e.grams}g</td>
                         <td class="p-4 text-center">---</td>
                         <td class="p-4 text-center">---</td>
-                        <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${profit.toLocaleString()}</td>
+                        <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profit).toLocaleString()}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
                     </tr>`;
             });
-            updateStats(entries.length, tGrams, tCost, cumulativeValue);
+            updateStats(entries.length, tGrams, Math.round(tCost), cumulativeValue);
         }
 
         function updateStats(count, grams, invested, value) {
             const profit = value - invested;
+            const isDark = document.documentElement.classList.contains('dark');
+            
             document.getElementById('statCount').innerText = count;
             document.getElementById('statGrams').innerText = grams.toFixed(2) + 'g';
             document.getElementById('statInvested').innerText = 'QAR ' + invested.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString();
             document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString();
+
+            const applyHighlight = (cardId, labelId, statId, isSuccess) => {
+                const card = document.getElementById(cardId);
+                const label = document.getElementById(labelId);
+                const stat = document.getElementById(statId);
+                if (isSuccess && invested > 0) {
+                    card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`;
+                    label.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400";
+                    stat.className = "text-xl font-black text-green-700 dark:text-green-300";
+                } else {
+                    card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`;
+                    label.className = "text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400";
+                    stat.className = "text-xl font-black text-gray-800 dark:text-white";
+                }
+            };
+
+            applyHighlight('cardValue', 'labelValue', 'statValue', value > invested);
+            applyHighlight('cardProfit', 'labelProfit', 'statProfit', profit > invested);
         }
 
         async function deleteEntry(id) {
@@ -242,40 +264,28 @@
             const doc = new jsPDF('l', 'mm', 'a4');
             const pageWidth = doc.internal.pageSize.getWidth();
             
-            // Header
             doc.setFontSize(18);
             doc.setTextColor(202, 138, 4);
-            doc.text("Samir's Gold Investment Report", 14, 15);
+            doc.text("Gold Investment Report", 14, 15);
+            
             doc.setFontSize(10);
             doc.setTextColor(100);
-            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+            doc.text(`Total Weight: ${document.getElementById('statGrams').innerText} | Profit: ${document.getElementById('statProfit').innerText}`, 14, 25);
 
-            // Summary Stats
-            doc.setDrawColor(200);
-            doc.line(14, 25, pageWidth - 14, 25);
-            doc.text(`Total Weight: ${document.getElementById('statGrams').innerText}`, 14, 32);
-            doc.text(`Total Investment: ${document.getElementById('statInvested').innerText}`, 60, 32);
-            doc.text(`Current Value: ${document.getElementById('statValue').innerText}`, 110, 32);
-            doc.text(`Net Profit: ${document.getElementById('statProfit').innerText}`, 160, 32);
-
-            // Charts
             const walletImg = document.getElementById('walletBehaviorChart').toDataURL('image/png', 1.0);
             const barImg = document.getElementById('weightBarChart').toDataURL('image/png', 1.0);
             
-            doc.setFontSize(12);
-            doc.text("Wallet Behavior & Weight Breakdown", 14, 45);
-            doc.addImage(walletImg, 'PNG', 14, 50, 130, 60);
-            doc.addImage(barImg, 'PNG', 150, 50, 130, 60);
+            doc.addImage(walletImg, 'PNG', 14, 30, 130, 60);
+            doc.addImage(barImg, 'PNG', 150, 30, 130, 60);
 
-            // Table
             doc.autoTable({ 
                 html: '#reportTable', 
-                startY: 120,
+                startY: 100,
                 headStyles: { fillColor: [202, 138, 4] },
-                didParseCell: (data) => { if(data.column.index === 7) data.cell.text = ''; }
+                didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; }
             });
 
-            doc.save("Gold_Wallet_Report.pdf");
+            doc.save("Gold_Report.pdf");
         }
     </script>
 </body>
