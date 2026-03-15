@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Wallet</title>
+    <title>Samir's Gold Wallet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -23,7 +23,6 @@
         }
         body { overflow: hidden; }
         
-        /* Segmented Control Styling */
         .theme-segment {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -51,18 +50,15 @@
             </div>
             
             <div class="flex flex-col items-end gap-2">
-                <div class="flex items-center gap-3">
-                    <span class="text-xs font-bold uppercase opacity-90">Theme</span>
-                    <div class="relative bg-yellow-800/40 p-1 rounded-lg flex w-32 h-9 items-center cursor-pointer overflow-hidden border border-yellow-500/20" onclick="toggleTheme()">
-                        <div class="theme-active absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-800 rounded-md shadow-sm transition-transform duration-300"></div>
-                        <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 dark:opacity-40">LIGHT</div>
-                        <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 opacity-40 dark:opacity-100">DARK</div>
-                    </div>
+                <div class="relative bg-yellow-800/40 p-1 rounded-lg flex w-32 h-9 items-center cursor-pointer overflow-hidden border border-yellow-500/20" onclick="toggleTheme()">
+                    <div class="theme-active absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-800 rounded-md shadow-sm transition-transform duration-300"></div>
+                    <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 dark:opacity-40">LIGHT</div>
+                    <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 opacity-40 dark:opacity-100">DARK</div>
                 </div>
 
                 <div class="flex flex-col items-end border-t border-yellow-500/30 pt-2 w-full">
-                    <span class="text-[10px] font-bold opacity-80 mb-0.5">V1.1.4</span>
-                    <span id="realTimeClock" class="text-[10px] font-mono opacity-90 mb-2">00:00:00 - 01/01/2026</span>
+                    <span class="text-[10px] font-bold opacity-80 mb-0.5">V1.1.5</span>
+                    <span id="realTimeClock" class="text-[10px] font-mono opacity-90 mb-2">00:00:00 - 15/03/2026</span>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-3 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase">Download Report</button>
                 </div>
             </div>
