@@ -32,15 +32,18 @@
         .dark .theme-active {
             transform: translateX(100%);
         }
+        /* Style for PDF capturing to ensure charts are visible */
+        .pdf-capture { background: white !important; color: black !important; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col overflow-hidden">
     
-    <div class="max-w-7xl mx-auto w-full h-full flex flex-col gap-0 p-0 mt-[5px]">
+    <div id="mainDashboard" class="max-w-7xl mx-auto w-full h-full flex flex-col gap-0 p-0 mt-[5px] bg-gray-100 dark:bg-gray-900">
         
         <header class="bg-yellow-600 text-white rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 shrink-0 px-6 py-2">
             <div class="flex flex-col">
@@ -53,7 +56,7 @@
             </div>
             
             <div class="flex items-center gap-6">
-                <div class="relative bg-yellow-800/40 p-1 rounded-lg flex w-32 h-9 items-center cursor-pointer overflow-hidden border border-yellow-500/20" onclick="toggleTheme()">
+                <div class="relative bg-yellow-800/40 p-1 rounded-lg flex w-32 h-9 items-center cursor-pointer overflow-hidden border border-yellow-500/20 no-pdf" onclick="toggleTheme()">
                     <div class="theme-active absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-800 rounded-md shadow-sm transition-transform duration-300"></div>
                     <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 text-black dark:text-white dark:opacity-40">LIGHT</div>
                     <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 text-white opacity-40 dark:opacity-100">DARK</div>
@@ -62,9 +65,9 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 15/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.2.5</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.2.6</span>
                     </div>
-                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide">Download Report</button>
+                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                 </div>
             </div>
         </header>
@@ -82,17 +85,17 @@
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Total Investment</p>
                 <p id="statInvested" class="text-xl font-black text-gray-700 dark:text-gray-200">QAR 0</p>
             </div>
-            <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-all duration-300">
-                <p id="labelValue" class="text-[10px] uppercase font-bold">Current Market Value</p>
+            <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-all duration-300 bg-gray-50 dark:bg-gray-700">
+                <p id="labelValue" class="text-[10px] uppercase font-bold text-gray-500">Current Market Value</p>
                 <p id="statValue" class="text-xl font-black">QAR 0</p>
             </div>
-            <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-all duration-300">
-                <p id="labelProfit" class="text-[10px] uppercase font-bold">Net Profit/Loss</p>
+            <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-all duration-300 bg-gray-50 dark:bg-gray-700">
+                <p id="labelProfit" class="text-[10px] uppercase font-bold text-gray-500">Net Profit/Loss</p>
                 <p id="statProfit" class="text-xl font-black">QAR 0</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b shrink-0">
+        <div id="chartsContainer" class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b shrink-0">
             <div class="lg:col-span-2">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Wallet Behavior (Growth)</h2>
                 <div style="height: 180px;"><canvas id="walletBehaviorChart"></canvas></div>
@@ -103,7 +106,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 p-6 shadow-md border-x dark:border-gray-700 shrink-0">
+        <div class="bg-white dark:bg-gray-800 p-6 shadow-md border-x dark:border-gray-700 shrink-0 no-pdf">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
                 <input type="date" id="purchaseDate" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
                 <select id="purity" class="border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white outline-none">
@@ -295,6 +298,7 @@
             document.getElementById('statInvested').innerText = 'QAR ' + invested.toLocaleString();
             document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString();
             document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString();
+            
             const applyHighlight = (cardId, labelId, statId, isSuccess) => {
                 const card = document.getElementById(cardId);
                 const label = document.getElementById(labelId);
@@ -320,19 +324,43 @@
             }
         }
 
-        function downloadPDF() {
+        // Overhauled PDF Logic for a "Dashboard Snapshot" look
+        async function downloadPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-            doc.setFontSize(18); doc.setTextColor(202, 138, 4); doc.text("Gold Investment Report", 14, 15);
-            doc.setFontSize(9); doc.setTextColor(150, 150, 150); doc.text(`24K: ${livePrice24K} | 22K: ${livePrice22K} | 21K: ${livePrice21K} (QAR/g)`, 14, 21);
-            doc.setFontSize(10); doc.setTextColor(100, 100, 100);
-            const stats = [{ label: "Purchases", val: document.getElementById('statCount').innerText }, { label: "Total Weight", val: document.getElementById('statGrams').innerText }, { label: "Total Invested", val: document.getElementById('statInvested').innerText }, { label: "Market Value", val: document.getElementById('statValue').innerText }, { label: "Net Profit/Loss", val: document.getElementById('statProfit').innerText }];
-            let startX = 14; stats.forEach(s => { doc.setFont(undefined, 'bold'); doc.text(s.label.toUpperCase(), startX, 30); doc.setFont(undefined, 'normal'); doc.text(s.val, startX, 35); startX += 55; });
-            const walletImg = document.getElementById('walletBehaviorChart').toDataURL('image/png', 1.0);
-            const barImg = document.getElementById('weightBarChart').toDataURL('image/png', 1.0);
-            doc.addImage(walletImg, 'PNG', 14, 42, 130, 60); doc.addImage(barImg, 'PNG', 150, 42, 130, 60);
-            doc.autoTable({ html: '#reportTable', startY: 110, headStyles: { fillColor: [202, 138, 4] }, didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } });
-            doc.save("Gold_Report.pdf");
+            const dashboard = document.getElementById('mainDashboard');
+            
+            // Hide elements that shouldn't be in the PDF (buttons, input fields)
+            const noPdfElements = document.querySelectorAll('.no-pdf');
+            noPdfElements.forEach(el => el.style.display = 'none');
+            
+            // Temporary style changes for better PDF contrast
+            const isDark = document.documentElement.classList.contains('dark');
+            if(isDark) document.documentElement.classList.remove('dark');
+            
+            try {
+                const canvas = await html2canvas(dashboard, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#f3f4f6'
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('l', 'mm', 'a4');
+                const imgWidth = 280; 
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                pdf.save(`Gold_Wallet_Report_${new Date().toLocaleDateString()}.pdf`);
+                
+            } catch (error) {
+                console.error("PDF Export failed:", error);
+                alert("Failed to generate PDF. Please try again.");
+            } finally {
+                // Restore elements and theme
+                noPdfElements.forEach(el => el.style.display = '');
+                if(isDark) document.documentElement.classList.add('dark');
+            }
         }
     </script>
 </body>
