@@ -10,6 +10,19 @@
             darkMode: 'class',
         }
     </script>
+    <style>
+        /* Custom scrollbar for a cleaner look */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #ca8a04;
+            border-radius: 10px;
+        }
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -31,7 +44,7 @@
                     <span id="themeIcon" class="text-xl">🌙</span>
                 </button>
                 <div class="flex flex-col items-end">
-                    <span class="text-[10px] font-bold opacity-80 mb-1">V1.0.9</span>
+                    <span class="text-[10px] font-bold opacity-80 mb-1">V1.1.0</span>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
                 </div>
             </div>
@@ -86,22 +99,24 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl overflow-x-auto text-sm border-x border-b dark:border-gray-700">
-            <table class="w-full text-left border-collapse" id="reportTable">
-                <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-bold text-[10px]">
-                    <tr>
-                        <th class="p-4 border-b dark:border-gray-600">Date</th>
-                        <th class="p-4 border-b dark:border-gray-600">Day Name</th>
-                        <th class="p-4 border-b dark:border-gray-600">Type</th>
-                        <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
-                        <th class="p-4 border-b dark:border-gray-600 text-center">Market Price</th>
-                        <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
-                        <th class="p-4 border-b dark:border-gray-600 text-center">Profit (QAR)</th>
-                        <th class="p-4 border-b dark:border-gray-600 text-right no-pdf">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="goldTable" class="dark:text-gray-300"></tbody>
-            </table>
+        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl overflow-hidden border-x border-b dark:border-gray-700">
+            <div class="max-h-[400px] overflow-y-auto custom-scrollbar" id="tableContainer">
+                <table class="w-full text-left border-collapse text-sm" id="reportTable">
+                    <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-bold text-[10px] sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th class="p-4 border-b dark:border-gray-600">Date</th>
+                            <th class="p-4 border-b dark:border-gray-600">Day Name</th>
+                            <th class="p-4 border-b dark:border-gray-600">Type</th>
+                            <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
+                            <th class="p-4 border-b dark:border-gray-600 text-center">Market Price</th>
+                            <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
+                            <th class="p-4 border-b dark:border-gray-600 text-center">Profit (QAR)</th>
+                            <th class="p-4 border-b dark:border-gray-600 text-right no-pdf">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="goldTable" class="dark:text-gray-300"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
