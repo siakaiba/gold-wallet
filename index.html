@@ -87,8 +87,8 @@
                         <th class="p-4 border-b dark:border-gray-600">Day Name</th>
                         <th class="p-4 border-b dark:border-gray-600">Type</th>
                         <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
-                        <th class="p-4 border-b dark:border-gray-600 text-center">Prob.</th>
-                        <th class="p-4 border-b dark:border-gray-600 text-center">% Positive Prob.</th>
+                        <th class="p-4 border-b dark:border-gray-600 text-center">Market Price</th>
+                        <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                         <th class="p-4 border-b dark:border-gray-600 text-center">Profit (QAR)</th>
                         <th class="p-4 border-b dark:border-gray-600 text-right no-pdf">Action</th>
                     </tr>
@@ -176,7 +176,10 @@
                 timestamp: new Date(rawDate).getTime(),
                 dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
                 dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }),
-                purity: purity, grams: grams, totalCost: (grams * price) + costs
+                purity: purity, 
+                grams: grams, 
+                totalCost: (grams * price) + costs,
+                pricePerGram: price + (costs / grams) // Actual cost per gram including making
             };
 
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(entry) });
@@ -208,15 +211,17 @@
             [...entries].reverse().forEach(e => {
                 const curVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 const profit = curVal - Math.round(e.totalCost);
-                // dayName and dateStr now both have font-medium
+                const profitPercent = ((profit / e.totalCost) * 100).toFixed(2);
+                const marketPricePaid = (e.totalCost / e.grams).toFixed(2);
+
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
                         <td class="p-4 font-medium">${e.dateStr}</td>
                         <td class="p-4 font-medium">${e.dayName}</td>
                         <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center">---</td>
-                        <td class="p-4 text-center">---</td>
+                        <td class="p-4 text-center">QAR ${marketPricePaid}</td>
+                        <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
                         <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profit).toLocaleString()}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
                     </tr>`;
@@ -250,7 +255,7 @@
             };
 
             applyHighlight('cardValue', 'labelValue', 'statValue', value > invested);
-            applyHighlight('cardProfit', 'labelProfit', 'statProfit', profit > invested);
+            applyHighlight('cardProfit', 'labelProfit', 'statProfit', profit > 0);
         }
 
         async function deleteEntry(id) {
