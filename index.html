@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,6 @@
         }
     </script>
     <style>
-        /* Custom scrollbar for a cleaner look */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
@@ -22,15 +21,19 @@
             background: #ca8a04;
             border-radius: 10px;
         }
+        /* Lock body scroll */
+        body { overflow: hidden; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 p-4 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
-    <div class="max-w-7xl mx-auto">
-        <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
+<body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col">
+    
+    <div class="max-w-7xl mx-auto w-full h-full flex flex-col p-4 gap-4">
+        
+        <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
             <div class="flex flex-col">
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                 <div class="text-xs md:text-sm flex flex-wrap gap-x-6 gap-y-1 mt-1">
@@ -50,7 +53,7 @@
             </div>
         </header>
 
-        <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-5 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-3 border-b text-center">
+        <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-5 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-3 border-b text-center shrink-0">
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Total Purchases</p>
                 <p id="statCount" class="text-xl font-black text-gray-800 dark:text-white">0</p>
@@ -73,18 +76,18 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b">
+        <div class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b shrink-0">
             <div class="lg:col-span-2">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Wallet Behavior (Growth)</h2>
-                <div style="height: 220px;"><canvas id="walletBehaviorChart"></canvas></div>
+                <div style="height: 180px;"><canvas id="walletBehaviorChart"></canvas></div>
             </div>
             <div class="border-l dark:border-gray-700 lg:pl-6">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Weight Breakdown (G)</h2>
-                <div style="height: 220px;"><canvas id="weightBarChart"></canvas></div>
+                <div style="height: 180px;"><canvas id="weightBarChart"></canvas></div>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 p-6 shadow-md border-x dark:border-gray-700">
+        <div class="bg-white dark:bg-gray-800 p-6 shadow-md border-x dark:border-gray-700 shrink-0">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
                 <input type="date" id="purchaseDate" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
                 <select id="purity" class="border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white outline-none">
@@ -99,8 +102,8 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl overflow-hidden border-x border-b dark:border-gray-700">
-            <div class="max-h-[400px] overflow-y-auto custom-scrollbar" id="tableContainer">
+        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl border-x border-b dark:border-gray-700 flex-grow overflow-hidden flex flex-col mb-4">
+            <div class="overflow-y-auto custom-scrollbar flex-grow" id="tableContainer">
                 <table class="w-full text-left border-collapse text-sm" id="reportTable">
                     <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-bold text-[10px] sticky top-0 z-10 shadow-sm">
                         <tr>
@@ -299,17 +302,14 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             
-            // Title
             doc.setFontSize(18);
             doc.setTextColor(202, 138, 4);
             doc.text("Samir's Gold Investment Report", 14, 15);
             
-            // Prices Row
             doc.setFontSize(9);
             doc.setTextColor(150, 150, 150);
             doc.text(`24K: ${livePrice24K} | 22K: ${livePrice22K} | 21K: ${livePrice21K} (QAR/g)`, 14, 21);
 
-            // Draw Stats
             doc.setFontSize(10);
             doc.setTextColor(100, 100, 100);
             
