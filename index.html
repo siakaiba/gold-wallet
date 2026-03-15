@@ -26,7 +26,10 @@
                 <button onclick="toggleTheme()" class="bg-yellow-700 hover:bg-yellow-800 p-2 rounded-full transition shadow-inner">
                     <span id="themeIcon" class="text-xl">🌙</span>
                 </button>
-                <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
+                <div class="flex flex-col items-end">
+                    <span class="text-[8px] opacity-80 mb-0.5 mr-1 uppercase">v1.0.1</span>
+                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
+                </div>
             </div>
         </header>
 
@@ -172,7 +175,6 @@
             
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
 
-            // Total amount actually paid for the investment
             const totalPaid = (grams * pricePerG) + makingTotal;
 
             const entry = {
@@ -181,7 +183,7 @@
                 dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }),
                 purity: purity, 
                 grams: grams, 
-                totalCost: totalPaid // Updated: This is the combined amount paid
+                totalCost: totalPaid
             };
 
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(entry) });
@@ -204,7 +206,7 @@
                 const liveValOfEntry = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 weights[e.purity] += e.grams;
                 tGrams += e.grams; 
-                tInvested += e.totalCost; // Sum of price + making
+                tInvested += e.totalCost;
                 currentWalletValue += liveValOfEntry;
                 cLabels.push(e.dateStr); cData.push(currentWalletValue);
             });
