@@ -44,7 +44,7 @@
                 <p id="statInvested" class="text-xl font-black text-gray-700 dark:text-gray-200">QAR 0</p>
             </div>
             <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-all duration-300">
-                <p id="labelValue" class="text-[10px] uppercase font-bold">Investment Value</p>
+                <p id="labelValue" class="text-[10px] uppercase font-bold">Current Market Value</p>
                 <p id="statValue" class="text-xl font-black">QAR 0</p>
             </div>
             <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-all duration-300">
@@ -129,7 +129,7 @@
 
             walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Wallet Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] },
+                data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false }, datalabels: { display: false } },
@@ -167,10 +167,13 @@
             const rawDate = document.getElementById('purchaseDate').value;
             const purity = parseInt(document.getElementById('purity').value);
             const grams = parseFloat(document.getElementById('grams').value) || 0;
-            const price = Math.round(parseFloat(document.getElementById('price').value) || 0);
-            const costs = Math.round(parseFloat(document.getElementById('costs').value) || 0);
+            const pricePerG = parseFloat(document.getElementById('price').value) || 0;
+            const makingTotal = parseFloat(document.getElementById('costs').value) || 0;
             
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
+
+            // Total amount actually paid for the investment
+            const totalPaid = (grams * pricePerG) + makingTotal;
 
             const entry = {
                 timestamp: new Date(rawDate).getTime(),
@@ -178,8 +181,7 @@
                 dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }),
                 purity: purity, 
                 grams: grams, 
-                totalCost: (grams * price) + costs,
-                pricePerGram: price + (costs / grams) // Actual cost per gram including making
+                totalCost: totalPaid // Updated: This is the combined amount paid
             };
 
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(entry) });
@@ -195,23 +197,25 @@
             entries.sort((a, b) => a.timestamp - b.timestamp);
 
             const weights = { 24: 0, 22: 0, 21: 0 };
-            let cumulativeValue = 0, tGrams = 0, tCost = 0;
+            let currentWalletValue = 0, tGrams = 0, tInvested = 0;
             let cLabels = [], cData = [];
 
             entries.forEach(e => {
-                const curVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
+                const liveValOfEntry = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 weights[e.purity] += e.grams;
-                tGrams += e.grams; tCost += e.totalCost; cumulativeValue += curVal;
-                cLabels.push(e.dateStr); cData.push(cumulativeValue);
+                tGrams += e.grams; 
+                tInvested += e.totalCost; // Sum of price + making
+                currentWalletValue += liveValOfEntry;
+                cLabels.push(e.dateStr); cData.push(currentWalletValue);
             });
 
             walletChart.data.labels = cLabels; walletChart.data.datasets[0].data = cData; walletChart.update();
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]]; barChart.update();
 
             [...entries].reverse().forEach(e => {
-                const curVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
-                const profit = curVal - Math.round(e.totalCost);
-                const profitPercent = ((profit / e.totalCost) * 100).toFixed(2);
+                const liveVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
+                const profitQar = liveVal - e.totalCost;
+                const profitPercent = ((profitQar / e.totalCost) * 100).toFixed(2);
                 const marketPricePaid = (e.totalCost / e.grams).toFixed(2);
 
                 tableBody.innerHTML += `
@@ -221,12 +225,12 @@
                         <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
                         <td class="p-4 text-center">QAR ${marketPricePaid}</td>
-                        <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
-                        <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profit).toLocaleString()}</td>
+                        <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
+                        <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profitQar).toLocaleString()}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
                     </tr>`;
             });
-            updateStats(entries.length, tGrams, Math.round(tCost), cumulativeValue);
+            updateStats(entries.length, tGrams, Math.round(tInvested), currentWalletValue);
         }
 
         function updateStats(count, grams, invested, value) {
