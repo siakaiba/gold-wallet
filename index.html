@@ -52,12 +52,12 @@
             <div class="flex flex-col items-end gap-2">
                 <div class="relative bg-yellow-800/40 p-1 rounded-lg flex w-32 h-9 items-center cursor-pointer overflow-hidden border border-yellow-500/20" onclick="toggleTheme()">
                     <div class="theme-active absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-800 rounded-md shadow-sm transition-transform duration-300"></div>
-                    <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 dark:opacity-40">LIGHT</div>
-                    <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 opacity-40 dark:opacity-100">DARK</div>
+                    <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 text-black dark:text-white dark:opacity-40">LIGHT</div>
+                    <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none transition-colors duration-300 text-white opacity-40 dark:opacity-100">DARK</div>
                 </div>
 
                 <div class="flex flex-col items-end border-t border-yellow-500/30 pt-2 w-full">
-                    <span class="text-[10px] font-bold opacity-80 mb-0.5">V1.1.5</span>
+                    <span class="text-[10px] font-bold opacity-80 mb-0.5">V1.1.6</span>
                     <span id="realTimeClock" class="text-[10px] font-mono opacity-90 mb-2">00:00:00 - 15/03/2026</span>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-3 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase">Download Report</button>
                 </div>
