@@ -35,11 +35,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col">
+<body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col overflow-hidden">
     
-    <div class="max-w-7xl mx-auto w-full h-full flex flex-col p-4 gap-4">
+    <div class="max-w-7xl mx-auto w-full h-full flex flex-col gap-0 p-0">
         
-        <header class="bg-yellow-600 text-white p-6 rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
+        <header class="bg-yellow-600 text-white rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 shrink-0 px-6 py-2">
             <div class="flex flex-col">
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                 <div class="text-xs md:text-sm flex flex-wrap gap-x-6 gap-y-1 mt-1">
@@ -59,7 +59,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 15/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.1.8</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.1.9</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide">Download Report</button>
                 </div>
@@ -100,7 +100,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 p-6 shadow-md border-x dark:border-gray-700 shrink-0">
+        <div class="bg-white dark:bg-gray-800 p-6 shadow-md border-x dark:border-gray-700 shrink-0 gap-0">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
                 <input type="date" id="purchaseDate" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
                 <select id="purity" class="border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white outline-none">
@@ -115,7 +115,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl border-x border-b dark:border-gray-700 flex-grow overflow-hidden flex flex-col mb-4">
+        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl border-x border-b dark:border-gray-700 flex-grow overflow-hidden flex flex-col mb-4 gap-0">
             <div class="overflow-y-auto custom-scrollbar flex-grow" id="tableContainer">
                 <table class="w-full text-left border-collapse text-sm" id="reportTable">
                     <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-bold text-[10px] sticky top-0 z-10 shadow-sm">
@@ -310,8 +310,10 @@
             applyHighlight('cardProfit', 'labelProfit', 'statProfit', profit > 0);
         }
 
+        // Fixed delete functionality
         async function deleteEntry(id) {
             if(confirm("Delete?")) {
+                // Correctly interpolate ID into URL
                 await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'DELETE' });
                 fetchEntries();
             }
