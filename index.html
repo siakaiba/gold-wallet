@@ -24,7 +24,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <button onclick="toggleTheme()" class="bg-yellow-700 hover:bg-yellow-800 p-2 rounded-full transition shadow-inner">
-                    <span id="themeIcon" class="text-xl">☀️</span>
+                    <span id="themeIcon" class="text-xl">🌙</span>
                 </button>
                 <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
             </div>
@@ -74,7 +74,7 @@
                 </select>
                 <input type="number" id="grams" placeholder="Grams" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
                 <input type="number" id="price" placeholder="Price/g" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
-                <input type="number" id="costs" placeholder="Making/g" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
+                <input type="number" id="costs" placeholder="Making" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
                 <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
             </div>
         </div>
@@ -167,13 +167,13 @@
             const rawDate = document.getElementById('purchaseDate').value;
             const purity = parseInt(document.getElementById('purity').value);
             const grams = parseFloat(document.getElementById('grams').value) || 0;
-            const pricePaid = parseFloat(document.getElementById('price').value) || 0;
-            const makingPaid = parseFloat(document.getElementById('costs').value) || 0;
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const costs = parseFloat(document.getElementById('costs').value) || 0;
             
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
 
-            // Formula: (Paid Price + Paid Making) * Grams
-            const totalTransactionCost = (pricePaid + makingPaid) * grams;
+            // Total investment amount (Market Price * Weight) + Making
+            const totalPaid = (grams * price) + costs;
 
             const entry = {
                 timestamp: new Date(rawDate).getTime(),
@@ -181,7 +181,7 @@
                 dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }),
                 purity: purity, 
                 grams: grams, 
-                totalCost: totalTransactionCost 
+                totalCost: totalPaid
             };
 
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(entry) });
@@ -197,28 +197,26 @@
             entries.sort((a, b) => a.timestamp - b.timestamp);
 
             const weights = { 24: 0, 22: 0, 21: 0 };
-            let totalCurrentMarketValue = 0, tGrams = 0, tInvested = 0;
+            let tValue = 0, tGrams = 0, tCost = 0;
             let cLabels = [], cData = [];
 
             entries.forEach(e => {
-                const liveVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
+                const curVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 weights[e.purity] += e.grams;
-                tGrams += e.grams; 
-                tInvested += e.totalCost;
-                totalCurrentMarketValue += liveVal;
-                cLabels.push(e.dateStr); cData.push(totalCurrentMarketValue);
+                tGrams += e.grams; tCost += e.totalCost; tValue += curVal;
+                cLabels.push(e.dateStr); cData.push(tValue);
             });
 
             walletChart.data.labels = cLabels; walletChart.data.datasets[0].data = cData; walletChart.update();
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]]; barChart.update();
 
             [...entries].reverse().forEach(e => {
-                const liveVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
-                const profitQar = liveVal - e.totalCost;
-                const profitPercent = ((profitQar / e.totalCost) * 100).toFixed(2);
+                const curVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
+                const profit = curVal - e.totalCost;
+                const profitPct = ((profit / e.totalCost) * 100).toFixed(2);
                 
-                // Displaying the total amount paid as "Market Price" for that transaction
-                const marketPriceTotal = e.totalCost.toLocaleString();
+                // Market Price header shows total paid (Gold Market + Making)
+                const totalMarketPricePaid = e.totalCost.toLocaleString();
 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
@@ -226,13 +224,13 @@
                         <td class="p-4 font-medium">${e.dayName}</td>
                         <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center">QAR ${marketPriceTotal}</td>
-                        <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
-                        <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profitQar).toLocaleString()}</td>
+                        <td class="p-4 text-center font-bold">QAR ${totalMarketPricePaid}</td>
+                        <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPct}%</td>
+                        <td class="p-4 text-center font-bold ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profit).toLocaleString()}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
                     </tr>`;
             });
-            updateStats(entries.length, tGrams, Math.round(tInvested), totalCurrentMarketValue);
+            updateStats(entries.length, tGrams, Math.round(tCost), tValue);
         }
 
         function updateStats(count, grams, invested, value) {
