@@ -59,7 +59,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 15/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.1.9</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.2.0</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide">Download Report</button>
                 </div>
@@ -100,7 +100,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 p-6 shadow-md border-x dark:border-gray-700 shrink-0 gap-0">
+        <div class="bg-white dark:bg-gray-800 p-6 shadow-md border-x dark:border-gray-700 shrink-0">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
                 <input type="date" id="purchaseDate" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
                 <select id="purity" class="border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white outline-none">
@@ -115,7 +115,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl border-x border-b dark:border-gray-700 flex-grow overflow-hidden flex flex-col mb-4 gap-0">
+        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl border-x border-b dark:border-gray-700 flex-grow overflow-hidden flex flex-col mb-4">
             <div class="overflow-y-auto custom-scrollbar flex-grow" id="tableContainer">
                 <table class="w-full text-left border-collapse text-sm" id="reportTable">
                     <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-bold text-[10px] sticky top-0 z-10 shadow-sm">
@@ -124,7 +124,7 @@
                             <th class="p-4 border-b dark:border-gray-600">Day Name</th>
                             <th class="p-4 border-b dark:border-gray-600">Type</th>
                             <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
-                            <th class="p-4 border-b dark:border-gray-600 text-center">Paid Amount</th>
+                            <th class="p-4 border-b dark:border-gray-600 text-center">Gold Price</th>
                             <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                             <th class="p-4 border-b dark:border-gray-600 text-center">Profit (QAR)</th>
                             <th class="p-4 border-b dark:border-gray-600 text-right no-pdf">Action</th>
@@ -267,7 +267,7 @@
                 const liveVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 const profitQar = liveVal - e.totalCost;
                 const profitPercent = ((profitQar / e.totalCost) * 100).toFixed(2);
-                let paidAmountPerG = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking).toFixed(2) : (e.totalCost / e.grams).toFixed(2);
+                let goldPriceDisplay = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking).toFixed(2) : (e.totalCost / e.grams).toFixed(2);
 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
@@ -275,7 +275,7 @@
                         <td class="p-4 font-medium">${e.dayName}</td>
                         <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center">QAR ${paidAmountPerG}</td>
+                        <td class="p-4 text-center">QAR ${goldPriceDisplay}</td>
                         <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
                         <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profitQar).toLocaleString()}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
@@ -310,10 +310,8 @@
             applyHighlight('cardProfit', 'labelProfit', 'statProfit', profit > 0);
         }
 
-        // Fixed delete functionality
         async function deleteEntry(id) {
             if(confirm("Delete?")) {
-                // Correctly interpolate ID into URL
                 await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'DELETE' });
                 fetchEntries();
             }
@@ -330,7 +328,13 @@
             const walletImg = document.getElementById('walletBehaviorChart').toDataURL('image/png', 1.0);
             const barImg = document.getElementById('weightBarChart').toDataURL('image/png', 1.0);
             doc.addImage(walletImg, 'PNG', 14, 42, 130, 60); doc.addImage(barImg, 'PNG', 150, 42, 130, 60);
-            doc.autoTable({ html: '#reportTable', startY: 110, headStyles: { fillColor: [202, 138, 4] }, didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } });
+            doc.autoTable({ 
+                html: '#reportTable', 
+                startY: 110, 
+                headStyles: { fillColor: [202, 138, 4] }, 
+                // Ensuring Gold Price is used in PDF export
+                didParseCell: (d) => { if(d.column.index === 7) d.cell.text = ''; } 
+            });
             doc.save("Gold_Report.pdf");
         }
     </script>
