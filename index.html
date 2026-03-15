@@ -175,7 +175,6 @@
             
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
 
-            // Storage still needs the total investment to calculate overall profit correctly
             const totalPaid = (grams * pricePerG) + makingTotal;
 
             const entry = {
@@ -184,8 +183,6 @@
                 dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }),
                 purity: purity, 
                 grams: grams, 
-                pricePerGram: pricePerG, // Saved specifically for the Market Price calculation
-                makingCharge: makingTotal, // Saved specifically for the Market Price calculation
                 totalCost: totalPaid 
             };
 
@@ -221,9 +218,7 @@
                 const liveVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 const profitQar = liveVal - e.totalCost;
                 const profitPercent = ((profitQar / e.totalCost) * 100).toFixed(2);
-                
-                // NEW FORMULA: Gold Price + Making Charges
-                const marketPriceDisplay = (e.pricePerGram + e.makingCharge).toLocaleString();
+                const marketPricePaid = (e.totalCost / e.grams).toFixed(2);
 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
@@ -231,7 +226,7 @@
                         <td class="p-4 font-medium">${e.dayName}</td>
                         <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center">QAR ${marketPriceDisplay}</td>
+                        <td class="p-4 text-center">QAR ${marketPricePaid}</td>
                         <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
                         <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profitQar).toLocaleString()}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
