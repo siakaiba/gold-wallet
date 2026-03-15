@@ -21,7 +21,6 @@
             background: #ca8a04;
             border-radius: 10px;
         }
-        /* Lock body scroll */
         body { overflow: hidden; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -47,7 +46,7 @@
                     <span id="themeIcon" class="text-xl">🌙</span>
                 </button>
                 <div class="flex flex-col items-end">
-                    <span class="text-[10px] font-bold opacity-80 mb-1">V1.1.0</span>
+                    <span class="text-[10px] font-bold opacity-80 mb-1">V1.1.1</span>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-2 rounded-lg font-bold shadow hover:bg-yellow-50 transition">Download PDF Report</button>
                 </div>
             </div>
@@ -97,7 +96,7 @@
                 </select>
                 <input type="number" id="grams" placeholder="Grams" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
                 <input type="number" id="price" placeholder="Price/g" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
-                <input type="number" id="costs" placeholder="Making" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
+                <input type="number" id="costs" placeholder="Making/g" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
                 <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
             </div>
         </div>
@@ -111,7 +110,7 @@
                             <th class="p-4 border-b dark:border-gray-600">Day Name</th>
                             <th class="p-4 border-b dark:border-gray-600">Type</th>
                             <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
-                            <th class="p-4 border-b dark:border-gray-600 text-center">Market Price</th>
+                            <th class="p-4 border-b dark:border-gray-600 text-center">Paid Amount</th>
                             <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                             <th class="p-4 border-b dark:border-gray-600 text-center">Profit (QAR)</th>
                             <th class="p-4 border-b dark:border-gray-600 text-right no-pdf">Action</th>
@@ -198,18 +197,21 @@
             const purity = parseInt(document.getElementById('purity').value);
             const grams = parseFloat(document.getElementById('grams').value) || 0;
             const pricePerG = parseFloat(document.getElementById('price').value) || 0;
-            const makingTotal = parseFloat(document.getElementById('costs').value) || 0;
+            const makingPerG = parseFloat(document.getElementById('costs').value) || 0;
             
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
 
-            const totalPaid = (grams * pricePerG) + makingTotal;
+            // Total Paid Amount per transaction
+            const totalPaid = grams * (pricePerG + makingPerG);
 
             const entry = {
                 timestamp: new Date(rawDate).getTime(),
                 dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
                 dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }),
                 purity: purity, 
-                grams: grams, 
+                grams: grams,
+                unitPrice: pricePerG,
+                unitMaking: makingPerG,
                 totalCost: totalPaid 
             };
 
@@ -245,7 +247,9 @@
                 const liveVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
                 const profitQar = liveVal - e.totalCost;
                 const profitPercent = ((profitQar / e.totalCost) * 100).toFixed(2);
-                const marketPricePaid = (e.totalCost / e.grams).toFixed(2);
+                
+                // Formula: Unit Market Price + Unit Making Price
+                const paidAmountPerG = (e.unitPrice + e.unitMaking).toFixed(2);
 
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
@@ -253,7 +257,7 @@
                         <td class="p-4 font-medium">${e.dayName}</td>
                         <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
-                        <td class="p-4 text-center">QAR ${marketPricePaid}</td>
+                        <td class="p-4 text-center">QAR ${paidAmountPerG}</td>
                         <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
                         <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profitQar).toLocaleString()}</td>
                         <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
