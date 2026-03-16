@@ -43,10 +43,13 @@
             border-color: #ca8a04;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col overflow-hidden">
@@ -73,7 +76,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 16/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.3.3</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.3.2</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                 </div>
@@ -110,7 +113,7 @@
             </div>
             <div class="border-l dark:border-gray-700 lg:px-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Live Market Rates (QAR/G)</h2>
+                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Live Market (24K OHLC)</h2>
                     <div class="flex gap-1 no-pdf" id="timeframeButtons">
                         <button onclick="setTimeframe('1H')" class="time-btn active text-[9px] px-1.5 py-0.5 border dark:border-gray-600 rounded">1H</button>
                         <button onclick="setTimeframe('1D')" class="time-btn text-[9px] px-1.5 py-0.5 border dark:border-gray-600 rounded">1D</button>
@@ -201,13 +204,13 @@
 
         function startPriceStream() {
             setInterval(() => {
-                const fluctuation = (Math.random() * 0.5 - 0.25).toFixed(2);
-                currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(fluctuation)).toFixed(2));
+                const fluctuation = (Math.random() * 0.5 - 0.25);
+                currentPrices.k24 = parseFloat((currentPrices.k24 + fluctuation).toFixed(2));
                 currentPrices.k22 = Math.round(currentPrices.k24 * (22/24));
                 currentPrices.k21 = Math.round(currentPrices.k24 * (21/24));
                 
                 updatePriceDisplay(fluctuation);
-                if(currentTimeframe === '1H') updateLivePriceChart();
+                if(currentTimeframe === '1H') updateCandleLive();
                 if(cachedEntries) renderTable(cachedEntries);
             }, 5000);
         }
@@ -216,7 +219,7 @@
             const el24 = document.getElementById('display24K');
             const el22 = document.getElementById('display22K');
             const el21 = document.getElementById('display21K');
-            el24.innerText = currentPrices.k24 + ' QAR/g';
+            el24.innerText = currentPrices.k24.toFixed(2) + ' QAR/g';
             el22.innerText = currentPrices.k22 + ' QAR/g';
             el21.innerText = currentPrices.k21 + ' QAR/g';
             
@@ -229,69 +232,58 @@
             });
         }
 
+        function updateCandleLive() {
+            const ds = goldPricesChart.data.datasets[0].data;
+            if (ds.length === 0) return;
+            const lastCandle = ds[ds.length - 1];
+            const price = currentPrices.k24;
+            
+            lastCandle.c = price;
+            if (price > lastCandle.h) lastCandle.h = price;
+            if (price < lastCandle.l) lastCandle.l = price;
+            
+            goldPricesChart.update('none');
+        }
+
         function setTimeframe(tf) {
             currentTimeframe = tf;
             document.querySelectorAll('.time-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.innerText === tf);
             });
             
-            const labels = [];
-            const data24 = [];
-            let points = 20;
-            let startPrice = currentPrices.k24;
+            const ohlcData = [];
+            let points = 25;
+            let currentBase = currentPrices.k24;
+            let intervalMs = 60000; // 1 min
 
-            if (tf === '1H') {
-                const now = new Date();
-                for(let i=0; i<10; i++) {
-                    const time = new Date(now.getTime() - (10-i)*60000).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
-                    labels.push(time);
-                    data24.push(startPrice + (Math.random() * 2 - 1));
-                }
-            } else {
-                let intervalDays = 1;
-                if (tf === '1D') { points = 24; intervalDays = 0.04; }
-                if (tf === '1W') { points = 7; intervalDays = 1; }
-                if (tf === '1M') { points = 30; intervalDays = 1; }
-                if (tf === '1Y') { points = 12; intervalDays = 30; }
-                if (tf === 'MAX') { points = 26; intervalDays = 365; }
+            if (tf === '1H') intervalMs = 300000; // 5 min
+            else if (tf === '1D') intervalMs = 3600000; // 1 hour
+            else if (tf === '1W' || tf === '1M') intervalMs = 86400000; // 1 day
+            else if (tf === '1Y') { intervalMs = 2592000000; points = 12; } // 1 month
+            else if (tf === 'MAX') { intervalMs = 31536000000; points = 26; currentBase = 40; } // 1 year
 
-                const now = new Date();
-                for (let i = points; i >= 0; i--) {
-                    const date = new Date(now);
-                    if (tf === 'MAX') {
-                        date.setFullYear(2026 - i);
-                        labels.push(date.getFullYear());
-                    } else {
-                        date.setDate(now.getDate() - (i * intervalDays));
-                        labels.push(date.toLocaleDateString('en-GB', {day:'2-digit', month:'short'}));
-                    }
+            const now = Date.now();
+            for (let i = points; i >= 0; i--) {
+                const timestamp = now - (i * intervalMs);
+                let open, high, low, close;
+
+                if (tf === 'MAX') {
                     const progress = (points - i) / points;
-                    const simulatedPrice = tf === 'MAX' ? (40 + (progress * 275) + (Math.random()*20)) : (startPrice - (i * 0.5) + (Math.random() * 5));
-                    data24.push(parseFloat(simulatedPrice.toFixed(2)));
+                    open = 40 + (progress * 260) + (Math.random() * 10);
+                    close = open + (Math.random() * 20 - 5);
+                } else {
+                    open = currentPrices.k24 - (i * 0.2) + (Math.random() * 2);
+                    close = open + (Math.random() * 2 - 1);
                 }
+                
+                high = Math.max(open, close) + (Math.random() * 1);
+                low = Math.min(open, close) - (Math.random() * 1);
+
+                ohlcData.push({ x: timestamp, o: open, h: high, l: low, c: close });
             }
 
-            goldPricesChart.data.labels = labels;
-            goldPricesChart.data.datasets[0].data = data24;
-            goldPricesChart.data.datasets[1].data = data24.map(v => v * (22/24));
-            goldPricesChart.data.datasets[2].data = data24.map(v => v * (21/24));
+            goldPricesChart.data.datasets[0].data = ohlcData;
             goldPricesChart.update();
-        }
-
-        function updateLivePriceChart() {
-            const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            if (goldPricesChart.data.labels[goldPricesChart.data.labels.length - 1] !== now) {
-                goldPricesChart.data.labels.push(now);
-                goldPricesChart.data.datasets[0].data.push(currentPrices.k24);
-                goldPricesChart.data.datasets[1].data.push(currentPrices.k22);
-                goldPricesChart.data.datasets[2].data.push(currentPrices.k21);
-
-                if (goldPricesChart.data.labels.length > 15) {
-                    goldPricesChart.data.labels.shift();
-                    goldPricesChart.data.datasets.forEach(ds => ds.data.shift());
-                }
-                goldPricesChart.update('none');
-            }
         }
 
         function toggleTheme() {
@@ -311,7 +303,7 @@
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false }, datalabels: { display: false } },
                 scales: {
-                    x: { ticks: { color: textColor, font: { size: 9 } }, grid: { display: false } },
+                    x: { type: 'time', ticks: { color: textColor, font: { size: 8 } }, grid: { display: false } },
                     y: { ticks: { color: textColor, font: { size: 9 } }, grid: { color: gridColor } }
                 }
             };
@@ -319,20 +311,23 @@
             walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), {
                 type: 'line',
                 data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] },
-                options: baseOptions
+                options: { ...baseOptions, scales: { ...baseOptions.scales, x: { ticks: { color: textColor, font: { size: 8 } }, grid: { display: false } } } }
             });
 
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), {
-                type: 'line',
+                type: 'candlestick',
                 data: { 
-                    labels: [], 
-                    datasets: [
-                        { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.3, pointRadius: 0, borderWidth: 2 },
-                        { label: '22K', data: [], borderColor: '#eab308', tension: 0.3, pointRadius: 0, borderWidth: 1.5 },
-                        { label: '21K', data: [], borderColor: '#facc15', tension: 0.3, pointRadius: 0, borderWidth: 1 }
-                    ] 
+                    datasets: [{
+                        label: '24K Gold',
+                        data: [],
+                        color: { up: '#10b981', down: '#ef4444', unchanged: '#9ca3af' },
+                        borderColor: { up: '#10b981', down: '#ef4444', unchanged: '#9ca3af' }
+                    }]
                 },
-                options: { ...baseOptions, plugins: { ...baseOptions.plugins, legend: { display: true, position: 'bottom', labels: { color: textColor, boxWidth: 8, font: { size: 9 } } } } }
+                options: {
+                    ...baseOptions,
+                    plugins: { legend: { display: false } }
+                }
             });
 
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), {
