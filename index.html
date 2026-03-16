@@ -36,8 +36,6 @@
         
         .price-up { filter: drop-shadow(0 0 2px #10b981); transition: all 0.5s ease; }
         .price-down { filter: drop-shadow(0 0 2px #ef4444); transition: all 0.5s ease; }
-        
-        .timeframe-btn.active { background-color: #ca8a04; color: white; border-color: #ca8a04; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -69,7 +67,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 16/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.3.1</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.3.0</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                 </div>
@@ -105,19 +103,10 @@
                 <div style="height: 180px;"><canvas id="walletBehaviorChart"></canvas></div>
             </div>
             <div class="border-l dark:border-gray-700 lg:px-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Live Market Rates (QAR/G)</h2>
-                    <div class="flex gap-1 no-pdf">
-                        <button onclick="changeTimeframe('1H')" id="btn1H" class="timeframe-btn active text-[8px] px-2 py-0.5 border rounded border-gray-300 dark:border-gray-600 font-bold">1H</button>
-                        <button onclick="changeTimeframe('1D')" id="btn1D" class="timeframe-btn text-[8px] px-2 py-0.5 border rounded border-gray-300 dark:border-gray-600 font-bold">1D</button>
-                        <button onclick="changeTimeframe('1W')" id="btn1W" class="timeframe-btn text-[8px] px-2 py-0.5 border rounded border-gray-300 dark:border-gray-600 font-bold">1W</button>
-                        <button onclick="changeTimeframe('1M')" id="btn1M" class="timeframe-btn text-[8px] px-2 py-0.5 border rounded border-gray-300 dark:border-gray-600 font-bold">1M</button>
-                        <button onclick="changeTimeframe('1Y')" id="btn1Y" class="timeframe-btn text-[8px] px-2 py-0.5 border rounded border-gray-300 dark:border-gray-600 font-bold">1Y</button>
-                    </div>
-                </div>
+                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Live Market Rates (QAR/G)</h2>
                 <div style="height: 180px;"><canvas id="goldPricesChart"></canvas></div>
             </div>
-            <div>
+            <div class="border-l dark:border-gray-700 lg:pl-6">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Weight Breakdown (G)</h2>
                 <div style="height: 180px;"><canvas id="weightBarChart"></canvas></div>
             </div>
@@ -163,11 +152,14 @@
         Chart.register(ChartDataLabels);
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         
-        let currentPrices = { k24: 600, k22: 550, k21: 525 };
-        let currentTF = '1H';
+        let currentPrices = {
+            k24: 600,
+            k22: Math.round(600 * (22/24)),
+            k21: Math.round(600 * (21/24))
+        };
+        
         let walletChart, barChart, goldPricesChart;
         let cachedEntries = null;
-        let sessionData = { labels: [], k24: [], k22: [], k21: [] };
 
         window.onload = function() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -195,48 +187,43 @@
                 currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(fluctuation)).toFixed(2));
                 currentPrices.k22 = Math.round(currentPrices.k24 * (22/24));
                 currentPrices.k21 = Math.round(currentPrices.k24 * (21/24));
+                
                 updatePriceDisplay(fluctuation);
-                const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                sessionData.labels.push(now); sessionData.k24.push(currentPrices.k24); sessionData.k22.push(currentPrices.k22); sessionData.k21.push(currentPrices.k21);
-                if(sessionData.labels.length > 20) { sessionData.labels.shift(); sessionData.k24.shift(); sessionData.k22.shift(); sessionData.k21.shift(); }
-                if(currentTF === '1H') updateLivePriceChart();
+                updateLivePriceChart();
                 if(cachedEntries) renderTable(cachedEntries);
             }, 5000);
         }
 
         function updatePriceDisplay(change) {
-            const el24 = document.getElementById('display24K'), el22 = document.getElementById('display22K'), el21 = document.getElementById('display21K');
-            el24.innerText = currentPrices.k24 + ' QAR/g'; el22.innerText = currentPrices.k22 + ' QAR/g'; el21.innerText = currentPrices.k21 + ' QAR/g';
+            const el24 = document.getElementById('display24K');
+            const el22 = document.getElementById('display22K');
+            const el21 = document.getElementById('display21K');
+            el24.innerText = currentPrices.k24 + ' QAR/g';
+            el22.innerText = currentPrices.k22 + ' QAR/g';
+            el21.innerText = currentPrices.k21 + ' QAR/g';
+            
             const animClass = change >= 0 ? 'price-up' : 'price-down';
-            [el24, el22, el21].forEach(el => { el.classList.remove('price-up', 'price-down'); void el.offsetWidth; el.classList.add(animClass); setTimeout(() => el.classList.remove(animClass), 1000); });
-        }
-
-        function changeTimeframe(tf) {
-            currentTF = tf;
-            document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn' + tf).classList.add('active');
-            updateLivePriceChart();
+            [el24, el22, el21].forEach(el => {
+                el.classList.remove('price-up', 'price-down');
+                void el.offsetWidth;
+                el.classList.add(animClass);
+                setTimeout(() => el.classList.remove(animClass), 1000);
+            });
         }
 
         function updateLivePriceChart() {
-            let labels = [], d24 = [], d22 = [], d21 = [];
-            const now = new Date();
-            if (currentTF === '1H') {
-                labels = sessionData.labels; d24 = sessionData.k24; d22 = sessionData.k22; d21 = sessionData.k21;
-            } else {
-                let count = currentTF === '1D' ? 24 : currentTF === '1W' ? 7 : currentTF === '1M' ? 30 : 26;
-                for(let i = count; i >= 0; i--) {
-                    let d = new Date();
-                    if(currentTF === '1D') { d.setHours(now.getHours() - i); labels.push(d.getHours() + ":00"); }
-                    else if(currentTF === '1W') { d.setDate(now.getDate() - i); labels.push(d.toLocaleDateString('en-GB', {weekday: 'short'})); }
-                    else if(currentTF === '1M') { d.setDate(now.getDate() - i); labels.push(d.getDate() + "/" + (d.getMonth()+1)); }
-                    else if(currentTF === '1Y') { labels.push(2026 - i); }
-                    let base = currentTF === '1Y' ? 40 + (i * 22) : 600 + (Math.sin(i) * 20);
-                    d24.push(Math.round(base)); d22.push(Math.round(base * 22/24)); d21.push(Math.round(base * 21/24));
-                }
+            const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            goldPricesChart.data.labels.push(now);
+            goldPricesChart.data.datasets[0].data.push(currentPrices.k24);
+            goldPricesChart.data.datasets[1].data.push(currentPrices.k22);
+            goldPricesChart.data.datasets[2].data.push(currentPrices.k21);
+
+            // Keep only last 10 points for visibility
+            if (goldPricesChart.data.labels.length > 10) {
+                goldPricesChart.data.labels.shift();
+                goldPricesChart.data.datasets.forEach(ds => ds.data.shift());
             }
-            goldPricesChart.data.labels = labels; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.data.datasets[1].data = d22; goldPricesChart.data.datasets[2].data = d21;
-            goldPricesChart.update();
+            goldPricesChart.update('none');
         }
 
         function toggleTheme() {
@@ -247,76 +234,170 @@
         }
 
         function initCharts() {
-            const isDark = document.documentElement.classList.contains('dark'), textColor = isDark ? '#9ca3af' : '#6b7280', gridColor = isDark ? '#374151' : '#e5e7eb';
-            const baseOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { ticks: { color: textColor, font: { size: 8 } }, grid: { display: false } }, y: { ticks: { color: textColor, font: { size: 8 } }, grid: { color: gridColor } } } };
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
 
-            walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] }, options: baseOptions });
-            goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: '24K', data: [], borderColor: '#ca8a04', tension: 0.3, pointRadius: 0 }, { label: '22K', data: [], borderColor: '#eab308', tension: 0.3, pointRadius: 0 }, { label: '21K', data: [], borderColor: '#facc15', tension: 0.3, pointRadius: 0 }] }, options: { ...baseOptions, plugins: { legend: { display: true, labels: { color: textColor, boxWidth: 10, font: { size: 8 } } } } } });
-            
-            // REMOVED DATALABELS FROM THIS CHART ONLY
-            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { 
-                type: 'bar', 
-                data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] }, 
-                options: { 
-                    ...baseOptions, 
-                    plugins: { 
-                        datalabels: { display: false } // This line hides the numeric labels on the bars
-                    }, 
-                    scales: { y: { display: false }, x: { ticks: { color: textColor } } } 
-                } 
+            const baseOptions = {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, datalabels: { display: false } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { size: 9 } }, grid: { display: false } },
+                    y: { ticks: { color: textColor, font: { size: 9 } }, grid: { color: gridColor } }
+                }
+            };
+
+            walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] },
+                options: baseOptions
             });
-            updateLivePriceChart();
+
+            // NEW: Gold Prices Live Chart
+            goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), {
+                type: 'line',
+                data: { 
+                    labels: [], 
+                    datasets: [
+                        { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.3, pointRadius: 0 },
+                        { label: '22K', data: [], borderColor: '#eab308', tension: 0.3, pointRadius: 0 },
+                        { label: '21K', data: [], borderColor: '#facc15', tension: 0.3, pointRadius: 0 }
+                    ] 
+                },
+                options: { ...baseOptions, plugins: { ...baseOptions.plugins, legend: { display: true, labels: { color: textColor, boxWidth: 10, font: { size: 10 } } } } }
+            });
+
+            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] },
+                options: {
+                    ...baseOptions,
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold' }, color: '#fff' }
+                    },
+                    scales: { y: { beginAtZero: true, display: false }, x: { ticks: { color: textColor }, grid: { display: false } } }
+                }
+            });
         }
 
         async function fetchEntries() {
-            const response = await fetch(DB_URL); const data = await response.json();
-            cachedEntries = data; renderTable(data);
+            const response = await fetch(DB_URL);
+            const data = await response.json();
+            cachedEntries = data;
+            renderTable(data);
         }
 
         async function addEntry() {
-            const rawDate = document.getElementById('purchaseDate').value, purity = parseInt(document.getElementById('purity').value), grams = parseFloat(document.getElementById('grams').value) || 0, pricePerG = parseFloat(document.getElementById('price').value) || 0, makingPerG = parseFloat(document.getElementById('costs').value) || 0;
+            const rawDate = document.getElementById('purchaseDate').value;
+            const purity = parseInt(document.getElementById('purity').value);
+            const grams = parseFloat(document.getElementById('grams').value) || 0;
+            const pricePerG = parseFloat(document.getElementById('price').value) || 0;
+            const makingPerG = parseFloat(document.getElementById('costs').value) || 0;
             if(!rawDate || grams <= 0) return alert("Fill Date and Grams!");
-            const entry = { timestamp: new Date(rawDate).getTime(), dateStr: new Date(rawDate).toLocaleDateString('en-GB'), dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }), purity, grams, unitPrice: pricePerG, unitMaking: makingPerG, totalCost: grams * (pricePerG + makingPerG) };
+            const totalPaid = grams * (pricePerG + makingPerG);
+            const entry = {
+                timestamp: new Date(rawDate).getTime(),
+                dateStr: new Date(rawDate).toLocaleDateString('en-GB'),
+                dayName: new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long' }),
+                purity: purity, grams: grams, unitPrice: pricePerG, unitMaking: makingPerG, totalCost: totalPaid 
+            };
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(entry) });
             fetchEntries();
         }
 
         function renderTable(data) {
-            const tableBody = document.getElementById('goldTable'); tableBody.innerHTML = ''; if (!data) { updateStats(0, 0, 0, 0); return; }
-            const entries = Object.keys(data).map(key => ({ id: key, ...data[key] })).sort((a, b) => a.timestamp - b.timestamp);
-            const weights = { 24: 0, 22: 0, 21: 0 }; let currentWalletValue = 0, tGrams = 0, tInvested = 0, cLabels = [], cData = [];
+            const tableBody = document.getElementById('goldTable');
+            tableBody.innerHTML = '';
+            if (!data) { updateStats(0, 0, 0, 0); return; }
+            const entries = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+            entries.sort((a, b) => a.timestamp - b.timestamp);
+            const weights = { 24: 0, 22: 0, 21: 0 };
+            let currentWalletValue = 0, tGrams = 0, tInvested = 0;
+            let cLabels = [], cData = [];
             entries.forEach(e => {
-                const liveVal = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24)));
-                weights[e.purity] += e.grams; tGrams += e.grams; tInvested += e.totalCost; currentWalletValue += liveVal;
+                const liveValOfEntry = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24)));
+                weights[e.purity] += e.grams;
+                tGrams += e.grams; tInvested += e.totalCost; currentWalletValue += liveValOfEntry;
                 cLabels.push(e.dateStr); cData.push(currentWalletValue);
             });
             walletChart.data.labels = cLabels; walletChart.data.datasets[0].data = cData; walletChart.update('none');
             barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]]; barChart.update('none');
             [...entries].reverse().forEach(e => {
-                const liveVal = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))), profitQar = liveVal - e.totalCost, profitPercent = ((profitQar / e.totalCost) * 100).toFixed(2);
-                tableBody.innerHTML += `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700"><td class="p-4 font-medium">${e.dateStr}</td><td class="p-4 font-medium">${e.dayName}</td><td class="p-4 font-bold text-yellow-600">${e.purity}K</td><td class="p-4 text-center font-bold">${e.grams}g</td><td class="p-4 text-center">QAR ${(e.unitPrice + e.unitMaking).toFixed(2)}</td><td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td><td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profitQar).toLocaleString()}</td><td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td></tr>`;
+                const liveVal = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24)));
+                const profitQar = liveVal - e.totalCost;
+                const profitPercent = ((profitQar / e.totalCost) * 100).toFixed(2);
+                let goldPriceDisplay = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking).toFixed(2) : (e.totalCost / e.grams).toFixed(2);
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
+                        <td class="p-4 font-medium">${e.dateStr}</td>
+                        <td class="p-4 font-medium">${e.dayName}</td>
+                        <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
+                        <td class="p-4 text-center font-bold">${e.grams}g</td>
+                        <td class="p-4 text-center">QAR ${goldPriceDisplay}</td>
+                        <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
+                        <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profitQar).toLocaleString()}</td>
+                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
+                    </tr>`;
             });
             updateStats(entries.length, tGrams, Math.round(tInvested), currentWalletValue);
         }
 
         function updateStats(count, grams, invested, value) {
-            const profit = value - invested, isDark = document.documentElement.classList.contains('dark');
-            document.getElementById('statCount').innerText = count; document.getElementById('statGrams').innerText = grams.toFixed(2) + 'g'; document.getElementById('statInvested').innerText = 'QAR ' + invested.toLocaleString(); document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString(); document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString();
+            const profit = value - invested;
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('statCount').innerText = count;
+            document.getElementById('statGrams').innerText = grams.toFixed(2) + 'g';
+            document.getElementById('statInvested').innerText = 'QAR ' + invested.toLocaleString();
+            document.getElementById('statValue').innerText = 'QAR ' + value.toLocaleString();
+            document.getElementById('statProfit').innerText = 'QAR ' + profit.toLocaleString();
             const applyHighlight = (cardId, labelId, statId, isSuccess) => {
                 const card = document.getElementById(cardId), label = document.getElementById(labelId), stat = document.getElementById(statId);
-                if (isSuccess && invested > 0) { card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`; label.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400"; stat.className = "text-xl font-black text-green-700 dark:text-green-300"; }
-                else if (invested > 0 && !isSuccess) { card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'}`; label.className = "text-[10px] uppercase font-bold text-red-600 dark:text-red-400"; stat.className = "text-xl font-black text-red-700 dark:text-red-300"; }
-                else { card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`; label.className = "text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"; stat.className = "text-xl font-black text-gray-800 dark:text-white"; }
+                if (isSuccess && invested > 0) {
+                    card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`;
+                    label.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400";
+                    stat.className = "text-xl font-black text-green-700 dark:text-green-300";
+                } else if (invested > 0 && !isSuccess) {
+                    card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'}`;
+                    label.className = "text-[10px] uppercase font-bold text-red-600 dark:text-red-400";
+                    stat.className = "text-xl font-black text-red-700 dark:text-red-300";
+                } else {
+                    card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`;
+                    label.className = "text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400";
+                    stat.className = "text-xl font-black text-gray-800 dark:text-white";
+                }
             };
-            applyHighlight('cardValue', 'labelValue', 'statValue', value > invested); applyHighlight('cardProfit', 'labelProfit', 'statProfit', profit > 0);
+            applyHighlight('cardValue', 'labelValue', 'statValue', value > invested);
+            applyHighlight('cardProfit', 'labelProfit', 'statProfit', profit > 0);
         }
 
-        async function deleteEntry(id) { if(confirm("Delete?")) { await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'DELETE' }); fetchEntries(); } }
+        async function deleteEntry(id) {
+            if(confirm("Delete?")) {
+                await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'DELETE' });
+                fetchEntries();
+            }
+        }
 
         async function downloadPDF() {
-            const { jsPDF } = window.jspdf; const dashboard = document.getElementById('mainDashboard'), noPdfElements = document.querySelectorAll('.no-pdf');
-            noPdfElements.forEach(el => el.style.display = 'none'); const isDark = document.documentElement.classList.contains('dark'); if(isDark) document.documentElement.classList.remove('dark');
-            try { const canvas = await html2canvas(dashboard, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f3f4f6' }); const imgData = canvas.toDataURL('image/png'); const pdf = new jsPDF('l', 'mm', 'a4'); const imgWidth = 280, imgHeight = (canvas.height * imgWidth) / canvas.width; pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight); pdf.save(`Gold_Wallet_Report_${new Date().toLocaleDateString()}.pdf`); } catch (error) { console.error("PDF Export failed:", error); } finally { noPdfElements.forEach(el => el.style.display = ''); if(isDark) document.documentElement.classList.add('dark'); }
+            const { jsPDF } = window.jspdf;
+            const dashboard = document.getElementById('mainDashboard');
+            const noPdfElements = document.querySelectorAll('.no-pdf');
+            noPdfElements.forEach(el => el.style.display = 'none');
+            const isDark = document.documentElement.classList.contains('dark');
+            if(isDark) document.documentElement.classList.remove('dark');
+            try {
+                const canvas = await html2canvas(dashboard, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f3f4f6' });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('l', 'mm', 'a4');
+                const imgWidth = 280; 
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                pdf.save(`Gold_Wallet_Report_${new Date().toLocaleDateString()}.pdf`);
+            } catch (error) { console.error("PDF Export failed:", error);
+            } finally {
+                noPdfElements.forEach(el => el.style.display = '');
+                if(isDark) document.documentElement.classList.add('dark');
+            }
         }
     </script>
 </body>
