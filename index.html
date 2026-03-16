@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V1.8.1</title>
+    <title>Gold Investment Wallet V1.8.2</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -73,7 +73,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                    <div class="flex items-center gap-3 mb-1">
                        <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                       <span class="text-[10px] font-bold opacity-80">V1.8.1</span>
+                       <span class="text-[10px] font-bold opacity-80">V1.8.2</span>
                    </div>
                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                </div>
@@ -145,7 +145,7 @@
                            <th class="p-4 border-b dark:border-gray-600 text-center">Price (<span class="currency-label">QAR</span>)</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Profit (<span class="currency-label">QAR</span>)</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-right no-pdf">Actions</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center no-pdf">Actions</th>
                        </tr>
                    </thead>
                    <tbody id="goldTable" class="dark:text-gray-300"></tbody>
@@ -160,7 +160,6 @@
         
         let exchangeRates = { QAR: 1, JOD: 0.1947, USD: 0.2747, EUR: 0.2588 };
         let currentCurrency = 'QAR';
-        
         let currentPrices = { k24: 599.50, k22: 555.50, k21: 530.25 };
         
         let walletChart, barChart, goldPricesChart, cachedEntries = null, isEditingLocked = false;
@@ -304,12 +303,12 @@
                     <td class="p-4 text-center"><span class="view-mode">${formatCurrency(gpd)}</span><div class="edit-mode hidden flex flex-col gap-1"><input type="number" placeholder="Price" class="edit-price border rounded p-1 w-20 text-xs dark:bg-gray-600" value="${e.unitPrice || (e.totalCost / e.grams)}"><input type="number" placeholder="Costs" class="edit-costs border rounded p-1 w-20 text-xs dark:bg-gray-600" value="${e.unitMaking || 0}"></div></td>
                     <td class="p-4 text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
                     <td class="p-4 text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(pq)}</td>
-                    <td class="p-4 text-right no-pdf">
-                        <div class="view-mode flex justify-end gap-2">
+                    <td class="p-4 text-center no-pdf">
+                        <div class="view-mode flex justify-center gap-2">
                             <button class="text-blue-400 font-bold text-xs" onclick="toggleEdit('${e.id}', true)">Edit</button>
                             <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
                         </div>
-                        <div class="edit-mode hidden flex justify-end gap-2">
+                        <div class="edit-mode hidden flex justify-center gap-2">
                             <button class="text-green-400 font-bold text-xs" onclick="saveEdit('${e.id}')">Save</button>
                             <button class="text-gray-400 font-bold text-xs" onclick="toggleEdit('${e.id}', false)">Cancel</button>
                         </div>
