@@ -25,7 +25,7 @@
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Updated Loading Screen Styles (No Image) */
+        /* Loading Screen Styles */
         #loadingScreen {
             position: fixed;
             inset: 0;
@@ -38,7 +38,7 @@
             transition: opacity 0.6s ease-out, visibility 0.6s;
         }
         .loader-text-pulse {
-            animation: pulse-gold-text 1.5s infinite;
+            animation: pulse-gold-text 2s infinite;
         }
         @keyframes pulse-gold-text {
             0%, 100% { opacity: 1; transform: scale(1); }
@@ -56,7 +56,8 @@
             height: 100%;
             background: linear-gradient(90deg, #ca8a04, #facc15);
             width: 0%;
-            transition: width 3s linear;
+            /* Reverted to 5 seconds */
+            transition: width 5s linear;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -97,7 +98,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 16/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.6.2</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.6.3</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                 </div>
@@ -191,12 +192,12 @@
             
             setTimeout(() => { loaderBar.style.width = '100%'; }, 50);
 
-            // 3-second timer
+            // Updated to 5 seconds (5000ms)
             setTimeout(() => {
                 loaderScreen.style.opacity = '0';
                 loaderScreen.style.visibility = 'hidden';
                 document.body.style.overflow = 'auto';
-            }, 3000);
+            }, 5000);
 
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
@@ -205,7 +206,7 @@
             initCharts(); fetchEntries(); startClock(); startPriceStream();
         };
 
-        // ... [Start of JS core logic - Minified for readability but functionally identical to original]
+        // ... [Start of JS core logic - Minified for brevity]
         function startClock() { const u = () => { const n = new Date(); document.getElementById('realTimeClock').innerText = n.toLocaleTimeString('en-GB', { hour12: false }) + " - " + n.toLocaleDateString('en-GB'); }; setInterval(u, 1000); u(); }
         function startPriceStream() { setInterval(() => { const f = (Math.random() * 2 - 1).toFixed(2); currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(f)).toFixed(2)); currentPrices.k22 = Math.round(currentPrices.k24 * (22/24)); currentPrices.k21 = Math.round(currentPrices.k24 * (21/24)); updatePriceDisplay(f); const l = goldPricesChart.data.datasets[0].data.length - 1; goldPricesChart.data.datasets[0].data[l] = currentPrices.k24; goldPricesChart.data.datasets[1].data[l] = currentPrices.k22; goldPricesChart.data.datasets[2].data[l] = currentPrices.k21; goldPricesChart.update('none'); if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); }, 5000); }
         function updatePriceDisplay(c) { const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); e24.innerText = currentPrices.k24 + ' QAR/g'; e22.innerText = currentPrices.k22 + ' QAR/g'; e21.innerText = currentPrices.k21 + ' QAR/g'; const a = c >= 0 ? 'price-up' : 'price-down'; [e24, e22, e21].forEach(e => { e.classList.remove('price-up', 'price-down'); void e.offsetWidth; e.classList.add(a); setTimeout(() => e.classList.remove(a), 1000); }); }
@@ -219,7 +220,7 @@
         async function saveEdit(id) { const r = document.getElementById(`row-${id}`), di = r.querySelector('input[type="date"]').value, p = parseInt(r.querySelector('select').value), g = parseFloat(r.querySelectorAll('input[type="number"]')[0].value), up = parseFloat(r.querySelector('.edit-price').value), um = parseFloat(r.querySelector('.edit-costs').value); const ue = { timestamp: new Date(di).getTime(), dateStr: new Date(di).toLocaleDateString('en-GB'), dayName: new Date(di).toLocaleDateString('en-GB', { weekday: 'long' }), purity: p, grams: g, unitPrice: up, unitMaking: um, totalCost: g * (up + um) }; await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'PUT', body: JSON.stringify(ue) }); isEditingLocked = false; fetchEntries(); }
         function updateStats(c, g, i, v) { const p = v - i, dk = document.documentElement.classList.contains('dark'); document.getElementById('statCount').innerText = c; document.getElementById('statGrams').innerText = g.toFixed(2) + 'g'; document.getElementById('statInvested').innerText = 'QAR ' + i.toLocaleString(); document.getElementById('statValue').innerText = 'QAR ' + v.toLocaleString(); document.getElementById('statProfit').innerText = 'QAR ' + p.toLocaleString(); const ah = (cid, lid, sid, s) => { const ca = document.getElementById(cid), la = document.getElementById(lid), st = document.getElementById(sid); if (s && i > 0) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`; la.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400"; st.className = "text-xl font-black text-green-700 dark:text-green-300"; } else if (i > 0 && !s) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'}`; la.className = "text-[10px] uppercase font-bold text-red-600 dark:text-red-400"; st.className = "text-xl font-black text-red-700 dark:text-red-300"; } else { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`; la.className = "text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"; st.className = "text-xl font-black text-gray-800 dark:text-white"; } }; ah('cardValue', 'labelValue', 'statValue', v > i); ah('cardProfit', 'labelProfit', 'statProfit', p > 0); }
         async function deleteEntry(id) { if(confirm("Delete?")) { await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'DELETE' }); fetchEntries(); } }
-        async function downloadPDF() { const { jsPDF } = window.jspdf; const db = document.getElementById('mainDashboard'), np = document.querySelectorAll('.no-pdf'), dk = document.documentElement.classList.contains('dark'); np.forEach(e => e.style.display = 'none'); if(dk) document.documentElement.classList.remove('dark'); try { const c = await html2canvas(db, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f3f4f6' }); const id = c.toDataURL('image/png'), p = new jsPDF('l', 'mm', 'a4'), iw = 280, ih = (c.height * iw) / c.width; p.addImage(id, 'PNG', 10, 10, iw, ih); p.save(`Gold_Wallet_Report_${new Date().toLocaleDateString()}.pdf`); } catch (err) { console.error("PDF Export failed:", err); } finally { np.forEach(e => e.style.display = ''); if(dk) document.documentElement.classList.add('dark'); } }
+        async function downloadPDF() { const { jsPDF } = window.jspdf; const db = document.getElementById('mainDashboard'), np = document.querySelectorAll('.no-pdf'), dk = document.documentElement.classList.contains('dark'); np.forEach(e => e.style.display = 'none'); if(dk) document.documentElement.classList.remove('dark'); try { const c = await html2canvas(db, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f3f4f6' }); const id = c.toDataURL('image/png'), p = new jsPDF('l', 'mm', 'a4'), iw = 280, ih = (c.height * iw) / c.width; p.addImage(id, 'PNG', 10, 10, iw, ih); p.save(`Gold_Wallet_Report_${new Date().toLocaleDateString()}.pdf`); } catch (err) { console.error("PDF Export failed:", err); } finally { np.forEach(e => e.style.display = ''); if(dk) document.documentElement.add('dark'); } }
     </script>
 </body>
 </html>
