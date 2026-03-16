@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V1.8.3</title>
+    <title>Gold Investment Wallet V1.8.5</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -73,7 +73,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                    <div class="flex items-center gap-3 mb-1">
                        <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                       <span class="text-[10px] font-bold opacity-80">V1.8.3</span>
+                       <span class="text-[10px] font-bold opacity-80">V1.8.5</span>
                    </div>
                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                </div>
@@ -260,12 +260,14 @@
                 data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] }, 
                 options: { 
                     ...bo, 
+                    layout: { padding: { right: 40, bottom: 20 } }, 
                     plugins: { 
                         ...bo.plugins, 
                         datalabels: { 
                             display: true, 
-                            align: 'top', 
-                            anchor: 'end', 
+                            align: 'bottom', // Moved labels below the line
+                            anchor: 'start', 
+                            offset: 4,
                             formatter: (v) => v > 0 ? Math.round(v).toLocaleString() : '', 
                             font: { weight: 'bold', size: 9 }, 
                             color: d ? '#fbbf24' : '#ca8a04' 
