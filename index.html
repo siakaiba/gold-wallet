@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V1.9.4</title>
+    <title>Gold Investment Wallet V1.9.5</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -73,7 +73,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                    <div class="flex items-center gap-3 mb-1">
                        <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                       <span class="text-[10px] font-bold opacity-80">V1.9.4</span>
+                       <span class="text-[10px] font-bold opacity-80">V1.9.5</span>
                    </div>
                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                </div>
@@ -141,17 +141,17 @@
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl border-x border-b dark:border-gray-700 flex-grow overflow-hidden flex flex-col mb-4">
             <div class="overflow-y-auto custom-scrollbar flex-grow" id="tableContainer">
                <table class="w-full text-left border-collapse text-sm" id="reportTable">
-                   <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-normal text-[10px] sticky top-0 z-10 shadow-sm">
+                   <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-bold text-[10px] sticky top-0 z-10 shadow-sm">
                        <tr>
-                           <th class="p-4 border-b dark:border-gray-600 font-bold">Date</th>
-                           <th class="p-4 border-b dark:border-gray-600 font-bold">Type</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center font-bold">Weight</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center font-bold">Price (<span class="currency-label">QAR</span>)</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white font-normal">Purchase Price</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white font-normal">Current Price</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center font-bold">Profit (<span class="currency-label">QAR</span>)</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center font-bold">Profit (%)</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center no-pdf font-bold">Actions</th>
+                           <th class="p-4 border-b dark:border-gray-600">Date</th>
+                           <th class="p-4 border-b dark:border-gray-600">Type</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center">Price (<span class="currency-label">QAR</span>)</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white">Purchase Price</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white">Current Price</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center">Profit (<span class="currency-label">QAR</span>)</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center no-pdf">Actions</th>
                        </tr>
                    </thead>
                    <tbody id="goldTable" class="dark:text-gray-300"></tbody>
@@ -294,7 +294,7 @@
             
             en.forEach(e => { 
                 const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
-                chartPricesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600">${Math.round(cv * rate).toLocaleString()}</td>`;
+                chartPricesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600 font-bold">${Math.round(cv * rate).toLocaleString()}</td>`;
             }); 
             
             walletChart.data.labels = cl; walletChart.data.datasets[0].data = cd; walletChart.update('none'); 
@@ -305,14 +305,14 @@
                 let gpd = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking) : (e.totalCost / e.grams); 
                 
                 tb.innerHTML += `<tr id="row-${e.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
-                    <td class="p-4 text-xs font-bold">${e.dateStr}</td>
-                    <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
-                    <td class="p-4 text-center font-bold">${e.grams}g</td>
-                    <td class="p-4 text-center text-xs font-bold">${formatCurrency(gpd)}</td>
-                    <td class="p-4 text-center font-normal text-gray-900 dark:text-white">${formatCurrency(e.totalCost)}</td>
-                    <td class="p-4 text-center font-normal text-gray-900 dark:text-white">${formatCurrency(lv)}</td>
-                    <td class="p-4 text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(pq)}</td>
-                    <td class="p-4 text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
+                    <td class="p-4 text-sm font-bold">${e.dateStr}</td>
+                    <td class="p-4 text-sm font-bold text-yellow-600">${e.purity}K</td>
+                    <td class="p-4 text-sm text-center font-bold">${e.grams}g</td>
+                    <td class="p-4 text-sm text-center font-bold">${formatCurrency(gpd)}</td>
+                    <td class="p-4 text-sm text-center font-bold text-gray-900 dark:text-white">${formatCurrency(e.totalCost)}</td>
+                    <td class="p-4 text-sm text-center font-bold text-gray-900 dark:text-white">${formatCurrency(lv)}</td>
+                    <td class="p-4 text-sm text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(pq)}</td>
+                    <td class="p-4 text-sm text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
                     <td class="p-4 text-center no-pdf">
                         <div class="view-mode flex justify-center gap-2">
                             <button class="text-blue-400 font-bold text-xs" onclick="toggleEdit('${e.id}', true)">Edit</button>
