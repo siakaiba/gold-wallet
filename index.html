@@ -36,13 +36,6 @@
         
         .price-up { filter: drop-shadow(0 0 2px #10b981); transition: all 0.5s ease; }
         .price-down { filter: drop-shadow(0 0 2px #ef4444); transition: all 0.5s ease; }
-
-        .time-btn.active {
-            background-color: #ca8a04;
-            color: white;
-            border-color: #ca8a04;
-            box-shadow: 0 2px 4px rgba(202, 138, 4, 0.3);
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -74,7 +67,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 16/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.3.4</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.3.0</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                 </div>
@@ -110,17 +103,7 @@
                 <div style="height: 180px;"><canvas id="walletBehaviorChart"></canvas></div>
             </div>
             <div class="border-l dark:border-gray-700 lg:px-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Live Market Rates (QAR/G)</h2>
-                    <div class="flex gap-1 no-pdf" id="tfSelector">
-                        <button onclick="updateTimeframe('1H')" class="time-btn active text-[9px] px-2 py-0.5 border dark:border-gray-600 rounded font-bold transition-all">1H</button>
-                        <button onclick="updateTimeframe('1D')" class="time-btn text-[9px] px-2 py-0.5 border dark:border-gray-600 rounded font-bold transition-all">1D</button>
-                        <button onclick="updateTimeframe('1W')" class="time-btn text-[9px] px-2 py-0.5 border dark:border-gray-600 rounded font-bold transition-all">1W</button>
-                        <button onclick="updateTimeframe('1M')" class="time-btn text-[9px] px-2 py-0.5 border dark:border-gray-600 rounded font-bold transition-all">1M</button>
-                        <button onclick="updateTimeframe('1Y')" class="time-btn text-[9px] px-2 py-0.5 border dark:border-gray-600 rounded font-bold transition-all">1Y</button>
-                        <button onclick="updateTimeframe('MAX')" class="time-btn text-[9px] px-2 py-0.5 border dark:border-gray-600 rounded font-bold transition-all">MAX</button>
-                    </div>
-                </div>
+                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Live Market Rates (QAR/G)</h2>
                 <div style="height: 180px;"><canvas id="goldPricesChart"></canvas></div>
             </div>
             <div class="border-l dark:border-gray-700 lg:pl-6">
@@ -170,14 +153,13 @@
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         
         let currentPrices = {
-            k24: 315.40,
-            k22: Math.round(315.40 * (22/24)),
-            k21: Math.round(315.40 * (21/24))
+            k24: 600,
+            k22: Math.round(600 * (22/24)),
+            k21: Math.round(600 * (21/24))
         };
         
         let walletChart, barChart, goldPricesChart;
         let cachedEntries = null;
-        let activeTimeframe = '1H';
 
         window.onload = function() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -188,7 +170,6 @@
             fetchEntries();
             startClock();
             startPriceStream();
-            updateTimeframe('1H');
         };
 
         function startClock() {
@@ -202,13 +183,13 @@
 
         function startPriceStream() {
             setInterval(() => {
-                const fluctuation = (Math.random() * 0.4 - 0.2).toFixed(2);
+                const fluctuation = (Math.random() * 2 - 1).toFixed(2);
                 currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(fluctuation)).toFixed(2));
                 currentPrices.k22 = Math.round(currentPrices.k24 * (22/24));
                 currentPrices.k21 = Math.round(currentPrices.k24 * (21/24));
                 
                 updatePriceDisplay(fluctuation);
-                if (activeTimeframe === '1H') updateLivePriceChart();
+                updateLivePriceChart();
                 if(cachedEntries) renderTable(cachedEntries);
             }, 5000);
         }
@@ -217,7 +198,7 @@
             const el24 = document.getElementById('display24K');
             const el22 = document.getElementById('display22K');
             const el21 = document.getElementById('display21K');
-            el24.innerText = currentPrices.k24.toFixed(2) + ' QAR/g';
+            el24.innerText = currentPrices.k24 + ' QAR/g';
             el22.innerText = currentPrices.k22 + ' QAR/g';
             el21.innerText = currentPrices.k21 + ' QAR/g';
             
@@ -230,68 +211,19 @@
             });
         }
 
-        function updateTimeframe(tf) {
-            activeTimeframe = tf;
-            document.querySelectorAll('.time-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText === tf);
-            });
-
-            const labels = [];
-            const data24 = [];
-            let count = 15;
-            let base = currentPrices.k24;
-
-            if (tf === '1H') {
-                const now = new Date();
-                for(let i=0; i<count; i++) {
-                    labels.push(new Date(now - (count-i)*60000).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}));
-                    data24.push(base - (Math.random() * 2));
-                }
-            } else {
-                let step = 1;
-                if (tf === '1D') { count = 24; step = 0.04; }
-                if (tf === '1W') { count = 7; step = 1; }
-                if (tf === '1M') { count = 30; step = 1; }
-                if (tf === '1Y') { count = 12; step = 30; }
-                if (tf === 'MAX') { count = 26; step = 365; }
-
-                const now = new Date();
-                for (let i = count; i >= 0; i--) {
-                    const d = new Date(now);
-                    if (tf === 'MAX') {
-                        d.setFullYear(2026 - i);
-                        labels.push(d.getFullYear());
-                        const progress = (count - i) / count;
-                        data24.push(40 + (progress * 275) + (Math.random() * 15));
-                    } else {
-                        d.setDate(now.getDate() - (i * step));
-                        labels.push(d.toLocaleDateString('en-GB', {day:'2-digit', month:'short'}));
-                        data24.push(base - (i * 0.3) + (Math.random() * 4));
-                    }
-                }
-            }
-
-            goldPricesChart.data.labels = labels;
-            goldPricesChart.data.datasets[0].data = data24;
-            goldPricesChart.data.datasets[1].data = data24.map(v => v * (22/24));
-            goldPricesChart.data.datasets[2].data = data24.map(v => v * (21/24));
-            goldPricesChart.update();
-        }
-
         function updateLivePriceChart() {
-            const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            if (goldPricesChart.data.labels[goldPricesChart.data.labels.length-1] !== now) {
-                goldPricesChart.data.labels.push(now);
-                goldPricesChart.data.datasets[0].data.push(currentPrices.k24);
-                goldPricesChart.data.datasets[1].data.push(currentPrices.k22);
-                goldPricesChart.data.datasets[2].data.push(currentPrices.k21);
+            const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            goldPricesChart.data.labels.push(now);
+            goldPricesChart.data.datasets[0].data.push(currentPrices.k24);
+            goldPricesChart.data.datasets[1].data.push(currentPrices.k22);
+            goldPricesChart.data.datasets[2].data.push(currentPrices.k21);
 
-                if (goldPricesChart.data.labels.length > 15) {
-                    goldPricesChart.data.labels.shift();
-                    goldPricesChart.data.datasets.forEach(ds => ds.data.shift());
-                }
-                goldPricesChart.update('none');
+            // Keep only last 10 points for visibility
+            if (goldPricesChart.data.labels.length > 10) {
+                goldPricesChart.data.labels.shift();
+                goldPricesChart.data.datasets.forEach(ds => ds.data.shift());
             }
+            goldPricesChart.update('none');
         }
 
         function toggleTheme() {
@@ -299,7 +231,6 @@
             localStorage.theme = isDark ? 'dark' : 'light';
             [walletChart, barChart, goldPricesChart].forEach(c => c.destroy());
             initCharts(); fetchEntries();
-            updateTimeframe(activeTimeframe);
         }
 
         function initCharts() {
@@ -322,17 +253,18 @@
                 options: baseOptions
             });
 
+            // NEW: Gold Prices Live Chart
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), {
                 type: 'line',
                 data: { 
                     labels: [], 
                     datasets: [
-                        { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.3, pointRadius: 0, borderWidth: 2 },
-                        { label: '22K', data: [], borderColor: '#eab308', tension: 0.3, pointRadius: 0, borderWidth: 1.5 },
-                        { label: '21K', data: [], borderColor: '#facc15', tension: 0.3, pointRadius: 0, borderWidth: 1 }
+                        { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.3, pointRadius: 0 },
+                        { label: '22K', data: [], borderColor: '#eab308', tension: 0.3, pointRadius: 0 },
+                        { label: '21K', data: [], borderColor: '#facc15', tension: 0.3, pointRadius: 0 }
                     ] 
                 },
-                options: { ...baseOptions, plugins: { ...baseOptions.plugins, legend: { display: true, position: 'bottom', labels: { color: textColor, boxWidth: 10, font: { size: 9 } } } } }
+                options: { ...baseOptions, plugins: { ...baseOptions.plugins, legend: { display: true, labels: { color: textColor, boxWidth: 10, font: { size: 10 } } } } }
             });
 
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), {
