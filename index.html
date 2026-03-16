@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V1.8.8</title>
+    <title>Gold Investment Wallet V1.8.9</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -12,7 +12,7 @@
         tailwind.config = { darkMode: 'class' }
     </script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ca8a04; border-radius: 10px; }
         body { overflow: hidden; }
@@ -32,7 +32,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col overflow-hidden">
  
@@ -73,7 +72,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                    <div class="flex items-center gap-3 mb-1">
                        <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                       <span class="text-[10px] font-bold opacity-80">V1.8.8</span>
+                       <span class="text-[10px] font-bold opacity-80">V1.8.9</span>
                    </div>
                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                </div>
@@ -104,9 +103,15 @@
         </div>
  
         <div id="chartsContainer" class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b shrink-0">
-           <div>
-                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Wallet Growth (<span class="currency-label">QAR</span>)</h2>
-               <div style="height: 180px;"><canvas id="walletBehaviorChart"></canvas></div>
+           <div class="flex flex-col">
+                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Wallet Growth (<span class="currency-label">QAR</span>)</h2>
+               <div style="height: 140px;"><canvas id="walletBehaviorChart"></canvas></div>
+               <div class="mt-4 overflow-x-auto custom-scrollbar bg-gray-50 dark:bg-gray-700/50 rounded border dark:border-gray-600">
+                   <table class="w-full text-[9px] uppercase tracking-tighter">
+                       <tr id="chartValueDates" class="border-b dark:border-gray-600 text-gray-500 dark:text-gray-400"></tr>
+                       <tr id="chartValuePrices" class="font-bold text-yellow-600 dark:text-yellow-500"></tr>
+                   </table>
+               </div>
            </div>
             <div class="border-l dark:border-gray-700 lg:px-6">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Market Rates (<span class="currency-label">QAR</span>)</h2>
@@ -155,7 +160,6 @@
     </div>
  
     <script>
-        Chart.register(ChartDataLabels);
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         
         let exchangeRates = { QAR: 1, JOD: 0.1947, USD: 0.2747, EUR: 0.2588 };
@@ -178,7 +182,6 @@
                 document.documentElement.classList.add('dark');
             }
             document.getElementById('purchaseDate').valueAsDate = new Date();
-            
             initCharts(); fetchEntries(); fetchLiveRates(); startClock(); startPriceStream(); startExchangeStream(); 
         };
 
@@ -227,7 +230,6 @@
                 currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(f)).toFixed(2)); 
                 currentPrices.k22 = parseFloat((currentPrices.k24 * (22/24)).toFixed(2));
                 currentPrices.k21 = parseFloat((currentPrices.k24 * (21/24)).toFixed(2));
-                
                 updatePriceDisplay(parseFloat(f)); 
                 const rate = exchangeRates[currentCurrency];
                 const l = goldPricesChart.data.datasets[0].data.length - 1; 
@@ -253,31 +255,16 @@
         
         function initCharts() { 
             const d = document.documentElement.classList.contains('dark'), tc = d ? '#9ca3af' : '#6b7280', gc = d ? '#374151' : '#e5e7eb'; 
-            const bo = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } }; 
+            const bo = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } }; 
             
             walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { 
                 type: 'line', 
-                data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] }, 
-                options: { 
-                    ...bo, 
-                    layout: { padding: { right: 60, top: 10, bottom: 10 } }, 
-                    plugins: { 
-                        ...bo.plugins, 
-                        datalabels: { 
-                            display: true, 
-                            align: 'right',
-                            anchor: 'center',
-                            offset: 8, // Shifted from 6 to 8 (+2 points)
-                            formatter: (v) => v > 0 ? Math.round(v).toLocaleString() : '', 
-                            font: { weight: 'bold', size: 9 }, 
-                            color: d ? '#fbbf24' : '#ca8a04' 
-                        } 
-                    } 
-                } 
+                data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, 
+                options: bo
             }); 
 
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.2, pointRadius: 2, borderWidth: 2 }, { label: '22K', data: [], borderColor: '#eab308', tension: 0.2, pointRadius: 0, borderWidth: 1 }, { label: '21K', data: [], borderColor: '#facc15', tension: 0.2, pointRadius: 0, borderWidth: 1 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
-            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] }, options: { ...bo, plugins: { legend: { display: false }, datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold' }, color: '#fff' } }, scales: { y: { beginAtZero: true, display: false }, x: { ticks: { color: tc }, grid: { display: false } } } } }); 
+            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] }, options: { ...bo, scales: { y: { beginAtZero: true, display: false }, x: { ticks: { color: tc }, grid: { display: false } } } } }); 
             generate30DayPriceHistory(); 
         }
 
@@ -301,12 +288,20 @@
         }
 
         function renderTable(data) { 
-            const tb = document.getElementById('goldTable'); tb.innerHTML = ''; if (!data) { updateStats(0, 0, 0, 0); return; } 
+            const tb = document.getElementById('goldTable'); tb.innerHTML = ''; 
+            const chartDatesRow = document.getElementById('chartValueDates');
+            const chartPricesRow = document.getElementById('chartValuePrices');
+            chartDatesRow.innerHTML = ''; chartPricesRow.innerHTML = '';
+            
+            if (!data) { updateStats(0, 0, 0, 0); return; } 
             const en = Object.keys(data).map(k => ({ id: k, ...data[k] })); en.sort((a, b) => a.timestamp - b.timestamp); 
             const w = { 24: 0, 22: 0, 21: 0 }; let cv = 0, tg = 0, ti = 0, cl = [], cd = []; const rate = exchangeRates[currentCurrency];
             
             en.forEach(e => { 
                 const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
+                // Build Mini Table
+                chartDatesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600">${e.dateStr.split('/')[0]}/${e.dateStr.split('/')[1]}</td>`;
+                chartPricesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600">${Math.round(cv * rate).toLocaleString()}</td>`;
             }); 
             
             walletChart.data.labels = cl; walletChart.data.datasets[0].data = cd; walletChart.update('none'); 
@@ -315,7 +310,6 @@
             [...en].reverse().forEach(e => { 
                 const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))), pq = lv - e.totalCost, pp = ((pq / e.totalCost) * 100).toFixed(2); 
                 let gpd = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking) : (e.totalCost / e.grams); 
-                
                 tb.innerHTML += `<tr id="row-${e.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
                     <td class="p-4"><span class="view-mode">${e.dateStr}</span><input type="date" class="edit-mode hidden border rounded p-1 w-full dark:bg-gray-600 dark:text-white" value="${new Date(e.timestamp).toISOString().split('T')[0]}"></td>
                     <td class="p-4"><span class="view-mode">${e.dayName}</span><span class="edit-mode hidden opacity-50">Auto</span></td>
