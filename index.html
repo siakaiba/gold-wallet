@@ -54,7 +54,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 16/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.6.0</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.6.1</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                 </div>
@@ -147,6 +147,7 @@
         
         let walletChart, barChart, goldPricesChart;
         let cachedEntries = null;
+        let isEditingLocked = false; // New flag to stop timer refresh
  
         window.onload = function() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -177,13 +178,17 @@
                 
                 updatePriceDisplay(fluctuation);
                 
+                // Keep charts updating even during edit
                 const lastIdx = goldPricesChart.data.datasets[0].data.length - 1;
                 goldPricesChart.data.datasets[0].data[lastIdx] = currentPrices.k24;
                 goldPricesChart.data.datasets[1].data[lastIdx] = currentPrices.k22;
                 goldPricesChart.data.datasets[2].data[lastIdx] = currentPrices.k21;
                 goldPricesChart.update('none');
 
-                if(cachedEntries) renderTable(cachedEntries);
+                // REFRESH TABLE ONLY IF NOT EDITING
+                if(cachedEntries && !isEditingLocked) { 
+                    renderTable(cachedEntries); 
+                }
             }, 5000);
         }
  
@@ -364,9 +369,13 @@
         }
 
         function toggleEdit(id, show) {
+            isEditingLocked = show; // Lock the 5s timer refresh
             const row = document.getElementById(`row-${id}`);
             row.querySelectorAll('.view-mode').forEach(el => el.classList.toggle('hidden', show));
             row.querySelectorAll('.edit-mode').forEach(el => el.classList.toggle('hidden', !show));
+            
+            // If user cancels, we want the table to be able to refresh again immediately
+            if(!show) fetchEntries(); 
         }
 
         async function saveEdit(id) {
@@ -392,6 +401,8 @@
                 method: 'PUT',
                 body: JSON.stringify(updatedEntry)
             });
+            
+            isEditingLocked = false; // Unlock refresh
             fetchEntries();
         }
  
