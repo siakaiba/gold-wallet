@@ -34,6 +34,9 @@
         }
         /* Style for PDF capturing to ensure charts are visible */
         .pdf-capture { background: white !important; color: black !important; }
+        
+        .price-up { color: #10b981; transition: color 0.5s ease; }
+        .price-down { color: #ef4444; transition: color 0.5s ease; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -49,9 +52,9 @@
             <div class="flex flex-col">
                 <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
                 <div class="text-[10px] md:text-[12px] flex flex-wrap gap-x-6 gap-y-1 mt-1">
-                    <p class="text-yellow-100">24K: <span id="display24K" class="font-bold">600 QAR/g</span></p>
-                    <p class="text-yellow-100">22K: <span id="display22K" class="font-bold">-- QAR/g</span></p>
-                    <p class="text-yellow-100">21K: <span id="display21K" class="font-bold">-- QAR/g</span></p>
+                    <p class="text-yellow-100">24K: <span id="display24K" class="font-bold transition-all underline decoration-yellow-400">-- QAR/g</span></p>
+                    <p class="text-yellow-100">22K: <span id="display22K" class="font-bold transition-all underline decoration-yellow-400">-- QAR/g</span></p>
+                    <p class="text-yellow-100">21K: <span id="display21K" class="font-bold transition-all underline decoration-yellow-400">-- QAR/g</span></p>
                 </div>
             </div>
             
@@ -65,7 +68,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 15/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.2.6</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.2.7</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                 </div>
@@ -145,22 +148,26 @@
     <script>
         Chart.register(ChartDataLabels);
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
-        const livePrice24K = 600; 
-        const livePrice22K = Math.round(livePrice24K * (22/24));
-        const livePrice21K = Math.round(livePrice24K * (21/24));
+        
+        // Real-time price management
+        let currentPrices = {
+            k24: 600,
+            k22: Math.round(600 * (22/24)),
+            k21: Math.round(600 * (21/24))
+        };
         
         let walletChart, barChart;
+        let cachedEntries = null;
 
         window.onload = function() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
             }
-            document.getElementById('display22K').innerText = livePrice22K + ' QAR/g';
-            document.getElementById('display21K').innerText = livePrice21K + ' QAR/g';
             document.getElementById('purchaseDate').valueAsDate = new Date();
             initCharts();
             fetchEntries();
             startClock();
+            startPriceStream();
         };
 
         function startClock() {
@@ -170,6 +177,36 @@
             };
             setInterval(updateClock, 1000);
             updateClock();
+        }
+
+        // Simulates real-time gold market fluctuations
+        function startPriceStream() {
+            setInterval(() => {
+                const fluctuation = (Math.random() * 2 - 1).toFixed(2); // Random change between -1 and +1
+                currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(fluctuation)).toFixed(2));
+                currentPrices.k22 = Math.round(currentPrices.k24 * (22/24));
+                currentPrices.k21 = Math.round(currentPrices.k24 * (21/24));
+                
+                updatePriceDisplay(fluctuation);
+                if(cachedEntries) renderTable(cachedEntries);
+            }, 5000); // Update every 5 seconds
+        }
+
+        function updatePriceDisplay(change) {
+            const el24 = document.getElementById('display24K');
+            const el22 = document.getElementById('display22K');
+            const el21 = document.getElementById('display21K');
+            
+            el24.innerText = currentPrices.k24 + ' QAR/g';
+            el22.innerText = currentPrices.k22 + ' QAR/g';
+            el21.innerText = currentPrices.k21 + ' QAR/g';
+            
+            const colorClass = change >= 0 ? 'price-up' : 'price-down';
+            [el24, el22, el21].forEach(el => {
+                el.classList.remove('price-up', 'price-down');
+                void el.offsetWidth; // Trigger reflow
+                el.classList.add(colorClass);
+            });
         }
 
         function toggleTheme() {
@@ -217,6 +254,7 @@
         async function fetchEntries() {
             const response = await fetch(DB_URL);
             const data = await response.json();
+            cachedEntries = data;
             renderTable(data);
         }
 
@@ -258,7 +296,7 @@
             let cLabels = [], cData = [];
 
             entries.forEach(e => {
-                const liveValOfEntry = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
+                const liveValOfEntry = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24)));
                 weights[e.purity] += e.grams;
                 tGrams += e.grams; 
                 tInvested += e.totalCost; 
@@ -266,11 +304,11 @@
                 cLabels.push(e.dateStr); cData.push(currentWalletValue);
             });
 
-            walletChart.data.labels = cLabels; walletChart.data.datasets[0].data = cData; walletChart.update();
-            barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]]; barChart.update();
+            walletChart.data.labels = cLabels; walletChart.data.datasets[0].data = cData; walletChart.update('none');
+            barChart.data.datasets[0].data = [weights[24], weights[22], weights[21]]; barChart.update('none');
 
             [...entries].reverse().forEach(e => {
-                const liveVal = Math.round(e.grams * (livePrice24K * (e.purity / 24)));
+                const liveVal = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24)));
                 const profitQar = liveVal - e.totalCost;
                 const profitPercent = ((profitQar / e.totalCost) * 100).toFixed(2);
                 let goldPriceDisplay = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking).toFixed(2) : (e.totalCost / e.grams).toFixed(2);
@@ -307,6 +345,10 @@
                     card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`;
                     label.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400";
                     stat.className = "text-xl font-black text-green-700 dark:text-green-300";
+                } else if (invested > 0 && !isSuccess) {
+                    card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'}`;
+                    label.className = "text-[10px] uppercase font-bold text-red-600 dark:text-red-400";
+                    stat.className = "text-xl font-black text-red-700 dark:text-red-300";
                 } else {
                     card.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`;
                     label.className = "text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400";
@@ -324,16 +366,11 @@
             }
         }
 
-        // Overhauled PDF Logic for a "Dashboard Snapshot" look
         async function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const dashboard = document.getElementById('mainDashboard');
-            
-            // Hide elements that shouldn't be in the PDF (buttons, input fields)
             const noPdfElements = document.querySelectorAll('.no-pdf');
             noPdfElements.forEach(el => el.style.display = 'none');
-            
-            // Temporary style changes for better PDF contrast
             const isDark = document.documentElement.classList.contains('dark');
             if(isDark) document.documentElement.classList.remove('dark');
             
@@ -344,20 +381,16 @@
                     logging: false,
                     backgroundColor: '#f3f4f6'
                 });
-                
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('l', 'mm', 'a4');
                 const imgWidth = 280; 
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
                 pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
                 pdf.save(`Gold_Wallet_Report_${new Date().toLocaleDateString()}.pdf`);
-                
             } catch (error) {
                 console.error("PDF Export failed:", error);
-                alert("Failed to generate PDF. Please try again.");
+                alert("Failed to generate PDF.");
             } finally {
-                // Restore elements and theme
                 noPdfElements.forEach(el => el.style.display = '');
                 if(isDark) document.documentElement.classList.add('dark');
             }
