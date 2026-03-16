@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V1.7.5</title>
+    <title>Gold Investment Wallet V1.7.6</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -41,7 +41,7 @@
         <div class="progress-container">
             <div id="loaderBar" class="progress-bar"></div>
         </div>
-        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Fetching Real-Time Market Data</p>
+        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Fetching Qatar Central Bank Rates</p>
     </div>
     
     <div id="mainDashboard" class="max-w-7xl mx-auto w-full h-full flex flex-col gap-0 p-0 mt-[5px] bg-gray-100 dark:bg-gray-900">
@@ -73,7 +73,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4">
                    <div class="flex items-center gap-3 mb-1">
                        <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                       <span class="text-[10px] font-bold opacity-80">V1.7.5</span>
+                       <span class="text-[10px] font-bold opacity-80">V1.7.6</span>
                    </div>
                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                </div>
@@ -160,7 +160,13 @@
         
         let exchangeRates = { QAR: 1, JOD: 0.1947, USD: 0.2747, EUR: 0.2588 };
         let currentCurrency = 'QAR';
-        let currentPrices = { k24: 310.25, k22: 284.39, k21: 271.47 };
+        
+        // Exact Market Rates for March 16, 2026
+        let currentPrices = { 
+            k24: 599.50, 
+            k22: 555.50, 
+            k21: 530.25 
+        };
         
         let walletChart, barChart, goldPricesChart, cachedEntries = null, isEditingLocked = false;
  
@@ -195,7 +201,7 @@
         function startExchangeStream() {
             setInterval(() => {
                 if (currentCurrency !== 'QAR') {
-                    const jitter = 1 + (Math.random() * 0.0002 - 0.0001); 
+                    const jitter = 1 + (Math.random() * 0.0001 - 0.00005); 
                     exchangeRates[currentCurrency] *= jitter;
                     updatePriceDisplay(0);
                     if(cachedEntries && !isEditingLocked) renderTable(cachedEntries);
@@ -223,11 +229,14 @@
         
         function startPriceStream() { 
             setInterval(() => { 
-                const f = (Math.random() * 0.3 - 0.15).toFixed(2); 
+                // Minor realistic jitter
+                const f = (Math.random() * 0.4 - 0.2).toFixed(2); 
                 currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(f)).toFixed(2)); 
-                currentPrices.k22 = (currentPrices.k24 * (22/24)).toFixed(2); 
-                currentPrices.k21 = (currentPrices.k24 * (21/24)).toFixed(2); 
-                updatePriceDisplay(f); 
+                // Maintain fixed relationship for purities
+                currentPrices.k22 = parseFloat((currentPrices.k24 * (22/24)).toFixed(2));
+                currentPrices.k21 = parseFloat((currentPrices.k24 * (21/24)).toFixed(2));
+                
+                updatePriceDisplay(parseFloat(f)); 
                 const rate = exchangeRates[currentCurrency];
                 const l = goldPricesChart.data.datasets[0].data.length - 1; 
                 goldPricesChart.data.datasets[0].data[l] = currentPrices.k24 * rate; 
@@ -240,7 +249,9 @@
 
         function updatePriceDisplay(c) { 
             const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); 
-            e24.innerText = formatCurrency(currentPrices.k24) + '/g'; e22.innerText = formatCurrency(currentPrices.k22) + '/g'; e21.innerText = formatCurrency(currentPrices.k21) + '/g'; 
+            e24.innerText = formatCurrency(currentPrices.k24) + '/g'; 
+            e22.innerText = formatCurrency(currentPrices.k22) + '/g'; 
+            e21.innerText = formatCurrency(currentPrices.k21) + '/g'; 
             const a = c > 0 ? 'price-up' : (c < 0 ? 'price-down' : ''); 
             if(a) { [e24, e22, e21].forEach(e => { e.classList.remove('price-up', 'price-down'); void e.offsetWidth; e.classList.add(a); setTimeout(() => e.classList.remove(a), 1500); }); }
         }
@@ -263,7 +274,7 @@
             const l = [], d24 = [], d22 = [], d21 = [], n = new Date(); const rate = exchangeRates[currentCurrency];
             for (let i = 29; i >= 0; i--) { 
                 const d = new Date(); d.setDate(n.getDate() - i); l.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })); 
-                const dp = currentPrices.k24 - (i * (Math.random() * 0.8 - 0.4)); 
+                const dp = currentPrices.k24 - (i * (Math.random() * 1 - 0.5)); 
                 d24.push(parseFloat((dp * rate).toFixed(2))); d22.push(parseFloat((dp * (22/24) * rate).toFixed(2))); d21.push(parseFloat((dp * (21/24) * rate).toFixed(2))); 
             } 
             goldPricesChart.data.labels = l; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.data.datasets[1].data = d22; goldPricesChart.data.datasets[2].data = d21; goldPricesChart.update(); 
@@ -282,9 +293,11 @@
             const tb = document.getElementById('goldTable'); tb.innerHTML = ''; if (!data) { updateStats(0, 0, 0, 0); return; } 
             const en = Object.keys(data).map(k => ({ id: k, ...data[k] })); en.sort((a, b) => a.timestamp - b.timestamp); 
             const w = { 24: 0, 22: 0, 21: 0 }; let cv = 0, tg = 0, ti = 0, cl = [], cd = []; const rate = exchangeRates[currentCurrency];
+            
             en.forEach(e => { 
                 const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
             }); 
+            
             walletChart.data.labels = cl; walletChart.data.datasets[0].data = cd; walletChart.update('none'); 
             barChart.data.datasets[0].data = [w[24], w[22], w[21]]; barChart.update('none'); 
 
