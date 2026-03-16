@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V1.8.9</title>
+    <title>Gold Investment Wallet V1.9.0</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -72,7 +72,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                    <div class="flex items-center gap-3 mb-1">
                        <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                       <span class="text-[10px] font-bold opacity-80">V1.8.9</span>
+                       <span class="text-[10px] font-bold opacity-80">V1.9.0</span>
                    </div>
                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                </div>
@@ -144,10 +144,11 @@
                    <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-bold text-[10px] sticky top-0 z-10 shadow-sm">
                        <tr>
                            <th class="p-4 border-b dark:border-gray-600">Date</th>
-                           <th class="p-4 border-b dark:border-gray-600">Day Name</th>
                            <th class="p-4 border-b dark:border-gray-600">Type</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Price (<span class="currency-label">QAR</span>)</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center text-yellow-600 dark:text-yellow-500">Purchase Price</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center text-blue-600 dark:text-blue-400">Current Price</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Profit (<span class="currency-label">QAR</span>)</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center no-pdf">Actions</th>
@@ -256,13 +257,7 @@
         function initCharts() { 
             const d = document.documentElement.classList.contains('dark'), tc = d ? '#9ca3af' : '#6b7280', gc = d ? '#374151' : '#e5e7eb'; 
             const bo = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } }; 
-            
-            walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { 
-                type: 'line', 
-                data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, 
-                options: bo
-            }); 
-
+            walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, options: bo }); 
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.2, pointRadius: 2, borderWidth: 2 }, { label: '22K', data: [], borderColor: '#eab308', tension: 0.2, pointRadius: 0, borderWidth: 1 }, { label: '21K', data: [], borderColor: '#facc15', tension: 0.2, pointRadius: 0, borderWidth: 1 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] }, options: { ...bo, scales: { y: { beginAtZero: true, display: false }, x: { ticks: { color: tc }, grid: { display: false } } } } }); 
             generate30DayPriceHistory(); 
@@ -299,7 +294,6 @@
             
             en.forEach(e => { 
                 const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
-                // Build Mini Table
                 chartDatesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600">${e.dateStr.split('/')[0]}/${e.dateStr.split('/')[1]}</td>`;
                 chartPricesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600">${Math.round(cv * rate).toLocaleString()}</td>`;
             }); 
@@ -310,12 +304,14 @@
             [...en].reverse().forEach(e => { 
                 const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))), pq = lv - e.totalCost, pp = ((pq / e.totalCost) * 100).toFixed(2); 
                 let gpd = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking) : (e.totalCost / e.grams); 
+                
                 tb.innerHTML += `<tr id="row-${e.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
-                    <td class="p-4"><span class="view-mode">${e.dateStr}</span><input type="date" class="edit-mode hidden border rounded p-1 w-full dark:bg-gray-600 dark:text-white" value="${new Date(e.timestamp).toISOString().split('T')[0]}"></td>
-                    <td class="p-4"><span class="view-mode">${e.dayName}</span><span class="edit-mode hidden opacity-50">Auto</span></td>
+                    <td class="p-4"><span class="view-mode text-xs">${e.dateStr}</span><input type="date" class="edit-mode hidden border rounded p-1 w-full dark:bg-gray-600 dark:text-white" value="${new Date(e.timestamp).toISOString().split('T')[0]}"></td>
                     <td class="p-4"><span class="view-mode font-bold text-yellow-600">${e.purity}K</span><select class="edit-mode hidden border rounded p-1 dark:bg-gray-600"><option value="24" ${e.purity == 24 ? 'selected' : ''}>24K</option><option value="22" ${e.purity == 22 ? 'selected' : ''}>22K</option><option value="21" ${e.purity == 21 ? 'selected' : ''}>21K</option></select></td>
                     <td class="p-4 text-center"><span class="view-mode font-bold">${e.grams}g</span><input type="number" class="edit-mode hidden border rounded p-1 w-20 text-center dark:bg-gray-600" value="${e.grams}"></td>
-                    <td class="p-4 text-center"><span class="view-mode">${formatCurrency(gpd)}</span><div class="edit-mode hidden flex flex-col gap-1"><input type="number" placeholder="Price" class="edit-price border rounded p-1 w-20 text-xs dark:bg-gray-600" value="${e.unitPrice || (e.totalCost / e.grams)}"><input type="number" placeholder="Costs" class="edit-costs border rounded p-1 w-20 text-xs dark:bg-gray-600" value="${e.unitMaking || 0}"></div></td>
+                    <td class="p-4 text-center"><span class="view-mode text-xs">${formatCurrency(gpd)}</span><div class="edit-mode hidden flex flex-col gap-1"><input type="number" placeholder="Price" class="edit-price border rounded p-1 w-20 text-xs dark:bg-gray-600" value="${e.unitPrice || (e.totalCost / e.grams)}"><input type="number" placeholder="Costs" class="edit-costs border rounded p-1 w-20 text-xs dark:bg-gray-600" value="${e.unitMaking || 0}"></div></td>
+                    <td class="p-4 text-center font-bold text-yellow-600">${formatCurrency(e.totalCost)}</td>
+                    <td class="p-4 text-center font-bold text-blue-600">${formatCurrency(lv)}</td>
                     <td class="p-4 text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
                     <td class="p-4 text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(pq)}</td>
                     <td class="p-4 text-center no-pdf">
