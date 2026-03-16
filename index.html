@@ -195,16 +195,10 @@
                 currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(fluctuation)).toFixed(2));
                 currentPrices.k22 = Math.round(currentPrices.k24 * (22/24));
                 currentPrices.k21 = Math.round(currentPrices.k24 * (21/24));
-                
                 updatePriceDisplay(fluctuation);
-                
                 const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                sessionData.labels.push(now);
-                sessionData.k24.push(currentPrices.k24);
-                sessionData.k22.push(currentPrices.k22);
-                sessionData.k21.push(currentPrices.k21);
+                sessionData.labels.push(now); sessionData.k24.push(currentPrices.k24); sessionData.k22.push(currentPrices.k22); sessionData.k21.push(currentPrices.k21);
                 if(sessionData.labels.length > 20) { sessionData.labels.shift(); sessionData.k24.shift(); sessionData.k22.shift(); sessionData.k21.shift(); }
-                
                 if(currentTF === '1H') updateLivePriceChart();
                 if(cachedEntries) renderTable(cachedEntries);
             }, 5000);
@@ -227,32 +221,21 @@
         function updateLivePriceChart() {
             let labels = [], d24 = [], d22 = [], d21 = [];
             const now = new Date();
-
             if (currentTF === '1H') {
                 labels = sessionData.labels; d24 = sessionData.k24; d22 = sessionData.k22; d21 = sessionData.k21;
             } else {
-                let count = currentTF === '1D' ? 24 : currentTF === '1W' ? 7 : currentTF === '1M' ? 30 : 26; // 26 years for 2000-2026
+                let count = currentTF === '1D' ? 24 : currentTF === '1W' ? 7 : currentTF === '1M' ? 30 : 26;
                 for(let i = count; i >= 0; i--) {
                     let d = new Date();
                     if(currentTF === '1D') { d.setHours(now.getHours() - i); labels.push(d.getHours() + ":00"); }
                     else if(currentTF === '1W') { d.setDate(now.getDate() - i); labels.push(d.toLocaleDateString('en-GB', {weekday: 'short'})); }
                     else if(currentTF === '1M') { d.setDate(now.getDate() - i); labels.push(d.getDate() + "/" + (d.getMonth()+1)); }
                     else if(currentTF === '1Y') { labels.push(2026 - i); }
-                    
-                    // Historical simulation logic
-                    let base = 600; 
-                    if(currentTF === '1Y') base = 40 + (i * 22); // Growth from ~2000 to 2026
-                    else base = 600 + (Math.sin(i) * 20);
-
-                    d24.push(Math.round(base));
-                    d22.push(Math.round(base * 22/24));
-                    d21.push(Math.round(base * 21/24));
+                    let base = currentTF === '1Y' ? 40 + (i * 22) : 600 + (Math.sin(i) * 20);
+                    d24.push(Math.round(base)); d22.push(Math.round(base * 22/24)); d21.push(Math.round(base * 21/24));
                 }
             }
-            goldPricesChart.data.labels = labels;
-            goldPricesChart.data.datasets[0].data = d24;
-            goldPricesChart.data.datasets[1].data = d22;
-            goldPricesChart.data.datasets[2].data = d21;
+            goldPricesChart.data.labels = labels; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.data.datasets[1].data = d22; goldPricesChart.data.datasets[2].data = d21;
             goldPricesChart.update();
         }
 
@@ -264,22 +247,30 @@
         }
 
         function initCharts() {
-            const isDark = document.documentElement.classList.contains('dark');
-            const textColor = isDark ? '#9ca3af' : '#6b7280';
-            const gridColor = isDark ? '#374151' : '#e5e7eb';
+            const isDark = document.documentElement.classList.contains('dark'), textColor = isDark ? '#9ca3af' : '#6b7280', gridColor = isDark ? '#374151' : '#e5e7eb';
             const baseOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { ticks: { color: textColor, font: { size: 8 } }, grid: { display: false } }, y: { ticks: { color: textColor, font: { size: 8 } }, grid: { color: gridColor } } } };
 
             walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] }, options: baseOptions });
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: '24K', data: [], borderColor: '#ca8a04', tension: 0.3, pointRadius: 0 }, { label: '22K', data: [], borderColor: '#eab308', tension: 0.3, pointRadius: 0 }, { label: '21K', data: [], borderColor: '#facc15', tension: 0.3, pointRadius: 0 }] }, options: { ...baseOptions, plugins: { legend: { display: true, labels: { color: textColor, boxWidth: 10, font: { size: 8 } } } } } });
-            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] }, options: { ...baseOptions, plugins: { datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 9 }, color: '#fff' } }, scales: { y: { display: false }, x: { ticks: { color: textColor } } } } });
+            
+            // REMOVED DATALABELS FROM THIS CHART ONLY
+            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { 
+                type: 'bar', 
+                data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] }, 
+                options: { 
+                    ...baseOptions, 
+                    plugins: { 
+                        datalabels: { display: false } // This line hides the numeric labels on the bars
+                    }, 
+                    scales: { y: { display: false }, x: { ticks: { color: textColor } } } 
+                } 
+            });
             updateLivePriceChart();
         }
 
         async function fetchEntries() {
-            const response = await fetch(DB_URL);
-            const data = await response.json();
-            cachedEntries = data;
-            renderTable(data);
+            const response = await fetch(DB_URL); const data = await response.json();
+            cachedEntries = data; renderTable(data);
         }
 
         async function addEntry() {
@@ -291,12 +282,9 @@
         }
 
         function renderTable(data) {
-            const tableBody = document.getElementById('goldTable');
-            tableBody.innerHTML = '';
-            if (!data) { updateStats(0, 0, 0, 0); return; }
+            const tableBody = document.getElementById('goldTable'); tableBody.innerHTML = ''; if (!data) { updateStats(0, 0, 0, 0); return; }
             const entries = Object.keys(data).map(key => ({ id: key, ...data[key] })).sort((a, b) => a.timestamp - b.timestamp);
-            const weights = { 24: 0, 22: 0, 21: 0 };
-            let currentWalletValue = 0, tGrams = 0, tInvested = 0, cLabels = [], cData = [];
+            const weights = { 24: 0, 22: 0, 21: 0 }; let currentWalletValue = 0, tGrams = 0, tInvested = 0, cLabels = [], cData = [];
             entries.forEach(e => {
                 const liveVal = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24)));
                 weights[e.purity] += e.grams; tGrams += e.grams; tInvested += e.totalCost; currentWalletValue += liveVal;
