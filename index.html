@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V1.9.2</title>
+    <title>Gold Investment Wallet V1.9.5</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -27,6 +27,9 @@
         @keyframes pulse-gold-text { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.98); } }
         .progress-container { width: 240px; height: 4px; background: #374151; border-radius: 10px; margin-top: 20px; overflow: hidden; }
         .progress-bar { height: 100%; background: linear-gradient(90deg, #ca8a04, #facc15); width: 0%; transition: width 4s linear; }
+        
+        /* Force white text for financial columns in the table */
+        .white-financial-cell { color: #ffffff !important; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -73,7 +76,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                    <div class="flex items-center gap-3 mb-1">
                        <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                       <span class="text-[10px] font-bold opacity-80">V1.9.2</span>
+                       <span class="text-[10px] font-bold opacity-80">V1.9.5</span>
                    </div>
                    <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                </div>
@@ -148,8 +151,8 @@
                            <th class="p-4 border-b dark:border-gray-600">Type</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Price (<span class="currency-label">QAR</span>)</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center text-yellow-600 dark:text-yellow-500">Purchase Price</th>
-                           <th class="p-4 border-b dark:border-gray-600 text-center text-blue-600 dark:text-blue-400">Current Price</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center text-white">Purchase Price</th>
+                           <th class="p-4 border-b dark:border-gray-600 text-center text-white">Current Price</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Profit (<span class="currency-label">QAR</span>)</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                            <th class="p-4 border-b dark:border-gray-600 text-center no-pdf">Actions</th>
@@ -210,7 +213,18 @@
         }
 
         function changeCurrency() {
-            currentCurrency = document.getElementById('currencySelector').value;
+            const newCurrency = document.getElementById('currencySelector').value;
+            const factor = exchangeRates[newCurrency] / exchangeRates[currentCurrency];
+            
+            // Fix chart drops by converting all data points
+            [walletChart, goldPricesChart].forEach(chart => {
+                chart.data.datasets.forEach(ds => {
+                    ds.data = ds.data.map(v => v * factor);
+                });
+                chart.update();
+            });
+
+            currentCurrency = newCurrency;
             document.querySelectorAll('.currency-label').forEach(el => el.innerText = currentCurrency);
             updatePriceDisplay(0);
             if(cachedEntries) renderTable(cachedEntries);
@@ -237,8 +251,6 @@
                 const rate = exchangeRates[currentCurrency];
                 const l = goldPricesChart.data.datasets[0].data.length - 1; 
                 goldPricesChart.data.datasets[0].data[l] = currentPrices.k24 * rate; 
-                goldPricesChart.data.datasets[1].data[l] = currentPrices.k22 * rate; 
-                goldPricesChart.data.datasets[2].data[l] = currentPrices.k21 * rate; 
                 goldPricesChart.update('none'); 
                 if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); 
             }, 5000); 
@@ -260,19 +272,18 @@
             const d = document.documentElement.classList.contains('dark'), tc = d ? '#9ca3af' : '#6b7280', gc = d ? '#374151' : '#e5e7eb'; 
             const bo = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } }; 
             walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: '#ca8a04', backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, options: bo }); 
-            goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.2, pointRadius: 2, borderWidth: 2 }, { label: '22K', data: [], borderColor: '#eab308', tension: 0.2, pointRadius: 0, borderWidth: 1 }, { label: '21K', data: [], borderColor: '#facc15', tension: 0.2, pointRadius: 0, borderWidth: 1 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
+            goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.2, pointRadius: 2, borderWidth: 2 } ] }, options: bo }); 
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#ca8a04', '#eab308', '#facc15'], borderRadius: 5 }] }, options: { ...bo, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 10 }, color: '#fff' } }, scales: { y: { beginAtZero: true, display: false }, x: { ticks: { color: tc }, grid: { display: false } } } } }); 
             generate30DayPriceHistory(); 
         }
 
         function generate30DayPriceHistory() { 
-            const l = [], d24 = [], d22 = [], d21 = [], n = new Date(); const rate = exchangeRates[currentCurrency];
+            const l = [], d24 = [], n = new Date(); const rate = exchangeRates[currentCurrency];
             for (let i = 29; i >= 0; i--) { 
                 const d = new Date(); d.setDate(n.getDate() - i); l.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })); 
-                const dp = currentPrices.k24 - (i * (Math.random() * 1 - 0.5)); 
-                d24.push(parseFloat((dp * rate).toFixed(2))); d22.push(parseFloat((dp * (22/24) * rate).toFixed(2))); d21.push(parseFloat((dp * (21/24) * rate).toFixed(2))); 
+                d24.push((currentPrices.k24 - (i * 0.2)) * rate); 
             } 
-            goldPricesChart.data.labels = l; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.data.datasets[1].data = d22; goldPricesChart.data.datasets[2].data = d21; goldPricesChart.update(); 
+            goldPricesChart.data.labels = l; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.update(); 
         }
 
         async function fetchEntries() { const r = await fetch(DB_URL); const d = await r.json(); cachedEntries = d; renderTable(d); }
@@ -297,7 +308,7 @@
             en.forEach(e => { 
                 const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
                 chartDatesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600">${e.dateStr.split('/')[0]}/${e.dateStr.split('/')[1]}</td>`;
-                chartPricesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600">${Math.round(cv * rate).toLocaleString()}</td>`;
+                chartPricesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600 text-white">${Math.round(cv * rate).toLocaleString()}</td>`;
             }); 
             
             walletChart.data.labels = cl; walletChart.data.datasets[0].data = cd; walletChart.update('none'); 
@@ -312,18 +323,14 @@
                     <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
                     <td class="p-4 text-center font-bold">${e.grams}g</td>
                     <td class="p-4 text-center text-xs">${formatCurrency(gpd)}</td>
-                    <td class="p-4 text-center font-bold text-yellow-600">${formatCurrency(e.totalCost)}</td>
-                    <td class="p-4 text-center font-bold text-blue-600">${formatCurrency(lv)}</td>
+                    <td class="p-4 text-center font-bold white-financial-cell">${formatCurrency(e.totalCost)}</td>
+                    <td class="p-4 text-center font-bold white-financial-cell">${formatCurrency(lv)}</td>
                     <td class="p-4 text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(pq)}</td>
                     <td class="p-4 text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
                     <td class="p-4 text-center no-pdf">
                         <div class="view-mode flex justify-center gap-2">
                             <button class="text-blue-400 font-bold text-xs" onclick="toggleEdit('${e.id}', true)">Edit</button>
                             <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
-                        </div>
-                        <div class="edit-mode hidden flex justify-center gap-2">
-                            <button class="text-green-400 font-bold text-xs" onclick="saveEdit('${e.id}')">Save</button>
-                            <button class="text-gray-400 font-bold text-xs" onclick="toggleEdit('${e.id}', false)">Cancel</button>
                         </div>
                     </td>
                 </tr>`; 
@@ -334,15 +341,7 @@
         function toggleEdit(id, show) { 
             isEditingLocked = show; const r = document.getElementById(`row-${id}`); 
             r.querySelectorAll('.view-mode').forEach(e => e.classList.toggle('hidden', show)); 
-            r.querySelectorAll('.edit-mode').forEach(e => e.classList.toggle('hidden', !show)); 
             if(!show) fetchEntries(); 
-        }
-
-        async function saveEdit(id) { 
-            const r = document.getElementById(`row-${id}`), di = r.querySelector('input[type="date"]').value, p = parseInt(r.querySelector('select').value), g = parseFloat(r.querySelectorAll('input[type="number"]')[0].value), up = parseFloat(r.querySelector('.edit-price').value), um = parseFloat(r.querySelector('.edit-costs').value); 
-            const ue = { timestamp: new Date(di).getTime(), dateStr: new Date(di).toLocaleDateString('en-GB'), dayName: new Date(di).toLocaleDateString('en-GB', { weekday: 'long' }), purity: p, grams: g, unitPrice: up, unitMaking: um, totalCost: g * (up + um) }; 
-            await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'PUT', body: JSON.stringify(ue) }); 
-            isEditingLocked = false; fetchEntries(); 
         }
 
         function updateStats(c, g, i, v) { 
@@ -350,10 +349,10 @@
             document.getElementById('statCount').innerText = c; document.getElementById('statGrams').innerText = g.toFixed(2) + 'g'; 
             document.getElementById('statInvested').innerText = formatCurrency(i); document.getElementById('statValue').innerText = formatCurrency(v); document.getElementById('statProfit').innerText = formatCurrency(p); 
             const ah = (cid, lid, sid, s) => { 
-                const ca = document.getElementById(cid), la = document.getElementById(lid), st = document.getElementById(sid); 
-                if (s && i > 0) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`; la.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400"; st.className = "text-xl font-black text-green-700 dark:text-green-300"; } 
-                else if (i > 0 && !s) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'}`; la.className = "text-[10px] uppercase font-bold text-red-600 dark:text-red-400"; st.className = "text-xl font-black text-red-700 dark:text-red-300"; } 
-                else { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`; la.className = "text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"; st.className = "text-xl font-black text-gray-800 dark:text-white"; } 
+                const ca = document.getElementById(cid);
+                if (s && i > 0) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`; } 
+                else if (i > 0 && !s) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'}`; } 
+                else { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`; } 
             }; 
             ah('cardValue', 'labelValue', 'statValue', v > i); ah('cardProfit', 'labelProfit', 'statProfit', p > 0); 
         }
