@@ -36,6 +36,12 @@
         
         .price-up { filter: drop-shadow(0 0 2px #10b981); transition: all 0.5s ease; }
         .price-down { filter: drop-shadow(0 0 2px #ef4444); transition: all 0.5s ease; }
+
+        .time-btn.active {
+            background-color: #ca8a04;
+            color: white;
+            border-color: #ca8a04;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -67,7 +73,7 @@
                 <div class="flex flex-col items-end border-l border-yellow-500/30 pl-6">
                     <div class="flex items-center gap-3 mb-1">
                         <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00 - 16/03/2026</span>
-                        <span class="text-[10px] font-bold opacity-80">V1.3.0</span>
+                        <span class="text-[10px] font-bold opacity-80">V1.3.3</span>
                     </div>
                     <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
                 </div>
@@ -103,7 +109,17 @@
                 <div style="height: 180px;"><canvas id="walletBehaviorChart"></canvas></div>
             </div>
             <div class="border-l dark:border-gray-700 lg:px-6">
-                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Live Market Rates (QAR/G)</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Live Market Rates (QAR/G)</h2>
+                    <div class="flex gap-1 no-pdf" id="timeframeButtons">
+                        <button onclick="setTimeframe('1H')" class="time-btn active text-[9px] px-1.5 py-0.5 border dark:border-gray-600 rounded">1H</button>
+                        <button onclick="setTimeframe('1D')" class="time-btn text-[9px] px-1.5 py-0.5 border dark:border-gray-600 rounded">1D</button>
+                        <button onclick="setTimeframe('1W')" class="time-btn text-[9px] px-1.5 py-0.5 border dark:border-gray-600 rounded">1W</button>
+                        <button onclick="setTimeframe('1M')" class="time-btn text-[9px] px-1.5 py-0.5 border dark:border-gray-600 rounded">1M</button>
+                        <button onclick="setTimeframe('1Y')" class="time-btn text-[9px] px-1.5 py-0.5 border dark:border-gray-600 rounded">1Y</button>
+                        <button onclick="setTimeframe('MAX')" class="time-btn text-[9px] px-1.5 py-0.5 border dark:border-gray-600 rounded">MAX</button>
+                    </div>
+                </div>
                 <div style="height: 180px;"><canvas id="goldPricesChart"></canvas></div>
             </div>
             <div class="border-l dark:border-gray-700 lg:pl-6">
@@ -153,13 +169,14 @@
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         
         let currentPrices = {
-            k24: 600,
-            k22: Math.round(600 * (22/24)),
-            k21: Math.round(600 * (21/24))
+            k24: 315.40,
+            k22: Math.round(315.40 * (22/24)),
+            k21: Math.round(315.40 * (21/24))
         };
         
         let walletChart, barChart, goldPricesChart;
         let cachedEntries = null;
+        let currentTimeframe = '1H';
 
         window.onload = function() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -170,6 +187,7 @@
             fetchEntries();
             startClock();
             startPriceStream();
+            setTimeframe('1H');
         };
 
         function startClock() {
@@ -183,13 +201,13 @@
 
         function startPriceStream() {
             setInterval(() => {
-                const fluctuation = (Math.random() * 2 - 1).toFixed(2);
+                const fluctuation = (Math.random() * 0.5 - 0.25).toFixed(2);
                 currentPrices.k24 = parseFloat((currentPrices.k24 + parseFloat(fluctuation)).toFixed(2));
                 currentPrices.k22 = Math.round(currentPrices.k24 * (22/24));
                 currentPrices.k21 = Math.round(currentPrices.k24 * (21/24));
                 
                 updatePriceDisplay(fluctuation);
-                updateLivePriceChart();
+                if(currentTimeframe === '1H') updateLivePriceChart();
                 if(cachedEntries) renderTable(cachedEntries);
             }, 5000);
         }
@@ -211,19 +229,69 @@
             });
         }
 
-        function updateLivePriceChart() {
-            const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            goldPricesChart.data.labels.push(now);
-            goldPricesChart.data.datasets[0].data.push(currentPrices.k24);
-            goldPricesChart.data.datasets[1].data.push(currentPrices.k22);
-            goldPricesChart.data.datasets[2].data.push(currentPrices.k21);
+        function setTimeframe(tf) {
+            currentTimeframe = tf;
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === tf);
+            });
+            
+            const labels = [];
+            const data24 = [];
+            let points = 20;
+            let startPrice = currentPrices.k24;
 
-            // Keep only last 10 points for visibility
-            if (goldPricesChart.data.labels.length > 10) {
-                goldPricesChart.data.labels.shift();
-                goldPricesChart.data.datasets.forEach(ds => ds.data.shift());
+            if (tf === '1H') {
+                const now = new Date();
+                for(let i=0; i<10; i++) {
+                    const time = new Date(now.getTime() - (10-i)*60000).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+                    labels.push(time);
+                    data24.push(startPrice + (Math.random() * 2 - 1));
+                }
+            } else {
+                let intervalDays = 1;
+                if (tf === '1D') { points = 24; intervalDays = 0.04; }
+                if (tf === '1W') { points = 7; intervalDays = 1; }
+                if (tf === '1M') { points = 30; intervalDays = 1; }
+                if (tf === '1Y') { points = 12; intervalDays = 30; }
+                if (tf === 'MAX') { points = 26; intervalDays = 365; }
+
+                const now = new Date();
+                for (let i = points; i >= 0; i--) {
+                    const date = new Date(now);
+                    if (tf === 'MAX') {
+                        date.setFullYear(2026 - i);
+                        labels.push(date.getFullYear());
+                    } else {
+                        date.setDate(now.getDate() - (i * intervalDays));
+                        labels.push(date.toLocaleDateString('en-GB', {day:'2-digit', month:'short'}));
+                    }
+                    const progress = (points - i) / points;
+                    const simulatedPrice = tf === 'MAX' ? (40 + (progress * 275) + (Math.random()*20)) : (startPrice - (i * 0.5) + (Math.random() * 5));
+                    data24.push(parseFloat(simulatedPrice.toFixed(2)));
+                }
             }
-            goldPricesChart.update('none');
+
+            goldPricesChart.data.labels = labels;
+            goldPricesChart.data.datasets[0].data = data24;
+            goldPricesChart.data.datasets[1].data = data24.map(v => v * (22/24));
+            goldPricesChart.data.datasets[2].data = data24.map(v => v * (21/24));
+            goldPricesChart.update();
+        }
+
+        function updateLivePriceChart() {
+            const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            if (goldPricesChart.data.labels[goldPricesChart.data.labels.length - 1] !== now) {
+                goldPricesChart.data.labels.push(now);
+                goldPricesChart.data.datasets[0].data.push(currentPrices.k24);
+                goldPricesChart.data.datasets[1].data.push(currentPrices.k22);
+                goldPricesChart.data.datasets[2].data.push(currentPrices.k21);
+
+                if (goldPricesChart.data.labels.length > 15) {
+                    goldPricesChart.data.labels.shift();
+                    goldPricesChart.data.datasets.forEach(ds => ds.data.shift());
+                }
+                goldPricesChart.update('none');
+            }
         }
 
         function toggleTheme() {
@@ -231,6 +299,7 @@
             localStorage.theme = isDark ? 'dark' : 'light';
             [walletChart, barChart, goldPricesChart].forEach(c => c.destroy());
             initCharts(); fetchEntries();
+            setTimeframe(currentTimeframe);
         }
 
         function initCharts() {
@@ -253,18 +322,17 @@
                 options: baseOptions
             });
 
-            // NEW: Gold Prices Live Chart
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), {
                 type: 'line',
                 data: { 
                     labels: [], 
                     datasets: [
-                        { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.3, pointRadius: 0 },
-                        { label: '22K', data: [], borderColor: '#eab308', tension: 0.3, pointRadius: 0 },
-                        { label: '21K', data: [], borderColor: '#facc15', tension: 0.3, pointRadius: 0 }
+                        { label: '24K', data: [], borderColor: '#ca8a04', tension: 0.3, pointRadius: 0, borderWidth: 2 },
+                        { label: '22K', data: [], borderColor: '#eab308', tension: 0.3, pointRadius: 0, borderWidth: 1.5 },
+                        { label: '21K', data: [], borderColor: '#facc15', tension: 0.3, pointRadius: 0, borderWidth: 1 }
                     ] 
                 },
-                options: { ...baseOptions, plugins: { ...baseOptions.plugins, legend: { display: true, labels: { color: textColor, boxWidth: 10, font: { size: 10 } } } } }
+                options: { ...baseOptions, plugins: { ...baseOptions.plugins, legend: { display: true, position: 'bottom', labels: { color: textColor, boxWidth: 8, font: { size: 9 } } } } }
             });
 
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), {
@@ -274,7 +342,7 @@
                     ...baseOptions,
                     plugins: { 
                         legend: { display: false },
-                        datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold' }, color: '#fff' }
+                        datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 10 }, color: '#fff' }
                     },
                     scales: { y: { beginAtZero: true, display: false }, x: { ticks: { color: textColor }, grid: { display: false } } }
                 }
@@ -282,10 +350,12 @@
         }
 
         async function fetchEntries() {
-            const response = await fetch(DB_URL);
-            const data = await response.json();
-            cachedEntries = data;
-            renderTable(data);
+            try {
+                const response = await fetch(DB_URL);
+                const data = await response.json();
+                cachedEntries = data;
+                renderTable(data);
+            } catch (e) { console.error("DB Load Error", e); }
         }
 
         async function addEntry() {
@@ -331,13 +401,13 @@
                 tableBody.innerHTML += `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
                         <td class="p-4 font-medium">${e.dateStr}</td>
-                        <td class="p-4 font-medium">${e.dayName}</td>
+                        <td class="p-4 font-medium text-gray-500">${e.dayName}</td>
                         <td class="p-4 font-bold text-yellow-600">${e.purity}K</td>
                         <td class="p-4 text-center font-bold">${e.grams}g</td>
                         <td class="p-4 text-center">QAR ${goldPriceDisplay}</td>
                         <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPercent}%</td>
                         <td class="p-4 text-center font-bold ${profitQar >= 0 ? 'text-green-500' : 'text-red-500'}">QAR ${Math.round(profitQar).toLocaleString()}</td>
-                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold" onclick="deleteEntry('${e.id}')">Delete</button></td>
+                        <td class="p-4 text-right no-pdf"><button class="text-red-400 font-bold hover:text-red-600" onclick="deleteEntry('${e.id}')">Delete</button></td>
                     </tr>`;
             });
             updateStats(entries.length, tGrams, Math.round(tInvested), currentWalletValue);
@@ -372,7 +442,7 @@
         }
 
         async function deleteEntry(id) {
-            if(confirm("Delete?")) {
+            if(confirm("Delete this entry?")) {
                 await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'DELETE' });
                 fetchEntries();
             }
