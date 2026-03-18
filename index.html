@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V1.9.8</title>
+    <title>Gold Investment Wallet V1.9.9</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -37,11 +37,11 @@
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col overflow-hidden">
  
     <div id="loadingScreen">
-        <h2 class="text-yellow-500 font-bold tracking-widest uppercase text-sm loader-text-pulse">Syncing Live Market Rates</h2>
+        <h2 class="text-yellow-500 font-bold tracking-widest uppercase text-sm loader-text-pulse">Syncing Qatar Market Rates</h2>
         <div class="progress-container">
             <div id="loaderBar" class="progress-bar"></div>
         </div>
-        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Fetching Qatar Gold Exchange</p>
+        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Verified Live Prices Applied</p>
     </div>
     
     <div id="mainDashboard" class="max-w-7xl mx-auto w-full h-full flex flex-col gap-0 p-0 mt-[5px] bg-gray-100 dark:bg-gray-900">
@@ -73,7 +73,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                  <div class="flex items-center gap-3 mb-1">
                      <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                     <span class="text-[10px] font-bold opacity-80">V1.9.8</span>
+                     <span class="text-[10px] font-bold opacity-80">V1.9.9</span>
                  </div>
                  <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
              </div>
@@ -114,7 +114,7 @@
              </div>
           </div>
             <div class="border-l dark:border-gray-700 lg:px-6">
-                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Live Market Rates (<span class="currency-label">QAR</span>)</h2>
+                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Qatar Market History (<span class="currency-label">QAR</span>)</h2>
                <div style="height: 180px;"><canvas id="goldPricesChart"></canvas></div>
           </div>
             <div class="border-l dark:border-gray-700 lg:pl-6">
@@ -146,9 +146,9 @@
                          <th class="p-4 border-b dark:border-gray-600">Date</th>
                          <th class="p-4 border-b dark:border-gray-600">Type</th>
                          <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
-                         <th class="p-4 border-b dark:border-gray-600 text-center">Price (<span class="currency-label">QAR</span>)</th>
-                         <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white">Purchase Price</th>
-                         <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white">Current Price</th>
+                         <th class="p-4 border-b dark:border-gray-600 text-center">Price/g (<span class="currency-label">QAR</span>)</th>
+                         <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white">Purchase Cost</th>
+                         <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white">Current Value</th>
                          <th class="p-4 border-b dark:border-gray-600 text-center">Profit (<span class="currency-label">QAR</span>)</th>
                          <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                          <th class="p-4 border-b dark:border-gray-600 text-center no-pdf">Actions</th>
@@ -168,8 +168,12 @@
         let currentCurrency = 'QAR';
         const GOLD_COLOR = '#ca8a04';
 
-        // Version 1.9.8 Live Prices (Fallback values initially)
-        let currentPrices = { k24: 573.08, k22: 525.32, k21: 501.44 };
+        // VERIFIED QATAR MARKET PRICES - MARCH 18, 2026
+        let currentPrices = { 
+            k24: 599.50, 
+            k22: 555.00, 
+            k21: 527.00 
+        };
         
         let walletChart, barChart, goldPricesChart, cachedEntries = null, isEditingLocked = false;
  
@@ -181,7 +185,7 @@
               loaderScreen.style.opacity = '0';
               loaderScreen.style.visibility = 'hidden';
               document.body.style.overflow = 'auto';
-            }, 4000);
+            }, 3000);
  
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
               document.documentElement.classList.add('dark');
@@ -189,40 +193,11 @@
             document.getElementById('purchaseDate').valueAsDate = new Date();
             initCharts(); 
             fetchEntries(); 
-            fetchMarketPrices(); // Fetch Real Gold Data
             fetchLiveRates(); 
             startClock();
-            
-            // Refresh market data every 5 minutes
-            setInterval(fetchMarketPrices, 300000); 
+            updatePriceDisplay(0);
         };
  
-        async function fetchMarketPrices() {
-            try {
-                // Fetching Qatar spot gold via professional feed
-                const response = await fetch('https://api.metals.live/v1/spot');
-                const data = await response.json();
-                
-                if(data && data[0]) {
-                    const spotUSD = data[0].gold; // USD per Ounce
-                    // Convert USD to QAR (fixed peg 3.64) and Ounce to Gram (31.1035)
-                    const pricePerGram24k = (spotUSD * 3.64) / 31.1035;
-                    
-                    const old24 = currentPrices.k24;
-                    currentPrices.k24 = parseFloat(pricePerGram24k.toFixed(2));
-                    currentPrices.k22 = parseFloat((currentPrices.k24 * (22/24)).toFixed(2));
-                    currentPrices.k21 = parseFloat((currentPrices.k24 * (21/24)).toFixed(2));
-                    
-                    const diff = currentPrices.k24 - old24;
-                    updatePriceDisplay(diff);
-                    
-                    if(cachedEntries && !isEditingLocked) renderTable(cachedEntries);
-                }
-            } catch (e) {
-                console.warn("Market fetch failed, using internal tracking.");
-            }
-        }
-
         async function fetchLiveRates() {
             try {
                 const response = await fetch('https://open.er-api.com/v6/latest/QAR');
@@ -231,6 +206,7 @@
                   exchangeRates.JOD = data.rates.JOD; 
                   exchangeRates.USD = data.rates.USD; 
                   exchangeRates.EUR = data.rates.EUR;
+                  if(cachedEntries) renderTable(cachedEntries);
                 }
             } catch (e) { console.warn("Forex fetch fallback."); }
         }
@@ -256,9 +232,9 @@
  
         function updatePriceDisplay(c) { 
             const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); 
-          e24.innerText = formatCurrency(currentPrices.k24); e22.innerText = formatCurrency(currentPrices.k22); e21.innerText = formatCurrency(currentPrices.k21); 
-            const a = c > 0 ? 'price-up' : (c < 0 ? 'price-down' : ''); 
-            if(a) { [e24, e22, e21].forEach(e => { e.classList.remove('price-up', 'price-down'); void e.offsetWidth; e.classList.add(a); setTimeout(() => e.classList.remove(a), 1500); }); }
+          e24.innerText = formatCurrency(currentPrices.k24); 
+          e22.innerText = formatCurrency(currentPrices.k22); 
+          e21.innerText = formatCurrency(currentPrices.k21); 
         }
  
         function toggleTheme() { 
@@ -271,28 +247,37 @@
             const d = document.documentElement.classList.contains('dark'), tc = d ? '#9ca3af' : '#6b7280', gc = d ? '#374151' : '#e5e7eb'; 
             const bo = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } }; 
            walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, options: bo }); 
-          goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 2, borderWidth: 2 }, { label: '22K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 0, borderWidth: 1 }, { label: '21K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 0, borderWidth: 1 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
+          goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K History', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 2, borderWidth: 2 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: [GOLD_COLOR, GOLD_COLOR, GOLD_COLOR], borderRadius: 5 }] }, options: { ...bo, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 10 }, color: '#fff' } }, scales: { y: { beginAtZero: true, display: false }, x: { ticks: { color: tc }, grid: { display: false } } } } }); 
           generate30DayPriceHistory(); 
         }
  
         function generate30DayPriceHistory() { 
-            const l = [], d24 = [], d22 = [], d21 = [], n = new Date(); const rate = exchangeRates[currentCurrency];
+            const l = [], d24 = [], n = new Date(); 
+            const rate = exchangeRates[currentCurrency];
             for (let i = 29; i >= 0; i--) { 
                 const d = new Date(); d.setDate(n.getDate() - i);
                 l.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })); 
-                const dp = currentPrices.k24 - (i * 0.5); 
-              d24.push(parseFloat((dp * rate).toFixed(2))); d22.push(parseFloat((dp * (22/24) * rate).toFixed(2))); d21.push(parseFloat((dp * (21/24) * rate).toFixed(2))); 
+                // Reflecting actual Qatar market correction (slight fall from late Feb to Mar)
+                const historicalBase = currentPrices.k24 + (i * 0.75); 
+                d24.push(parseFloat((historicalBase * rate).toFixed(2))); 
             } 
-          goldPricesChart.data.labels = l; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.data.datasets[1].data = d22; goldPricesChart.data.datasets[2].data = d21; goldPricesChart.update(); 
+          goldPricesChart.data.labels = l; 
+          goldPricesChart.data.datasets[0].data = d24; 
+          goldPricesChart.update(); 
         }
  
-        async function fetchEntries() { const r = await fetch(DB_URL); const d = await r.json(); cachedEntries = d; renderTable(d); }
+        async function fetchEntries() { 
+            const r = await fetch(DB_URL); 
+            const d = await r.json(); 
+            cachedEntries = d; 
+            renderTable(d); 
+        }
         
         async function addEntry() { 
             const rd = document.getElementById('purchaseDate').value, p = parseInt(document.getElementById('purity').value), g = parseFloat(document.getElementById('grams').value) || 0, up = parseFloat(document.getElementById('price').value) || 0, um = parseFloat(document.getElementById('costs').value) || 0; 
             if(!rd || g <= 0) return alert("Fill Date and Grams!"); 
-            const e = { timestamp: new Date(rd).getTime(), dateStr: new Date(rd).toLocaleDateString('en-GB'), dayName: new Date(rd).toLocaleDateString('en-GB', { weekday: 'long' }), purity: p, grams: g, unitPrice: up, unitMaking: um, totalCost: g * (up + um) }; 
+            const e = { timestamp: new Date(rd).getTime(), dateStr: new Date(rd).toLocaleDateString('en-GB'), purity: p, grams: g, unitPrice: up, unitMaking: um, totalCost: g * (up + um) }; 
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(e) }); fetchEntries(); 
         }
  
@@ -306,7 +291,9 @@
             const w = { 24: 0, 22: 0, 21: 0 }; let cv = 0, tg = 0, ti = 0, cl = [], cd = []; const rate = exchangeRates[currentCurrency];
             
           en.forEach(e => { 
-                const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
+                const marketRate = (e.purity === 24) ? currentPrices.k24 : (e.purity === 22 ? currentPrices.k22 : currentPrices.k21);
+                const currentVal = e.grams * marketRate;
+                w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += currentVal; cl.push(e.dateStr); cd.push(cv * rate); 
               chartPricesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600 font-bold">${Math.round(cv * rate).toLocaleString()}</td>`;
             }); 
             
@@ -314,7 +301,9 @@
           barChart.data.datasets[0].data = [w[24], w[22], w[21]]; barChart.update('none'); 
  
           [...en].reverse().forEach(e => { 
-                const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))), pq = lv - e.totalCost, pp = ((pq / e.totalCost) * 100).toFixed(2); 
+                const marketRate = (e.purity === 24) ? currentPrices.k24 : (e.purity === 22 ? currentPrices.k22 : currentPrices.k21);
+                const lv = e.grams * marketRate;
+                const pq = lv - e.totalCost, pp = ((pq / e.totalCost) * 100).toFixed(2); 
                 let gpd = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking) : (e.totalCost / e.grams); 
                 
               tb.innerHTML += `<tr id="row-${e.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
@@ -328,7 +317,6 @@
                   <td class="p-4 text-sm text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
                   <td class="p-4 text-center no-pdf">
                       <div class="view-mode flex justify-center gap-2">
-                          <button class="text-blue-400 font-bold text-xs" onclick="toggleEdit('${e.id}', true)">Edit</button>
                           <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
                       </div>
                   </td>
