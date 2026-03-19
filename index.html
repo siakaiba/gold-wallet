@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.3.3</title>
+    <title>Gold Investment Wallet V2.3.4</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -31,6 +31,9 @@
             50% { opacity: 0.4; transform: scale(1.2); }
         }
         .status-flash { animation: live-flash 2s infinite; }
+
+        /* THEME TOGGLE FIX */
+        .dark .theme-slider-bg { transform: translateX(100%); }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -54,7 +57,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.3.3</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.3.4</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -72,7 +75,7 @@
                </select>
  
                <div class="relative bg-yellow-800/40 p-1 rounded-lg flex w-28 h-9 items-center cursor-pointer overflow-hidden border border-yellow-500/20 no-pdf" onclick="toggleTheme()">
-                  <div class="theme-active absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-800 rounded-md shadow-sm transition-transform duration-300"></div>
+                  <div class="theme-slider-bg absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-gray-800 rounded-md shadow-sm transition-transform duration-300 ease-in-out"></div>
                   <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none text-black dark:text-white dark:opacity-40">LIGHT</div>
                   <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none text-white opacity-40 dark:opacity-100">DARK</div>
               </div>
@@ -549,7 +552,13 @@
            ah('cardValue', 'labelValue', 'statValue', v > i); ah('cardProfit', 'labelProfit', 'statProfit', p > 0); 
         }
         async function deleteEntry(id) { if(confirm("Delete?")) { await fetch(`${DB_URL.replace('.json', '')}/${id}.json`, { method: 'DELETE' }); fetchEntries(); } }
-        function toggleTheme() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; [walletChart, barChart, goldPricesChart].forEach(c => c.destroy()); initCharts(); fetchEntries(); }
+        function toggleTheme() { 
+            document.documentElement.classList.toggle('dark'); 
+            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; 
+            [walletChart, barChart, goldPricesChart].forEach(c => c.destroy()); 
+            initCharts(); 
+            fetchEntries(); 
+        }
         async function downloadPDF() { const { jsPDF } = window.jspdf; const db = document.getElementById('mainDashboard'), np = document.querySelectorAll('.no-pdf'), dk = document.documentElement.classList.contains('dark'); np.forEach(e => e.style.display = 'none'); if(dk) document.documentElement.classList.remove('dark'); try { const c = await html2canvas(db, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f3f4f6' }); const p = new jsPDF('l', 'mm', 'a4'); p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, 280, (c.height * 280) / c.width); p.save(`Gold_Report_${new Date().toLocaleDateString()}.pdf`); } catch (err) {} finally { np.forEach(e => e.style.display = ''); if(dk) document.documentElement.classList.add('dark'); } }
     </script>
 </body>
