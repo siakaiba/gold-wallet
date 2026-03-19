@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.2.8</title>
+    <title>Gold Investment Wallet V2.2.9</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -54,7 +54,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.2.8</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.2.9</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="font-black text-white underline decoration-yellow-400/50">--</span></p>
@@ -382,7 +382,10 @@
             const commonOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false }, datalabels: { display: false } },
+                plugins: { 
+                    legend: { display: false }, 
+                    datalabels: { display: false } // Global disable for clarity
+                },
                 scales: { 
                     x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, 
                     y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } 
@@ -395,7 +398,6 @@
                 options: { ...commonOptions, interaction: { mode: 'index', intersect: false } } 
             }); 
 
-            // ENHANCED INTERACTION FOR MARKET RATES CHART
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { 
                 type: 'line', 
                 data: { 
@@ -409,12 +411,25 @@
                 options: { 
                     ...commonOptions, 
                     interaction: { 
-                        mode: 'nearest', // Shows only the price of the closest line
-                        intersect: false // Allow hover between points
+                        mode: 'nearest', 
+                        intersect: false 
                     },
                     plugins: { 
+                        datalabels: { display: false }, // ABSOLUTELY DISABLED HERE
                         legend: { display: true, position: 'top', labels: { color: tc, usePointStyle: true, boxWidth: 6, font: { size: 10, weight: 'bold' } } },
-                        tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', padding: 10, titleFont: { size: 11 }, bodyFont: { size: 10 }, cornerRadius: 4 }
+                        tooltip: { 
+                           enabled: true,
+                           backgroundColor: 'rgba(17, 24, 39, 0.95)', 
+                           padding: 10, 
+                           titleFont: { size: 11 }, 
+                           bodyFont: { size: 10 }, 
+                           cornerRadius: 4,
+                           callbacks: {
+                               label: function(context) {
+                                   return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ' + currentCurrency;
+                               }
+                           }
+                        }
                     },
                     scales: {
                         x: commonOptions.scales.x,
@@ -426,7 +441,21 @@
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { 
                 type: 'bar', 
                 data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: GOLD_COLOR, borderRadius: 5 }] }, 
-                options: { ...commonOptions, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 12 }, color: '#fff' } }, scales: { y: { display: false }, x: { ticks: { color: tc, font: { size: 12, weight: 'bold' } }, grid: { display: false } } } } 
+                options: { 
+                    ...commonOptions, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { 
+                            display: true, // Only enabled for the bar chart where it is useful
+                            anchor: 'center', 
+                            align: 'center', 
+                            formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', 
+                            font: { weight: 'bold', size: 12 }, 
+                            color: '#fff' 
+                        } 
+                    }, 
+                    scales: { y: { display: false }, x: { ticks: { color: tc, font: { size: 12, weight: 'bold' } }, grid: { display: false } } } 
+                } 
             }); 
 
             generateEnhancedHistory(); 
