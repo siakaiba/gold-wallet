@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.3.2</title>
+    <title>Gold Investment Wallet V2.3.3</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -54,7 +54,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.3.2</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.3.3</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -114,12 +114,7 @@
         <div id="chartsContainer" class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b shrink-0">
            <div class="flex flex-col">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Wallet Growth (<span class="currency-label">QAR</span>)</h2>
-                <div style="height: 140px;"><canvas id="walletBehaviorChart"></canvas></div>
-                <div class="mt-4 overflow-x-auto custom-scrollbar bg-gray-50 dark:bg-gray-700/50 rounded border dark:border-gray-600">
-                  <table class="w-full text-[9px] uppercase tracking-tighter">
-                      <tr id="chartValuePrices" class="font-bold text-yellow-600 dark:text-yellow-500"></tr>
-                  </table>
-              </div>
+                <div style="height: 180px;"><canvas id="walletBehaviorChart"></canvas></div>
           </div>
             <div class="border-l dark:border-gray-700 lg:px-6">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Market Rates (<span class="currency-label">QAR</span>)</h2>
@@ -293,7 +288,6 @@
 
         function renderTable(data) { 
             const tb = document.getElementById('goldTable'); tb.innerHTML = ''; 
-            const cpRow = document.getElementById('chartValuePrices'); cpRow.innerHTML = '';
             if (!data) { updateStats(0, 0, 0, 0); return; } 
             const en = Object.keys(data).map(k => ({ id: k, ...data[k] })); en.sort((a, b) => a.timestamp - b.timestamp); 
             const w = { 24: 0, 22: 0, 21: 0 }; let cv = 0, tg = 0, ti = 0, cl = [], cd = []; const rate = exchangeRates[currentCurrency];
@@ -301,7 +295,6 @@
            en.forEach(e => { 
                 const ref = currentPrices.k24 || 325;
                 const lv = Math.round(e.grams * (ref * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
-               cpRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600 font-bold">${Math.round(cv * rate).toLocaleString()}</td>`;
             }); 
             
            walletChart.data.labels = cl; walletChart.data.datasets[0].data = cd; walletChart.update('none'); 
@@ -418,7 +411,7 @@
                         datalabels: { display: false }, 
                         legend: { 
                            display: true, 
-                           position: 'bottom', // LEGEND AT BOTTOM
+                           position: 'bottom', 
                            labels: { color: tc, usePointStyle: true, boxWidth: 6, font: { size: 10, weight: 'bold' } } 
                         },
                         tooltip: { 
@@ -437,7 +430,7 @@
                     },
                     scales: {
                         x: {
-                           display: false, // X-AXIS DATES REMOVED
+                           display: false, 
                            ticks: { display: false }
                         },
                         y: { ...commonOptions.scales.y, beginAtZero: false } 
