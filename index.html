@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.2.5</title>
+    <title>Gold Investment Wallet V2.2.6</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -55,13 +55,11 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <div id="liveIndicator" class="w-3 h-3 rounded-full bg-red-500 shadow-inner transition-all duration-500" title="Disconnected"></div>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="font-black text-white underline decoration-yellow-400/50">--</span></p>
                   <p class="text-yellow-100">22K: <span id="display22K" class="font-bold text-white">--</span></p>
                   <p class="text-yellow-100">21K: <span id="display21K" class="font-bold text-white">--</span></p>
-                  <span id="lastUpdateLabel" class="text-white font-extrabold tracking-widest text-[10px] bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm">syncing...</span>
               </div>
           </div>
             
@@ -78,6 +76,11 @@
                   <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none text-black dark:text-white dark:opacity-40">LIGHT</div>
                   <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none text-white opacity-40 dark:opacity-100">DARK</div>
               </div>
+
+               <div class="flex items-center gap-2 bg-yellow-800/40 px-3 h-9 rounded-lg border border-yellow-500/20 no-pdf">
+                   <span id="lastUpdateLabel" class="text-white font-black tracking-widest text-[10px] uppercase">syncing...</span>
+                   <div id="liveIndicator" class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm transition-all duration-500" title="Disconnected"></div>
+               </div>
  
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                   <div class="flex items-center gap-3 mb-1">
