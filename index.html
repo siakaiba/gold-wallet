@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.2.2</title>
+    <title>Gold Investment Wallet V2.2.3</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -77,7 +77,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                   <div class="flex items-center gap-3 mb-1">
                       <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                      <span class="text-[10px] font-bold opacity-80">V2.2.2</span>
+                      <span class="text-[10px] font-bold opacity-80">V2.2.3</span>
                   </div>
                   <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
               </div>
@@ -265,7 +265,6 @@
                 currentPrices.k22 = +(currentPrices.k24 * 0.9166).toFixed(2);
                 currentPrices.k21 = +(currentPrices.k24 * 0.875).toFixed(2);
                 updatePriceUI();
-                document.getElementById('lastUpdateLabel').innerText = "manual entry: " + new Date().toLocaleTimeString();
             }
         }
 
@@ -278,14 +277,13 @@
            
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 2, borderWidth: 2 }, { label: '22K', data: [], borderColor: '#ca8a0499', tension: 0.2, pointRadius: 0, borderWidth: 1 }, { label: '21K', data: [], borderColor: '#ca8a0466', tension: 0.2, pointRadius: 0, borderWidth: 1 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
            
-            // FIXED WEIGHT BREAKDOWN CHART
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { 
                 type: 'bar', 
                 data: { 
                     labels: ['24K', '22K', '21K'], 
                     datasets: [{ 
                         data: [0, 0, 0], 
-                        backgroundColor: GOLD_COLOR, // Single color for all bars
+                        backgroundColor: GOLD_COLOR,
                         borderRadius: 5 
                     }] 
                 }, 
@@ -298,7 +296,7 @@
                             anchor: 'center',
                             align: 'center',
                             formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', 
-                            font: { weight: 'bold', size: 12 }, // Set to 12 as requested
+                            font: { weight: 'bold', size: 12 },
                             color: '#fff' 
                         } 
                     }, 
@@ -381,12 +379,12 @@
                    <td class="p-4 text-xs text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
                    <td class="p-4 text-center no-pdf">
                        <div class="view-mode flex justify-center gap-2">
-                           <button class="text-blue-400 font-bold text-[10px]" onclick="toggleEdit('${e.id}', true)">Edit</button>
-                           <button class="text-red-400 font-bold text-[10px]" onclick="deleteEntry('${e.id}')">Delete</button>
+                           <button class="text-blue-400 font-bold text-xs" onclick="toggleEdit('${e.id}', true)">Edit</button>
+                           <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
                        </div>
                        <div class="edit-mode hidden flex justify-center gap-2">
-                           <button class="text-green-500 font-bold text-[10px]" onclick="saveEdit('${e.id}')">Save</button>
-                           <button class="text-gray-400 font-bold text-[10px]" onclick="toggleEdit('${e.id}', false)">Cancel</button>
+                           <button class="text-green-500 font-bold text-xs" onclick="saveEdit('${e.id}')">Save</button>
+                           <button class="text-gray-400 font-bold text-xs" onclick="toggleEdit('${e.id}', false)">Cancel</button>
                        </div>
                    </td>
                </tr>`; 
