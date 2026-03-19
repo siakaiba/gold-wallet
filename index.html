@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.0.0</title>
+    <title>Gold Investment Wallet V2.1.0</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -16,8 +16,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ca8a04; border-radius: 10px; }
         body { overflow: hidden; }
-        .theme-segment { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .dark .theme-active { transform: translateX(100%); }
         .price-up { filter: drop-shadow(0 0 4px #10b981); transition: all 0.5s ease; }
         .price-down { filter: drop-shadow(0 0 4px #ef4444); transition: all 0.5s ease; }
         input[type="number"]::-webkit-inner-spin-button, 
@@ -27,6 +25,8 @@
         @keyframes pulse-gold-text { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.98); } }
         .progress-container { width: 240px; height: 4px; background: #374151; border-radius: 10px; margin-top: 20px; overflow: hidden; }
         .progress-bar { height: 100%; background: linear-gradient(90deg, #ca8a04, #facc15); width: 0%; transition: width 4s linear; }
+        .status-pulse { animation: pulse-opacity 2s infinite; }
+        @keyframes pulse-opacity { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -37,22 +37,26 @@
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col overflow-hidden">
  
     <div id="loadingScreen">
-        <h2 class="text-yellow-500 font-bold tracking-widest uppercase text-sm loader-text-pulse">Syncing Gold Wallet</h2>
+        <h2 class="text-yellow-500 font-bold tracking-widest uppercase text-sm loader-text-pulse">Establishing Live Connection</h2>
         <div class="progress-container">
             <div id="loaderBar" class="progress-bar"></div>
         </div>
-        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Fetching Real-Time Qatar Rates</p>
+        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Scraping Qatar Gold Markets...</p>
     </div>
     
     <div id="mainDashboard" class="max-w-7xl mx-auto w-full h-full flex flex-col gap-0 p-0 mt-[5px] bg-gray-100 dark:bg-gray-900">
         
         <header class="bg-yellow-600 text-white rounded-t-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 shrink-0 px-6 py-2">
             <div class="flex flex-col">
-                <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-               <div class="text-[8px] md:text-[10px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider">
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
+                    <div id="liveIndicator" class="w-2 h-2 rounded-full bg-red-500 status-pulse" title="Disconnected"></div>
+                </div>
+               <div class="text-[8px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider">
                   <p class="text-yellow-100">24K: <span id="display24K" class="font-bold text-white underline decoration-yellow-400/50">--</span></p>
                   <p class="text-yellow-100">22K: <span id="display22K" class="font-bold text-white underline decoration-yellow-400/50">--</span></p>
                   <p class="text-yellow-100">21K: <span id="display21K" class="font-bold text-white underline decoration-yellow-400/50">--</span></p>
+                  <p class="text-yellow-200/50 italic lowercase" id="lastUpdateLabel">syncing...</p>
               </div>
           </div>
             
@@ -73,7 +77,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                   <div class="flex items-center gap-3 mb-1">
                       <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                      <span class="text-[10px] font-bold opacity-80">V2.0.0 (LIVE)</span>
+                      <span class="text-[10px] font-bold opacity-80">V2.1.0</span>
                   </div>
                   <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
               </div>
@@ -169,9 +173,8 @@
         let currentCurrency = 'QAR';
         const GOLD_COLOR = '#ca8a04'; 
 
-        // Initial default prices (will be overwritten by Live fetch)
-        let currentPrices = { k24: 537.23, k22: 493.18, k21: 470.08 };
-        let lastKnownPrice = 537.23;
+        let currentPrices = { k24: 0, k22: 0, k21: 0 };
+        let lastKnownPrice = 0;
         
         let walletChart, barChart, goldPricesChart, cachedEntries = null, isEditingLocked = false;
  
@@ -189,8 +192,8 @@
             fetchEntries(); 
             fetchLiveRates(); 
             startClock(); 
-            fetchLiveGoldPrices(); // Initial live fetch
-            startPriceStream(); // Periodic refresh
+            fetchLiveGoldPrices(); 
+            startPriceRefreshCycle();
             startExchangeStream(); 
 
             setTimeout(() => {
@@ -211,66 +214,80 @@
         }
 
         async function fetchLiveGoldPrices() {
+            const indicator = document.getElementById('liveIndicator');
+            const timeLabel = document.getElementById('lastUpdateLabel');
+            
             try {
-                // Using a CORS proxy to fetch the HTML content
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(QATAR_GOLD_URL)}`;
+                // Using proxy with unique timestamp to avoid browser caching
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(QATAR_GOLD_URL)}&timestamp=${Date.now()}`;
                 const response = await fetch(proxyUrl);
                 const data = await response.json();
                 
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(data.contents, 'text/html');
-                
-                // Find the rows in the table that contain the gram prices
                 const rows = Array.from(doc.querySelectorAll('tr'));
                 
-                let found24 = false, found22 = false, found21 = false;
-                
+                let found = { k24: false, k22: false, k21: false };
+
                 rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
                     const text = row.innerText.toUpperCase();
-                    if(text.includes('24K') && text.includes('GRAM') && !found24) {
-                        const val = extractPrice(row);
-                        if(val) { currentPrices.k24 = val; found24 = true; }
+                    
+                    if(text.includes('24K') && !found.k24) {
+                        const val = parseValueFromRow(row);
+                        if(val > 100) { currentPrices.k24 = val; found.k24 = true; }
                     }
-                    if(text.includes('22K') && text.includes('GRAM') && !found22) {
-                        const val = extractPrice(row);
-                        if(val) { currentPrices.k22 = val; found22 = true; }
+                    if(text.includes('22K') && !found.k22) {
+                        const val = parseValueFromRow(row);
+                        if(val > 100) { currentPrices.k22 = val; found.k22 = true; }
                     }
-                    if(text.includes('21K') && text.includes('GRAM') && !found21) {
-                        const val = extractPrice(row);
-                        if(val) { currentPrices.k21 = val; found21 = true; }
+                    if(text.includes('21K') && !found.k21) {
+                        const val = parseValueFromRow(row);
+                        if(val > 100) { currentPrices.k21 = val; found.k21 = true; }
                     }
                 });
 
-                const change = currentPrices.k24 - lastKnownPrice;
-                lastKnownPrice = currentPrices.k24;
-                
-                updatePriceDisplay(change);
-                updateChartsWithLive();
-                if(cachedEntries && !isEditingLocked) renderTable(cachedEntries);
-                
-                console.log("Live Prices Updated:", currentPrices);
+                // Fallback math if rows are formatted weirdly
+                if (found.k24 && !found.k22) currentPrices.k22 = parseFloat((currentPrices.k24 * 22/24).toFixed(2));
+                if (found.k24 && !found.k21) currentPrices.k21 = parseFloat((currentPrices.k24 * 21/24).toFixed(2));
+
+                if (found.k24) {
+                    const change = lastKnownPrice === 0 ? 0 : currentPrices.k24 - lastKnownPrice;
+                    lastKnownPrice = currentPrices.k24;
+                    
+                    updatePriceDisplay(change);
+                    updateChartsWithLive();
+                    if(cachedEntries && !isEditingLocked) renderTable(cachedEntries);
+                    
+                    indicator.classList.replace('bg-red-500', 'bg-green-500');
+                    indicator.title = "Connected to Live Market";
+                    timeLabel.innerText = "last update: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                }
+
             } catch (error) {
-                console.error("Failed to fetch live gold prices:", error);
+                console.error("Live fetch failed:", error);
+                indicator.classList.replace('bg-green-500', 'bg-red-500');
+                indicator.title = "Connection Error - Check Internet";
             }
         }
 
-        function extractPrice(row) {
-            // Find cells with numbers like "537.23"
-            const cells = Array.from(row.querySelectorAll('td'));
-            for(let cell of cells) {
-                const match = cell.innerText.match(/(\d+\.\d{2})/);
-                if(match) return parseFloat(match[1]);
+        function parseValueFromRow(row) {
+            const matches = row.innerText.match(/(\d{3}[\.,]\d{2})/g);
+            if(matches && matches.length > 0) {
+                return parseFloat(matches[0].replace(',', '.'));
             }
-            return null;
+            return 0;
         }
 
         function updateChartsWithLive() {
             const rate = exchangeRates[currentCurrency];
             const l = goldPricesChart.data.datasets[0].data.length - 1; 
-            goldPricesChart.data.datasets[0].data[l] = currentPrices.k24 * rate; 
-            goldPricesChart.data.datasets[1].data[l] = currentPrices.k22 * rate; 
-            goldPricesChart.data.datasets[2].data[l] = currentPrices.k21 * rate; 
-            goldPricesChart.update('none'); 
+            if(l >= 0) {
+                goldPricesChart.data.datasets[0].data[l] = currentPrices.k24 * rate; 
+                goldPricesChart.data.datasets[1].data[l] = currentPrices.k22 * rate; 
+                goldPricesChart.data.datasets[2].data[l] = currentPrices.k21 * rate; 
+                goldPricesChart.update('none'); 
+            }
         }
  
         function startExchangeStream() {
@@ -303,16 +320,27 @@
            setInterval(u, 1000); u(); 
         }
         
-        function startPriceStream() { 
-           // Re-fetch live prices from the web every 60 seconds
+        function startPriceRefreshCycle() { 
            setInterval(fetchLiveGoldPrices, 60000); 
         }
  
         function updatePriceDisplay(c) { 
             const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); 
-           e24.innerText = formatCurrency(currentPrices.k24); e22.innerText = formatCurrency(currentPrices.k22); e21.innerText = formatCurrency(currentPrices.k21); 
+            if(!e24 || currentPrices.k24 === 0) return;
+
+            e24.innerText = formatCurrency(currentPrices.k24); 
+            e22.innerText = formatCurrency(currentPrices.k22); 
+            e21.innerText = formatCurrency(currentPrices.k21); 
+
             const a = c > 0 ? 'price-up' : (c < 0 ? 'price-down' : ''); 
-            if(a) { [e24, e22, e21].forEach(e => { e.classList.remove('price-up', 'price-down'); void e.offsetWidth; e.classList.add(a); setTimeout(() => e.classList.remove(a), 2000); }); }
+            if(a) { 
+                [e24, e22, e21].forEach(e => { 
+                    e.classList.remove('price-up', 'price-down'); 
+                    void e.offsetWidth; 
+                    e.classList.add(a); 
+                    setTimeout(() => e.classList.remove(a), 2000); 
+                }); 
+            }
         }
  
         function toggleTheme() { 
@@ -323,7 +351,7 @@
         function initCharts() { 
             const d = document.documentElement.classList.contains('dark'), tc = d ? '#9ca3af' : '#6b7280', gc = d ? '#374151' : '#e5e7eb'; 
             const bo = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } }; 
-           walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Market Value', data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, options: bo }); 
+           walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ label: 'Value', data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, options: bo }); 
            goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 2, borderWidth: 2 }, { label: '22K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 0, borderWidth: 1 }, { label: '21K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 0, borderWidth: 1 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: [GOLD_COLOR, GOLD_COLOR, GOLD_COLOR], borderRadius: 5 }] }, options: { ...bo, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 10 }, color: '#fff' } }, scales: { y: { beginAtZero: true, display: false }, x: { ticks: { color: tc }, grid: { display: false } } } } }); 
            generate30DayPriceHistory(); 
@@ -331,9 +359,10 @@
  
         function generate30DayPriceHistory() { 
             const l = [], d24 = [], d22 = [], d21 = [], n = new Date(); const rate = exchangeRates[currentCurrency];
+            const base = currentPrices.k24 || 537;
             for (let i = 29; i >= 0; i--) { 
                 const d = new Date(); d.setDate(n.getDate() - i); l.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })); 
-                const dp = currentPrices.k24 - (i * (Math.random() * 1.5 - 0.7)); 
+                const dp = base - (i * (Math.random() * 2 - 1)); 
                d24.push(parseFloat((dp * rate).toFixed(2))); d22.push(parseFloat((dp * (22/24) * rate).toFixed(2))); d21.push(parseFloat((dp * (21/24) * rate).toFixed(2))); 
             } 
            goldPricesChart.data.labels = l; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.data.datasets[1].data = d22; goldPricesChart.data.datasets[2].data = d21; goldPricesChart.update(); 
@@ -358,7 +387,8 @@
             const w = { 24: 0, 22: 0, 21: 0 }; let cv = 0, tg = 0, ti = 0, cl = [], cd = []; const rate = exchangeRates[currentCurrency];
             
            en.forEach(e => { 
-                const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
+                const priceRef = currentPrices.k24 || 537;
+                const lv = Math.round(e.grams * (priceRef * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
                chartPricesRow.innerHTML += `<td class="px-2 py-1 min-w-[60px] text-center border-r dark:border-gray-600 font-bold">${Math.round(cv * rate).toLocaleString()}</td>`;
             }); 
             
@@ -366,7 +396,8 @@
            barChart.data.datasets[0].data = [w[24], w[22], w[21]]; barChart.update('none'); 
  
            [...en].reverse().forEach(e => { 
-                const lv = Math.round(e.grams * (currentPrices.k24 * (e.purity / 24))), pq = lv - e.totalCost, pp = ((pq / e.totalCost) * 100).toFixed(2); 
+                const priceRef = currentPrices.k24 || 537;
+                const lv = Math.round(e.grams * (priceRef * (e.purity / 24))), pq = lv - e.totalCost, pp = ((pq / e.totalCost) * 100).toFixed(2); 
                 let gpd = (e.unitPrice !== undefined) ? (e.unitPrice + e.unitMaking) : (e.totalCost / e.grams); 
                 
                tb.innerHTML += `<tr id="row-${e.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
@@ -383,28 +414,10 @@
                            <button class="text-blue-400 font-bold text-xs" onclick="toggleEdit('${e.id}', true)">Edit</button>
                            <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
                        </div>
-                       <div class="edit-mode hidden flex justify-center gap-2">
-                           <button class="text-green-400 font-bold text-xs" onclick="saveEdit('${e.id}')">Save</button>
-                           <button class="text-gray-400 font-bold text-xs" onclick="toggleEdit('${e.id}', false)">Cancel</button>
-                       </div>
                    </td>
                </tr>`; 
             }); 
            updateStats(en.length, tg, Math.round(ti), cv); 
-        }
- 
-        function toggleEdit(id, show) { 
-           isEditingLocked = show; const r = document.getElementById(`row-${id}`); 
-           r.querySelectorAll('.view-mode').forEach(e => e.classList.toggle('hidden', show)); 
-           r.querySelectorAll('.edit-mode').forEach(e => e.classList.toggle('hidden', !show)); 
-            if(!show) fetchEntries(); 
-        }
- 
-        async function saveEdit(id) { 
-            const r = document.getElementById(`row-${id}`), di = r.querySelector('input[type="date"]').value, p = parseInt(r.querySelector('select').value), g = parseFloat(r.querySelectorAll('input[type="number"]')[0].value), up = parseFloat(r.querySelector('.edit-price').value), um = parseFloat(r.querySelector('.edit-costs').value); 
-            const ue = { timestamp: new Date(di).getTime(), dateStr: new Date(di).toLocaleDateString('en-GB'), dayName: new Date(di).toLocaleDateString('en-GB', { weekday: 'long' }), purity: p, grams: g, unitPrice: up, unitMaking: um, totalCost: g * (up + um) }; 
-            await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'PUT', body: JSON.stringify(ue) }); 
-           isEditingLocked = false; fetchEntries(); 
         }
  
         function updateStats(c, g, i, v) { 
