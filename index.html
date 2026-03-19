@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.2.7</title>
+    <title>Gold Investment Wallet V2.2.8</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -54,7 +54,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.2.7</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.2.8</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="font-black text-white underline decoration-yellow-400/50">--</span></p>
@@ -214,7 +214,6 @@
                 const data = await response.json();
                 if (data.contents) {
                     parseMarketHTML(data.contents);
-                    // NEW: Try to update history based on page data if available
                     updateHistoryFromPage(data.contents);
                     return success(indicator, timeLabel);
                 }
@@ -259,7 +258,6 @@
         }
 
         function updateHistoryFromPage(html) {
-            // Attempt to find historical tables commonly found on gold price sites
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             const tables = Array.from(doc.querySelectorAll('table'));
@@ -384,7 +382,6 @@
             const commonOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
                 plugins: { legend: { display: false }, datalabels: { display: false } },
                 scales: { 
                     x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, 
@@ -395,9 +392,10 @@
             walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { 
                 type: 'line', 
                 data: { labels: [], datasets: [{ data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, 
-                options: commonOptions 
+                options: { ...commonOptions, interaction: { mode: 'index', intersect: false } } 
             }); 
 
+            // ENHANCED INTERACTION FOR MARKET RATES CHART
             goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { 
                 type: 'line', 
                 data: { 
@@ -410,6 +408,10 @@
                 }, 
                 options: { 
                     ...commonOptions, 
+                    interaction: { 
+                        mode: 'nearest', // Shows only the price of the closest line
+                        intersect: false // Allow hover between points
+                    },
                     plugins: { 
                         legend: { display: true, position: 'top', labels: { color: tc, usePointStyle: true, boxWidth: 6, font: { size: 10, weight: 'bold' } } },
                         tooltip: { backgroundColor: 'rgba(17, 24, 39, 0.9)', padding: 10, titleFont: { size: 11 }, bodyFont: { size: 10 }, cornerRadius: 4 }
@@ -431,30 +433,23 @@
         }
 
         function generateEnhancedHistory() {
-            // Simulated Random Walk (Geometric Brownian Motion) Fallback
             const l = [], d24 = [], d22 = [], d21 = [], n = new Date();
             const rate = exchangeRates[currentCurrency];
             let price = (currentPrices.k24 || 325);
-            
-            // Generate 30 points of realistic volatility
             const steps = 30;
-            const volatility = 0.008; // 0.8% max daily move
+            const volatility = 0.008; 
             
             for (let i = steps; i >= 0; i--) {
                 const d = new Date();
                 d.setDate(n.getDate() - i);
                 const dayLabel = d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
                 l.push(dayLabel);
-                
-                // Random Walk logic
                 const change = 1 + (Math.random() * volatility * 2 - volatility);
                 price = price * change;
-                
                 d24.push(+(price * rate).toFixed(2));
                 d22.push(+(price * 0.916 * rate).toFixed(2));
                 d21.push(+(price * 0.875 * rate).toFixed(2));
             }
-            
             renderEnhancedHistory(d24, d22, d21, l);
         }
 
@@ -467,7 +462,6 @@
                     return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
                 });
             }
-            
             goldPricesChart.data.labels = labels;
             goldPricesChart.data.datasets[0].data = h24;
             goldPricesChart.data.datasets[1].data = h22;
@@ -493,7 +487,7 @@
             currentCurrency = document.getElementById('currencySelector').value; 
             document.querySelectorAll('.currency-label').forEach(el => el.innerText = currentCurrency); 
             updatePriceDisplay(0); 
-            generateEnhancedHistory(); // Refresh chart scales for new currency
+            generateEnhancedHistory(); 
             if(cachedEntries) renderTable(cachedEntries); 
         }
         
