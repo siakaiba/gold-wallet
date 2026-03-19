@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.2.4</title>
+    <title>Gold Investment Wallet V2.2.5</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -58,7 +58,7 @@
                     <div id="liveIndicator" class="w-3 h-3 rounded-full bg-red-500 shadow-inner transition-all duration-500" title="Disconnected"></div>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
-                  <p class="text-yellow-100 cursor-pointer hover:text-white" onclick="manualPriceEntry()">24K: <span id="display24K" class="font-black text-white underline decoration-yellow-400/50">--</span></p>
+                  <p class="text-yellow-100">24K: <span id="display24K" class="font-black text-white underline decoration-yellow-400/50">--</span></p>
                   <p class="text-yellow-100">22K: <span id="display22K" class="font-bold text-white">--</span></p>
                   <p class="text-yellow-100">21K: <span id="display21K" class="font-bold text-white">--</span></p>
                   <span id="lastUpdateLabel" class="text-white font-extrabold tracking-widest text-[10px] bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm">syncing...</span>
@@ -82,7 +82,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                   <div class="flex items-center gap-3 mb-1">
                       <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                      <span class="text-[10px] font-bold opacity-80">V2.2.4</span>
+                      <span class="text-[10px] font-bold opacity-80">V2.2.5</span>
                   </div>
                   <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
               </div>
@@ -224,7 +224,7 @@
             } catch(e) {}
             indicator.classList.remove('bg-green-500', 'status-flash');
             indicator.classList.add('bg-red-500');
-            timeLabel.innerText = "offline (tap price to fix)";
+            timeLabel.innerText = "offline";
         }
 
         function success(ind, lbl) {
@@ -260,16 +260,6 @@
             updatePriceDisplay(diff);
             updateChartsWithLive();
             if(cachedEntries && !isEditingLocked) renderTable(cachedEntries);
-        }
-
-        function manualPriceEntry() {
-            const val = prompt("Enter 24K Price (QAR):", currentPrices.k24 || 537);
-            if (val && !isNaN(val)) {
-                currentPrices.k24 = parseFloat(val);
-                currentPrices.k22 = +(currentPrices.k24 * 0.9166).toFixed(2);
-                currentPrices.k21 = +(currentPrices.k24 * 0.875).toFixed(2);
-                updatePriceUI();
-            }
         }
 
         // --- TABLES, EDITS, & STYLING ---
