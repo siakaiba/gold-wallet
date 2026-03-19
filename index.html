@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.2.9</title>
+    <title>Gold Investment Wallet V2.3.1</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -54,12 +54,12 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.2.9</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.3.1</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
-                  <p class="text-yellow-100">24K: <span id="display24K" class="font-black text-white underline decoration-yellow-400/50">--</span></p>
-                  <p class="text-yellow-100">22K: <span id="display22K" class="font-bold text-white">--</span></p>
-                  <p class="text-yellow-100">21K: <span id="display21K" class="font-bold text-white">--</span></p>
+                  <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
+                  <p class="text-yellow-100">22K: <span id="display22K" class="text-white font-medium">--</span></p>
+                  <p class="text-yellow-100">21K: <span id="display21K" class="text-white font-medium">--</span></p>
               </div>
           </div>
             
@@ -155,8 +155,8 @@
                           <th class="p-4 border-b dark:border-gray-600">Type</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center">Price (<span class="currency-label">QAR</span>)</th>
-                          <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white">Purchase Price</th>
-                          <th class="p-4 border-b dark:border-gray-600 text-center text-gray-900 dark:text-white">Current Price</th>
+                          <th class="p-4 border-b dark:border-gray-600 text-center">Purchase Price</th>
+                          <th class="p-4 border-b dark:border-gray-600 text-center">Current Price</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center">Profit (<span class="currency-label">QAR</span>)</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center no-pdf">Actions</th>
@@ -384,7 +384,7 @@
                 maintainAspectRatio: false,
                 plugins: { 
                     legend: { display: false }, 
-                    datalabels: { display: false } // Global disable for clarity
+                    datalabels: { display: false }
                 },
                 scales: { 
                     x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, 
@@ -415,7 +415,7 @@
                         intersect: false 
                     },
                     plugins: { 
-                        datalabels: { display: false }, // ABSOLUTELY DISABLED HERE
+                        datalabels: { display: false }, 
                         legend: { display: true, position: 'top', labels: { color: tc, usePointStyle: true, boxWidth: 6, font: { size: 10, weight: 'bold' } } },
                         tooltip: { 
                            enabled: true,
@@ -446,7 +446,7 @@
                     plugins: { 
                         legend: { display: false }, 
                         datalabels: { 
-                            display: true, // Only enabled for the bar chart where it is useful
+                            display: true, 
                             anchor: 'center', 
                             align: 'center', 
                             formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', 
@@ -523,7 +523,9 @@
         function updatePriceDisplay(c) { 
             const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); 
             if(!e24 || currentPrices.k24 === 0) return;
-            e24.innerText = formatCurrency(currentPrices.k24); e22.innerText = formatCurrency(currentPrices.k22); e21.innerText = formatCurrency(currentPrices.k21); 
+            e24.innerText = formatCurrency(currentPrices.k24); 
+            e22.innerText = formatCurrency(currentPrices.k22); 
+            e21.innerText = formatCurrency(currentPrices.k21); 
             if (c !== 0) { const a = c > 0 ? 'price-up' : 'price-down'; [e24, e22, e21].forEach(e => { e.classList.remove('price-up', 'price-down'); void e.offsetWidth; e.classList.add(a); setTimeout(() => e.classList.remove(a), 2000); }); }
         }
         function startExchangeStream() { setInterval(() => { if (currentCurrency !== 'QAR') { exchangeRates[currentCurrency] *= (1 + (Math.random() * 0.0001 - 0.00005)); updatePriceDisplay(0); if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); } }, 10000); }
