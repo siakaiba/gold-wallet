@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.2.3</title>
+    <title>Gold Investment Wallet V2.2.4</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -25,8 +25,13 @@
         @keyframes pulse-gold-text { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.98); } }
         .progress-container { width: 240px; height: 4px; background: #374151; border-radius: 10px; margin-top: 20px; overflow: hidden; }
         .progress-bar { height: 100%; background: linear-gradient(90deg, #ca8a04, #facc15); width: 0%; transition: width 4s linear; }
-        .status-pulse { animation: pulse-opacity 2s infinite; }
-        @keyframes pulse-opacity { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        /* FLASHING ANIMATION */
+        @keyframes live-flash {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.2); }
+        }
+        .status-flash { animation: live-flash 2s infinite; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -37,11 +42,11 @@
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300 h-screen flex flex-col overflow-hidden">
  
     <div id="loadingScreen">
-        <h2 class="text-yellow-500 font-bold tracking-widest uppercase text-sm loader-text-pulse">Establishing Live Connection</h2>
+        <h2 class="text-yellow-500 font-bold tracking-widest uppercase text-sm loader-text-pulse">Syncing Wallet Data</h2>
         <div class="progress-container">
             <div id="loaderBar" class="progress-bar"></div>
         </div>
-        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50" id="loaderSubtext">Syncing Qatar Market Data...</p>
+        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Fetching Qatar Market Data...</p>
     </div>
     
     <div id="mainDashboard" class="max-w-7xl mx-auto w-full h-full flex flex-col gap-0 p-0 mt-[5px] bg-gray-100 dark:bg-gray-900">
@@ -50,13 +55,13 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <div id="liveIndicator" class="w-2.5 h-2.5 rounded-full bg-red-500 status-pulse" title="Not Syncing"></div>
+                    <div id="liveIndicator" class="w-3 h-3 rounded-full bg-red-500 shadow-inner transition-all duration-500" title="Disconnected"></div>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100 cursor-pointer hover:text-white" onclick="manualPriceEntry()">24K: <span id="display24K" class="font-black text-white underline decoration-yellow-400/50">--</span></p>
                   <p class="text-yellow-100">22K: <span id="display22K" class="font-bold text-white">--</span></p>
                   <p class="text-yellow-100">21K: <span id="display21K" class="font-bold text-white">--</span></p>
-                  <span id="lastUpdateLabel" class="text-yellow-200/40 italic normal-case text-[9px]">waiting for connection...</span>
+                  <span id="lastUpdateLabel" class="text-white font-extrabold tracking-widest text-[10px] bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm">syncing...</span>
               </div>
           </div>
             
@@ -77,7 +82,7 @@
                <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
                   <div class="flex items-center gap-3 mb-1">
                       <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                      <span class="text-[10px] font-bold opacity-80">V2.2.3</span>
+                      <span class="text-[10px] font-bold opacity-80">V2.2.4</span>
                   </div>
                   <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
               </div>
@@ -203,7 +208,7 @@
             }, 4000);
         };
 
-        // --- DATA FETCHING ---
+        // --- FETCHING & MARKET UI ---
         async function fetchGoldFlow() {
             const indicator = document.getElementById('liveIndicator');
             const timeLabel = document.getElementById('lastUpdateLabel');
@@ -217,14 +222,14 @@
                 const html = await response.text();
                 if (parseMarketHTML(html)) return success(indicator, timeLabel);
             } catch(e) {}
-            indicator.classList.replace('bg-green-500', 'bg-red-500');
-            indicator.classList.add('status-pulse');
+            indicator.classList.remove('bg-green-500', 'status-flash');
+            indicator.classList.add('bg-red-500');
             timeLabel.innerText = "offline (tap price to fix)";
         }
 
         function success(ind, lbl) {
-            ind.classList.replace('bg-red-500', 'bg-green-500');
-            ind.classList.remove('status-pulse');
+            ind.classList.remove('bg-red-500');
+            ind.classList.add('bg-green-500', 'status-flash');
             lbl.innerText = "market live: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
 
@@ -242,8 +247,7 @@
             if (dataFound) {
                 if (currentPrices.k22 === 0) currentPrices.k22 = +(currentPrices.k24 * 0.9166).toFixed(2);
                 if (currentPrices.k21 === 0) currentPrices.k21 = +(currentPrices.k24 * 0.875).toFixed(2);
-                updatePriceUI();
-                return true;
+                updatePriceUI(); return true;
             }
             return false;
         }
@@ -268,65 +272,7 @@
             }
         }
 
-        // --- CHARTS & UI ---
-        function initCharts() { 
-            const d = document.documentElement.classList.contains('dark'), tc = d ? '#9ca3af' : '#6b7280', gc = d ? '#374151' : '#e5e7eb'; 
-            const bo = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } }; 
-           
-            walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, options: bo }); 
-           
-            goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 2, borderWidth: 2 }, { label: '22K', data: [], borderColor: '#ca8a0499', tension: 0.2, pointRadius: 0, borderWidth: 1 }, { label: '21K', data: [], borderColor: '#ca8a0466', tension: 0.2, pointRadius: 0, borderWidth: 1 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
-           
-            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { 
-                type: 'bar', 
-                data: { 
-                    labels: ['24K', '22K', '21K'], 
-                    datasets: [{ 
-                        data: [0, 0, 0], 
-                        backgroundColor: GOLD_COLOR,
-                        borderRadius: 5 
-                    }] 
-                }, 
-                options: { 
-                    ...bo, 
-                    plugins: { 
-                        legend: { display: false }, 
-                        datalabels: { 
-                            display: true, 
-                            anchor: 'center',
-                            align: 'center',
-                            formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', 
-                            font: { weight: 'bold', size: 12 },
-                            color: '#fff' 
-                        } 
-                    }, 
-                    scales: { 
-                        y: { display: false }, 
-                        x: { ticks: { color: tc, font: { size: 12, weight: 'bold' } }, grid: { display: false } } 
-                    } 
-                } 
-            }); 
-            generate30DayPriceHistory(); 
-        }
-
-        function updateChartsWithLive() {
-            const rate = exchangeRates[currentCurrency];
-            const l = goldPricesChart.data.datasets[0].data.length - 1; 
-            if(l >= 0) {
-                goldPricesChart.data.datasets[0].data[l] = currentPrices.k24 * rate; 
-                goldPricesChart.data.datasets[1].data[l] = currentPrices.k22 * rate; 
-                goldPricesChart.data.datasets[2].data[l] = currentPrices.k21 * rate; 
-                goldPricesChart.update('none'); 
-            }
-        }
-
-        function generate30DayPriceHistory() { 
-            const l = [], d24 = [], d22 = [], d21 = [], n = new Date(); const r = exchangeRates[currentCurrency]; const base = currentPrices.k24 || 537;
-            for (let i = 29; i >= 0; i--) { const d = new Date(); d.setDate(n.getDate() - i); l.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })); const dp = base - (i * (Math.random() * 1.5 - 0.5)); d24.push(+(dp * r).toFixed(2)); d22.push(+(dp * 0.916 * r).toFixed(2)); d21.push(+(dp * 0.875 * r).toFixed(2)); } 
-           goldPricesChart.data.labels = l; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.data.datasets[1].data = d22; goldPricesChart.data.datasets[2].data = d21; goldPricesChart.update(); 
-        }
-
-        // --- TABLE & CRUD ---
+        // --- TABLES, EDITS, & STYLING ---
         function renderTable(data) { 
             const tb = document.getElementById('goldTable'); tb.innerHTML = ''; 
             const cpRow = document.getElementById('chartValuePrices'); cpRow.innerHTML = '';
@@ -412,7 +358,38 @@
             isEditingLocked = false; fetchEntries(); 
         }
 
-        // --- UTILS ---
+        // --- CHARTS & UI UTILS ---
+        function initCharts() { 
+            const d = document.documentElement.classList.contains('dark'), tc = d ? '#9ca3af' : '#6b7280', gc = d ? '#374151' : '#e5e7eb'; 
+            const bo = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } }; 
+            walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, options: bo }); 
+            goldPricesChart = new Chart(document.getElementById('goldPricesChart').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '24K', data: [], borderColor: GOLD_COLOR, tension: 0.2, pointRadius: 2, borderWidth: 2 }, { label: '22K', data: [], borderColor: '#ca8a0499', tension: 0.2, pointRadius: 0, borderWidth: 1 }, { label: '21K', data: [], borderColor: '#ca8a0466', tension: 0.2, pointRadius: 0, borderWidth: 1 } ] }, options: { ...bo, plugins: { ...bo.plugins, legend: { display: true, labels: { color: tc, boxWidth: 10, font: { size: 10 } } } } } }); 
+            
+            barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { 
+                type: 'bar', 
+                data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: GOLD_COLOR, borderRadius: 5 }] }, 
+                options: { ...bo, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 12 }, color: '#fff' } }, scales: { y: { display: false }, x: { ticks: { color: tc, font: { size: 12, weight: 'bold' } }, grid: { display: false } } } } 
+            }); 
+            generate30DayPriceHistory(); 
+        }
+
+        function updateChartsWithLive() {
+            const rate = exchangeRates[currentCurrency];
+            const l = goldPricesChart.data.datasets[0].data.length - 1; 
+            if(l >= 0) {
+                goldPricesChart.data.datasets[0].data[l] = currentPrices.k24 * rate; 
+                goldPricesChart.data.datasets[1].data[l] = currentPrices.k22 * rate; 
+                goldPricesChart.data.datasets[2].data[l] = currentPrices.k21 * rate; 
+                goldPricesChart.update('none'); 
+            }
+        }
+
+        function generate30DayPriceHistory() { 
+            const l = [], d24 = [], d22 = [], d21 = [], n = new Date(); const r = exchangeRates[currentCurrency]; const base = currentPrices.k24 || 537;
+            for (let i = 29; i >= 0; i--) { const d = new Date(); d.setDate(n.getDate() - i); l.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })); const dp = base - (i * (Math.random() * 1.5 - 0.5)); d24.push(+(dp * r).toFixed(2)); d22.push(+(dp * 0.916 * r).toFixed(2)); d21.push(+(dp * 0.875 * r).toFixed(2)); } 
+           goldPricesChart.data.labels = l; goldPricesChart.data.datasets[0].data = d24; goldPricesChart.data.datasets[1].data = d22; goldPricesChart.data.datasets[2].data = d21; goldPricesChart.update(); 
+        }
+
         async function fetchLiveRates() { try { const res = await fetch('https://open.er-api.com/v6/latest/QAR'); const data = await res.json(); if(data?.rates) { exchangeRates.JOD = data.rates.JOD; exchangeRates.USD = data.rates.USD; exchangeRates.EUR = data.rates.EUR; } } catch (e) {} }
         function formatCurrency(val) { const rate = exchangeRates[currentCurrency]; return (val * rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency; }
         function startClock() { const u = () => { document.getElementById('realTimeClock').innerText = new Date().toLocaleTimeString('en-GB', { hour12: false }) + " - " + new Date().toLocaleDateString('en-GB'); }; setInterval(u, 1000); u(); }
