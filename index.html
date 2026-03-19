@@ -55,6 +55,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.2.6</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="font-black text-white underline decoration-yellow-400/50">--</span></p>
@@ -82,12 +83,8 @@
                    <div id="liveIndicator" class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm transition-all duration-500" title="Disconnected"></div>
                </div>
  
-               <div class="flex flex-col items-end border-l border-yellow-500/30 pl-4 mr-[3px]">
-                  <div class="flex items-center gap-3 mb-1">
-                      <span id="realTimeClock" class="text-[10px] font-bold opacity-80">00:00:00</span>
-                      <span class="text-[10px] font-bold opacity-80">V2.2.5</span>
-                  </div>
-                  <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 py-1.5 rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
+               <div class="flex items-center border-l border-yellow-500/30 pl-4 h-9">
+                  <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 h-full rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
               </div>
            </div>
         </header>
@@ -198,7 +195,6 @@
             initCharts(); 
             fetchEntries(); 
             fetchLiveRates(); 
-            startClock(); 
             
             fetchGoldFlow();
             setInterval(fetchGoldFlow, 60000); 
@@ -385,7 +381,6 @@
 
         async function fetchLiveRates() { try { const res = await fetch('https://open.er-api.com/v6/latest/QAR'); const data = await res.json(); if(data?.rates) { exchangeRates.JOD = data.rates.JOD; exchangeRates.USD = data.rates.USD; exchangeRates.EUR = data.rates.EUR; } } catch (e) {} }
         function formatCurrency(val) { const rate = exchangeRates[currentCurrency]; return (val * rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency; }
-        function startClock() { const u = () => { document.getElementById('realTimeClock').innerText = new Date().toLocaleTimeString('en-GB', { hour12: false }) + " - " + new Date().toLocaleDateString('en-GB'); }; setInterval(u, 1000); u(); }
         function changeCurrency() { currentCurrency = document.getElementById('currencySelector').value; document.querySelectorAll('.currency-label').forEach(el => el.innerText = currentCurrency); updatePriceDisplay(0); if(cachedEntries) renderTable(cachedEntries); }
         function updatePriceDisplay(c) { 
             const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); 
