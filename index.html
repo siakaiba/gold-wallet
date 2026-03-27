@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.4.3</title>
+    <title>Gold Investment Wallet V2.4.5</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -47,7 +47,7 @@
         <div class="progress-container">
             <div id="loaderBar" class="progress-bar"></div>
         </div>
-        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Connecting to Global Markets...</p>
+        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Syncing Stable Baseline...</p>
     </div>
     
     <div id="mainDashboard" class="max-w-[98%] mx-auto w-full h-full flex flex-col gap-0 p-0 mt-[5px] bg-gray-100 dark:bg-gray-900">
@@ -56,7 +56,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.4.3</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.4.5</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -207,7 +207,7 @@
 
         function loadTradingView() {
             const isDark = document.documentElement.classList.contains('dark');
-            const bgColor = isDark ? "#111827" : "#f3f4f6";
+            const bgColor = isDark ? "#111827" : "#f3f4f6"; 
             
             new TradingView.widget({
                 "autosize": true,
@@ -233,20 +233,14 @@
             let successFlag = false;
 
             try {
-                // Primary method: AllOrigins
                 const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(SOURCE_URL)}&ts=${Date.now()}`);
                 const data = await response.json();
-                if (data.contents && parseMarketHTML(data.contents)) {
-                    successFlag = true;
-                }
+                if (data.contents && parseMarketHTML(data.contents)) successFlag = true;
             } catch(e) {
-                // Secondary method: CORSProxy
                 try {
                     const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(SOURCE_URL)}`);
                     const html = await response.text();
-                    if (html && parseMarketHTML(html)) {
-                        successFlag = true;
-                    }
+                    if (html && parseMarketHTML(html)) successFlag = true;
                 } catch(err) {}
             }
 
@@ -315,20 +309,66 @@
                 let um_base = e.unitMaking !== undefined ? e.unitMaking : 0;
 
                tb.innerHTML += `<tr id="row-${e.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
-                   <td class="p-4 text-xs font-bold">${e.dateStr}</td>
-                   <td class="p-4 text-xs font-bold text-yellow-600">${e.purity}K</td>
-                   <td class="p-4 text-xs text-center font-bold">${e.grams}g</td>
-                   <td class="p-4 text-xs text-center font-bold">${formatCurrency(up_base + um_base)}</td>
+                   <td class="p-4 text-xs font-bold">
+                        <div class="view-mode">${e.dateStr}</div>
+                        <input type="date" class="edit-mode hidden border rounded p-1 text-black text-[10px] w-24" value="${new Date(e.timestamp).toISOString().split('T')[0]}">
+                   </td>
+                   <td class="p-4 text-xs font-bold text-yellow-600">
+                        <div class="view-mode">${e.purity}K</div>
+                        <select class="edit-mode hidden border rounded p-1 text-black text-[10px]">
+                            <option value="24" ${e.purity==24?'selected':''}>24K</option>
+                            <option value="22" ${e.purity==22?'selected':''}>22K</option>
+                            <option value="21" ${e.purity==21?'selected':''}>21K</option>
+                        </select>
+                   </td>
+                   <td class="p-4 text-xs text-center font-bold">
+                        <div class="view-mode">${e.grams}g</div>
+                        <input type="number" class="edit-mode hidden border rounded p-1 text-black text-[10px] w-12 text-center" value="${e.grams}">
+                   </td>
+                   <td class="p-4 text-xs text-center font-bold">
+                        <div class="view-mode">${formatCurrency(up_base + um_base)}</div>
+                        <div class="edit-mode hidden flex flex-col gap-1">
+                            <input type="number" class="edit-price border rounded p-1 text-black text-[8px] w-16" value="${up_base}" placeholder="Price">
+                            <input type="number" class="edit-costs border rounded p-1 text-black text-[8px] w-16" value="${um_base}" placeholder="Making">
+                        </div>
+                   </td>
                    <td class="p-4 text-xs text-center font-bold">${formatCurrency(e.totalCost)}</td>
                    <td class="p-4 text-xs text-center font-bold">${formatCurrency(lv)}</td>
                    <td class="p-4 text-xs text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(pq)}</td>
                    <td class="p-4 text-xs text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
                    <td class="p-4 text-center no-pdf">
-                       <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
+                       <div class="view-mode flex justify-center gap-2">
+                           <button class="text-blue-400 font-bold text-xs" onclick="toggleEdit('${e.id}', true)">Edit</button>
+                           <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
+                       </div>
+                       <div class="edit-mode hidden flex justify-center gap-2">
+                           <button class="text-green-500 font-bold text-xs" onclick="saveEdit('${e.id}')">Save</button>
+                           <button class="text-gray-400 font-bold text-xs" onclick="toggleEdit('${e.id}', false)">Cancel</button>
+                       </div>
                    </td>
                </tr>`; 
             }); 
            updateStats(en.length, tg, Math.round(ti), cv); 
+        }
+
+        function toggleEdit(id, show) { 
+            isEditingLocked = show; 
+            const r = document.getElementById(`row-${id}`); 
+            r.querySelectorAll('.view-mode').forEach(e => e.classList.toggle('hidden', show)); 
+            r.querySelectorAll('.edit-mode').forEach(e => e.classList.toggle('hidden', !show)); 
+            if(!show) fetchEntries(); 
+        }
+
+        async function saveEdit(id) { 
+            const r = document.getElementById(`row-${id}`);
+            const dateVal = r.querySelector('input[type="date"]').value;
+            const purityVal = parseInt(r.querySelector('select').value);
+            const gramVal = parseFloat(r.querySelectorAll('input[type="number"]')[0].value);
+            const priceVal = parseFloat(r.querySelector('.edit-price').value) || 0;
+            const costVal = parseFloat(r.querySelector('.edit-costs').value) || 0;
+            const ue = { timestamp: new Date(dateVal).getTime(), dateStr: new Date(dateVal).toLocaleDateString('en-GB'), purity: purityVal, grams: gramVal, unitPrice: priceVal, unitMaking: costVal, totalCost: gramVal * (priceVal + costVal) }; 
+            await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'PUT', body: JSON.stringify(ue) }); 
+            isEditingLocked = false; fetchEntries(); 
         }
 
         function initCharts() { 
