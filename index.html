@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.4.0</title>
+    <title>Gold Investment Wallet V2.4.1</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -56,7 +56,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.4.0</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.4.1</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -210,7 +210,7 @@
             new TradingView.widget({
                 "autosize": true,
                 "symbol": "OANDA:XAUUSD",
-                "interval": "D",
+                "interval": "240", // Changed to 240 (4 Hours)
                 "timezone": "Etc/UTC",
                 "theme": isDark ? "dark" : "light",
                 "style": "2",
@@ -301,7 +301,7 @@
                    <td class="p-4 text-xs text-center font-bold">${formatCurrency(e.totalCost)}</td>
                    <td class="p-4 text-xs text-center font-bold">${formatCurrency(lv)}</td>
                    <td class="p-4 text-xs text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(pq)}</td>
-                   <td class="p-4 text-xs text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
+                   <td class="p-4 text-xs text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${profitPct}%</td>
                    <td class="p-4 text-center no-pdf">
                        <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
                    </td>
@@ -370,7 +370,7 @@
         function toggleTheme() { 
             document.documentElement.classList.toggle('dark'); 
             localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; 
-            loadTradingView(); // Reload widget with new theme
+            loadTradingView(); 
             [walletChart, barChart].forEach(c => c.destroy()); 
             initCharts(); 
             fetchEntries(); 
