@@ -256,7 +256,7 @@
         function success(ind, lbl) {
             ind.classList.remove('bg-red-500');
             ind.classList.add('bg-green-500', 'status-flash');
-            lbl.innerText = "market live: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            lbl.innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
 
         function parseMarketHTML(html) {
