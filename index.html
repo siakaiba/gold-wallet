@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.3.6</title>
+    <title>Gold Investment Wallet V2.3.7</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -47,7 +47,7 @@
         <div class="progress-container">
             <div id="loaderBar" class="progress-bar"></div>
         </div>
-        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Fetching Qatar Market Data...</p>
+        <p class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Fetching Market Data...</p>
     </div>
     
     <div id="mainDashboard" class="max-w-[98%] mx-auto w-full h-full flex flex-col gap-0 p-0 mt-[5px] bg-gray-100 dark:bg-gray-900">
@@ -56,7 +56,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.3.6</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.3.7</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                   <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -67,9 +67,9 @@
             
             <div class="flex items-center gap-4">
                <select id="currencySelector" onchange="changeCurrency()" class="bg-yellow-800/40 text-white text-[10px] font-bold border border-yellow-500/20 rounded-lg h-9 px-2 outline-none no-pdf cursor-pointer">
+                   <option value="USD" selected>USD (Dollar)</option>
                    <option value="QAR">QAR (Riyal)</option>
                    <option value="JOD">JOD (Dinar)</option>
-                   <option value="USD">USD (Dollar)</option>
                    <option value="EUR">EUR (Euro)</option>
                </select>
  
@@ -115,7 +115,7 @@
  
         <div id="chartsContainer" class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b shrink-0">
            <div class="flex flex-col">
-                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Wallet Growth (<span class="currency-label">QAR</span>)</h2>
+                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">Wallet Growth (<span class="currency-label">USD</span>)</h2>
                 <div style="height: 180px;"><canvas id="walletBehaviorChart"></canvas></div>
           </div>
             <div class="border-l dark:border-gray-700 lg:px-6">
@@ -123,7 +123,7 @@
                 <div style="height: 180px;"><canvas id="weightBarChart"></canvas></div>
            </div>
             <div class="border-l dark:border-gray-700 lg:pl-6">
-                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Market Rates (<span class="currency-label">QAR</span>)</h2>
+                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Market Rates (<span class="currency-label">USD</span>)</h2>
                 <div style="height: 180px;"><canvas id="goldPricesChart"></canvas></div>
            </div>
         </div>
@@ -137,8 +137,8 @@
                   <option value="21">21K</option>
               </select>
               <input type="number" id="grams" placeholder="Grams" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
-              <input type="number" id="price" placeholder="Price/g (QAR)" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
-              <input type="number" id="costs" placeholder="Making/g (QAR)" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
+              <input type="number" id="price" placeholder="Price/g (USD)" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
+              <input type="number" id="costs" placeholder="Making/g (USD)" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
               <button onclick="addEntry()" class="bg-yellow-600 text-white h-10 rounded font-bold hover:bg-yellow-700 transition uppercase text-xs">Add Entry</button>
           </div>
         </div>
@@ -151,10 +151,10 @@
                           <th class="p-4 border-b dark:border-gray-600">Date</th>
                           <th class="p-4 border-b dark:border-gray-600">Type</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center">Weight</th>
-                          <th class="p-4 border-b dark:border-gray-600 text-center">Price (<span class="currency-label">QAR</span>)</th>
+                          <th class="p-4 border-b dark:border-gray-600 text-center">Price (<span class="currency-label">USD</span>)</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center">Purchase Price</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center">Current Price</th>
-                          <th class="p-4 border-b dark:border-gray-600 text-center">Profit (<span class="currency-label">QAR</span>)</th>
+                          <th class="p-4 border-b dark:border-gray-600 text-center">Profit (<span class="currency-label">USD</span>)</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center">Profit (%)</th>
                           <th class="p-4 border-b dark:border-gray-600 text-center no-pdf">Actions</th>
                       </tr>
@@ -170,8 +170,9 @@
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         const SOURCE_URL = "https://www.livepriceofgold.com/Qatar-gold-price.html";
         
-        let exchangeRates = { QAR: 1, JOD: 0.1947, USD: 0.2747, EUR: 0.2588 };
-        let currentCurrency = 'QAR';
+        // Defaults updated for USD
+        let exchangeRates = { QAR: 3.64, JOD: 0.709, USD: 1, EUR: 0.94 };
+        let currentCurrency = 'USD';
         let currentPrices = { k24: 0, k22: 0, k21: 0 };
         let lastKnownPrice = 0;
         const GOLD_COLOR = '#ca8a04'; 
@@ -242,13 +243,17 @@
             let dataFound = false;
             rows.forEach(row => {
                 const txt = row.innerText.toUpperCase();
-                if (txt.includes('24K') && txt.includes('GRAM')) { const price = extractPrice(row.innerText); if (price > 100) { currentPrices.k24 = price; dataFound = true; } }
-                if (txt.includes('22K') && txt.includes('GRAM')) { const price = extractPrice(row.innerText); if (price > 100) currentPrices.k22 = price; }
-                if (txt.includes('21K') && txt.includes('GRAM')) { const price = extractPrice(row.innerText); if (price > 100) currentPrices.k21 = price; }
+                if (txt.includes('24K') && txt.includes('GRAM')) { 
+                    const priceQAR = extractPrice(row.innerText); 
+                    if (priceQAR > 100) { 
+                        currentPrices.k24 = priceQAR / 3.64; // Convert scraped QAR to USD
+                        dataFound = true; 
+                    } 
+                }
             });
             if (dataFound) {
-                if (currentPrices.k22 === 0) currentPrices.k22 = +(currentPrices.k24 * 0.9166).toFixed(2);
-                if (currentPrices.k21 === 0) currentPrices.k21 = +(currentPrices.k24 * 0.875).toFixed(2);
+                currentPrices.k22 = +(currentPrices.k24 * 0.9166).toFixed(2);
+                currentPrices.k21 = +(currentPrices.k24 * 0.875).toFixed(2);
                 updatePriceUI(); return true;
             }
             return false;
@@ -266,8 +271,8 @@
                     rows.forEach(row => {
                         const cells = row.querySelectorAll('td');
                         if (cells.length >= 2) {
-                            const p = extractPrice(cells[1].innerText);
-                            if (p > 100) historyData.push(p);
+                            const pQAR = extractPrice(cells[1].innerText);
+                            if (pQAR > 100) historyData.push(pQAR / 3.64);
                         }
                     });
                 }
@@ -295,7 +300,7 @@
             const w = { 24: 0, 22: 0, 21: 0 }; let cv = 0, tg = 0, ti = 0, cl = [], cd = []; const rate = exchangeRates[currentCurrency];
             
            en.forEach(e => { 
-                const ref = currentPrices.k24 || 325;
+                const ref = currentPrices.k24 || 89.5; // Updated USD reference
                 const lv = Math.round(e.grams * (ref * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
             }); 
             
@@ -303,7 +308,7 @@
            barChart.data.datasets[0].data = [w[24], w[22], w[21]]; barChart.update('none'); 
  
            [...en].reverse().forEach(e => { 
-                const ref = currentPrices.k24 || 325;
+                const ref = currentPrices.k24 || 89.5;
                 const lv = Math.round(e.grams * (ref * (e.purity / 24))), pq = lv - e.totalCost, pp = ((pq / e.totalCost) * 100).toFixed(2); 
                 let up_base = e.unitPrice !== undefined ? e.unitPrice : (e.totalCost / e.grams);
                 let um_base = e.unitMaking !== undefined ? e.unitMaking : 0;
@@ -466,7 +471,7 @@
         function generateEnhancedHistory() {
             const l = [], d24 = [], d22 = [], d21 = [], n = new Date();
             const rate = exchangeRates[currentCurrency];
-            let price = (currentPrices.k24 || 325);
+            let price = (currentPrices.k24 || 89.5);
             const steps = 30;
             const volatility = 0.008; 
             
@@ -512,7 +517,7 @@
             }
         }
 
-        async function fetchLiveRates() { try { const res = await fetch('https://open.er-api.com/v6/latest/QAR'); const data = await res.json(); if(data?.rates) { exchangeRates.JOD = data.rates.JOD; exchangeRates.USD = data.rates.USD; exchangeRates.EUR = data.rates.EUR; } } catch (e) {} }
+        async function fetchLiveRates() { try { const res = await fetch('https://open.er-api.com/v6/latest/USD'); const data = await res.json(); if(data?.rates) { exchangeRates.JOD = data.rates.JOD; exchangeRates.QAR = data.rates.QAR; exchangeRates.EUR = data.rates.EUR; } } catch (e) {} }
         function formatCurrency(val) { const rate = exchangeRates[currentCurrency]; return (val * rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency; }
         function changeCurrency() { 
             currentCurrency = document.getElementById('currencySelector').value; 
@@ -530,7 +535,7 @@
             e21.innerText = formatCurrency(currentPrices.k21); 
             if (c !== 0) { const a = c > 0 ? 'price-up' : 'price-down'; [e24, e22, e21].forEach(e => { e.classList.remove('price-up', 'price-down'); void e.offsetWidth; e.classList.add(a); setTimeout(() => e.classList.remove(a), 2000); }); }
         }
-        function startExchangeStream() { setInterval(() => { if (currentCurrency !== 'QAR') { exchangeRates[currentCurrency] *= (1 + (Math.random() * 0.0001 - 0.00005)); updatePriceDisplay(0); if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); } }, 10000); }
+        function startExchangeStream() { setInterval(() => { if (currentCurrency !== 'USD') { exchangeRates[currentCurrency] *= (1 + (Math.random() * 0.0001 - 0.00005)); updatePriceDisplay(0); if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); } }, 10000); }
         async function fetchEntries() { const r = await fetch(DB_URL); const d = await r.json(); cachedEntries = d; renderTable(d); }
         async function addEntry() { 
             const rd = document.getElementById('purchaseDate').value, p = parseInt(document.getElementById('purity').value), g = parseFloat(document.getElementById('grams').value) || 0, up = parseFloat(document.getElementById('price').value) || 0, um = parseFloat(document.getElementById('costs').value) || 0; 
