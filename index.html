@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.5.1</title>
+    <title>Gold Investment Wallet V2.5.0</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -64,6 +64,7 @@
             <input type="password" id="passInput" placeholder="••••••••" oninput="checkPass(this.value)">
             <p id="passError" class="text-red-500 text-[10px] mt-2 uppercase hidden">Invalid Access Key</p>
         </div>
+        
         <p id="loaderSub" class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Syncing Market Prices</p>
     </div>
     
@@ -73,7 +74,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.5.1</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.5.0</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                  <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -198,16 +199,26 @@
  
         window.onload = function() {
             const loaderBar = document.getElementById('loaderBar');
+            const loaderScreen = document.getElementById('loadingScreen');
             const passArea = document.getElementById('passwordArea');
             const loaderTitle = document.getElementById('loaderTitle');
             const pContainer = document.getElementById('pContainer');
+
             setTimeout(() => { loaderBar.style.width = '100%'; }, 50);
+            
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                document.documentElement.classList.add('dark');
             }
             document.getElementById('purchaseDate').valueAsDate = new Date();
-            initCharts(); loadTradingView(); fetchEntries(); fetchLiveRates(); fetchGoldFlow();
-            setInterval(fetchGoldFlow, 60000); startExchangeStream(); 
+            
+            initCharts(); 
+            loadTradingView();
+            fetchEntries(); 
+            fetchLiveRates(); 
+            fetchGoldFlow();
+            setInterval(fetchGoldFlow, 60000); 
+            startExchangeStream(); 
+ 
             setTimeout(() => {
                 loaderTitle.classList.remove('loader-text-pulse');
                 loaderTitle.innerText = "ACCESS SECURED";
@@ -218,25 +229,33 @@
         };
 
         function checkPass(val) {
+            const error = document.getElementById('passError');
             if(val === "siakaiba") {
-                document.getElementById('loadingScreen').style.opacity = '0';
-                document.getElementById('loadingScreen').style.visibility = 'hidden';
+                const loaderScreen = document.getElementById('loadingScreen');
+                loaderScreen.style.opacity = '0';
+                loaderScreen.style.visibility = 'hidden';
+                error.classList.add('hidden');
             } else if (val.length >= 8) {
-                document.getElementById('passError').classList.remove('hidden');
+                error.classList.remove('hidden');
             }
         }
 
-        // --- Logic for Market Status ---
+        // Logic for Market Open/Closed Status
         function isMarketOpen() {
             const now = new Date();
-            const day = now.getUTCDay(); // 0=Sun, 6=Sat
+            const day = now.getUTCDay(); // 0 = Sun, 1 = Mon... 5 = Fri, 6 = Sat
             const hour = now.getUTCHours();
-            // Market Closes Fri 21:00 UTC, Opens Sun 22:00 UTC
-            if (day === 6) return false;
-            if (day === 0 && hour < 22) return false;
-            if (day === 5 && hour >= 21) return false;
-            // Daily break 21:00-22:00 UTC
+            const min = now.getUTCMinutes();
+
+            // Market closes Friday 21:00 UTC (12:00 AM Saturday Doha)
+            // Market opens Sunday 22:00 UTC (1:00 AM Monday Doha)
+            if (day === 6) return false; // Saturday
+            if (day === 0 && hour < 22) return false; // Sunday before open
+            if (day === 5 && hour >= 21) return false; // Friday after close
+            
+            // Daily maintenance hour (00:00 - 01:00 Doha / 21:00 - 22:00 UTC)
             if (hour === 21) return false;
+
             return true;
         }
 
@@ -259,17 +278,17 @@
             }
 
             if (!marketOpen) {
-                indicator.className = "w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"; // Changed to Red
+                indicator.className = "w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm";
                 timeLabel.innerText = "Market Closed";
-                timeLabel.className = "text-red-400 font-black tracking-widest text-[10px] uppercase";
+                timeLabel.className = "text-yellow-200 font-black tracking-widest text-[10px] uppercase";
             } else if (successFlag) {
                 indicator.className = "w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm transition-all duration-500 status-flash";
                 timeLabel.innerText = "Live";
-                timeLabel.className = "text-green-300 font-black tracking-widest text-[10px] uppercase";
+                timeLabel.className = "text-green-200 font-black tracking-widest text-[10px] uppercase";
             } else {
-                indicator.className = "w-2.5 h-2.5 rounded-full bg-gray-500 shadow-sm";
+                indicator.className = "w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm";
                 timeLabel.innerText = "Offline";
-                timeLabel.className = "text-gray-400 font-black tracking-widest text-[10px] uppercase";
+                timeLabel.className = "text-red-200 font-black tracking-widest text-[10px] uppercase";
             }
         }
 
@@ -307,72 +326,171 @@
             if (!data) { updateStats(0, 0, 0, 0); return; } 
             const en = Object.keys(data).map(k => ({ id: k, ...data[k] })); en.sort((a, b) => a.timestamp - b.timestamp); 
             const w = { 24: 0, 22: 0, 21: 0 }; let cv = 0, tg = 0, ti = 0, cl = [], cd = []; const rate = exchangeRates[currentCurrency];
+            
             en.forEach(e => { 
                 const ref = currentPrices.k24 || 325;
                 const lv = Math.round(e.grams * (ref * (e.purity / 24))); w[e.purity] += e.grams; tg += e.grams; ti += e.totalCost; cv += lv; cl.push(e.dateStr); cd.push(cv * rate); 
             }); 
+            
             walletChart.data.labels = cl; walletChart.data.datasets[0].data = cd; walletChart.update('none'); 
             barChart.data.datasets[0].data = [w[24], w[22], w[21]]; barChart.update('none'); 
+
             [...en].reverse().forEach(e => { 
                 const ref = currentPrices.k24 || 325;
                 const lv = Math.round(e.grams * (ref * (e.purity / 24))), pq = lv - e.totalCost, pp = ((pq / e.totalCost) * 100).toFixed(2); 
+                let up_base = e.unitPrice !== undefined ? e.unitPrice : (e.totalCost / e.grams);
+                let um_base = e.unitMaking !== undefined ? e.unitMaking : 0;
+
                 tb.innerHTML += `<tr id="row-${e.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
-                    <td class="p-4 text-xs font-bold">${e.dateStr}</td>
-                    <td class="p-4 text-xs font-bold text-yellow-600">${e.purity}K</td>
-                    <td class="p-4 text-xs text-center font-bold">${e.grams}g</td>
-                    <td class="p-4 text-xs text-center font-bold">${formatCurrency(e.totalCost / e.grams)}</td>
+                    <td class="p-4 text-xs font-bold">
+                        <div class="view-mode">${e.dateStr}</div>
+                        <input type="date" class="edit-mode hidden border rounded p-1 text-black text-[10px] w-24" value="${new Date(e.timestamp).toISOString().split('T')[0]}">
+                    </td>
+                    <td class="p-4 text-xs font-bold text-yellow-600">
+                        <div class="view-mode">${e.purity}K</div>
+                        <select class="edit-mode hidden border rounded p-1 text-black text-[10px]">
+                            <option value="24" ${e.purity==24?'selected':''}>24K</option>
+                            <option value="22" ${e.purity==22?'selected':''}>22K</option>
+                            <option value="21" ${e.purity==21?'selected':''}>21K</option>
+                        </select>
+                    </td>
+                    <td class="p-4 text-xs text-center font-bold">
+                        <div class="view-mode">${e.grams}g</div>
+                        <input type="number" class="edit-mode hidden border rounded p-1 text-black text-[10px] w-12 text-center" value="${e.grams}">
+                    </td>
+                    <td class="p-4 text-xs text-center font-bold">
+                        <div class="view-mode">${formatCurrency(up_base + um_base)}</div>
+                        <div class="edit-mode hidden flex flex-col gap-1">
+                            <input type="number" class="edit-price border rounded p-1 text-black text-[8px] w-16" value="${up_base}" placeholder="Price">
+                            <input type="number" class="edit-costs border rounded p-1 text-black text-[8px] w-16" value="${um_base}" placeholder="Making">
+                        </div>
+                    </td>
                     <td class="p-4 text-xs text-center font-bold">${formatCurrency(e.totalCost)}</td>
                     <td class="p-4 text-xs text-center font-bold">${formatCurrency(lv)}</td>
                     <td class="p-4 text-xs text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(pq)}</td>
                     <td class="p-4 text-xs text-center font-bold ${pq >= 0 ? 'text-green-500' : 'text-red-500'}">${pp}%</td>
                     <td class="p-4 text-center no-pdf">
-                        <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
+                        <div class="view-mode flex justify-center gap-2">
+                            <button class="text-blue-400 font-bold text-xs" onclick="toggleEdit('${e.id}', true)">Edit</button>
+                            <button class="text-red-400 font-bold text-xs" onclick="deleteEntry('${e.id}')">Delete</button>
+                        </div>
+                        <div class="edit-mode hidden flex justify-center gap-2">
+                            <button class="text-green-500 font-bold text-xs" onclick="saveEdit('${e.id}')">Save</button>
+                            <button class="text-gray-400 font-bold text-xs" onclick="toggleEdit('${e.id}', false)">Cancel</button>
+                        </div>
                     </td>
                 </tr>`; 
             }); 
             updateStats(en.length, tg, Math.round(ti), cv); 
         }
 
+        function toggleEdit(id, show) { 
+            isEditingLocked = show; 
+            const r = document.getElementById(`row-${id}`); 
+            r.querySelectorAll('.view-mode').forEach(e => e.classList.toggle('hidden', show)); 
+            r.querySelectorAll('.edit-mode').forEach(e => e.classList.toggle('hidden', !show)); 
+            if(!show) fetchEntries(); 
+        }
+
+        async function saveEdit(id) { 
+            const r = document.getElementById(`row-${id}`);
+            const dateVal = r.querySelector('input[type="date"]').value;
+            const purityVal = parseInt(r.querySelector('select').value);
+            const gramVal = parseFloat(r.querySelectorAll('input[type="number"]')[0].value);
+            const priceVal = parseFloat(r.querySelector('.edit-price').value) || 0;
+            const costVal = parseFloat(r.querySelector('.edit-costs').value) || 0;
+            const ue = { timestamp: new Date(dateVal).getTime(), dateStr: new Date(dateVal).toLocaleDateString('en-GB'), purity: purityVal, grams: gramVal, unitPrice: priceVal, unitMaking: costVal, totalCost: gramVal * (priceVal + costVal) }; 
+            await fetch(`https://samirgoldwallet-default-rtdb.firebaseio.com/entries/${id}.json`, { method: 'PUT', body: JSON.stringify(ue) }); 
+            isEditingLocked = false; fetchEntries(); 
+        }
+
         function initCharts() { 
             const d = document.documentElement.classList.contains('dark'), tc = d ? '#9ca3af' : '#6b7280', gc = d ? '#374151' : '#e5e7eb'; 
-            const commonOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: tc, font: { size: 9 } } }, y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } } };
+            const commonOptions = {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, datalabels: { display: false } },
+                scales: { 
+                    x: { ticks: { color: tc, font: { size: 9 } }, grid: { display: false } }, 
+                    y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } 
+                }
+            };
+
             walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { 
-                type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3 }] }, 
-                options: commonOptions 
+                type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, 
+                options: { ...commonOptions, interaction: { mode: 'index', intersect: false } } 
             }); 
+            
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { 
-                type: 'bar', data: { labels: ['24', '22', '21'], datasets: [{ data: [0, 0, 0], backgroundColor: GOLD_COLOR, borderRadius: 5 }] }, 
-                options: commonOptions 
+                type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: GOLD_COLOR, borderRadius: 5 }] }, 
+                options: { ...commonOptions, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 12 }, color: '#fff' } }, scales: { y: { display: false }, x: { ticks: { color: tc, font: { size: 12, weight: 'bold' } }, grid: { display: false } } } } 
             }); 
         }
 
         async function fetchLiveRates() { try { const res = await fetch('https://open.er-api.com/v6/latest/QAR'); const data = await res.json(); if(data?.rates) { exchangeRates.JOD = data.rates.JOD; exchangeRates.USD = data.rates.USD; exchangeRates.EUR = data.rates.EUR; } } catch (e) {} }
         function formatCurrency(val) { const rate = exchangeRates[currentCurrency]; return (val * rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency; }
-        function changeCurrency() { currentCurrency = document.getElementById('currencySelector').value; if(cachedEntries) renderTable(cachedEntries); }
+        function changeCurrency() { 
+            currentCurrency = document.getElementById('currencySelector').value; 
+            document.querySelectorAll('.currency-label').forEach(el => el.innerText = currentCurrency); 
+            updatePriceDisplay(0); if(cachedEntries) renderTable(cachedEntries); 
+        }
+        
         function updatePriceDisplay(c) { 
             const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); 
             if(!e24 || currentPrices.k24 === 0) return;
             e24.innerText = formatCurrency(currentPrices.k24); e22.innerText = formatCurrency(currentPrices.k22); e21.innerText = formatCurrency(currentPrices.k21); 
+            if (c !== 0) { const a = c > 0 ? 'price-up' : 'price-down'; [e24, e22, e21].forEach(e => { e.classList.remove('price-up', 'price-down'); void e.offsetWidth; e.classList.add(a); setTimeout(() => e.classList.remove(a), 2000); }); }
         }
         function startExchangeStream() { setInterval(() => { if (currentCurrency !== 'QAR') { exchangeRates[currentCurrency] *= (1 + (Math.random() * 0.0001 - 0.00005)); updatePriceDisplay(0); if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); } }, 10000); }
         async function fetchEntries() { const r = await fetch(DB_URL); const d = await r.json(); cachedEntries = d; renderTable(d); }
         async function addEntry() { 
-            const rd = document.getElementById('purchaseDate').value, g = parseFloat(document.getElementById('grams').value) || 0, up = parseFloat(document.getElementById('price').value) || 0, um = parseFloat(document.getElementById('costs').value) || 0; 
-            if(!rd || g <= 0) return; 
-            const e = { timestamp: new Date(rd).getTime(), dateStr: new Date(rd).toLocaleDateString('en-GB'), purity: parseInt(document.getElementById('purity').value), grams: g, totalCost: g * (up + um) }; 
+            const rd = document.getElementById('purchaseDate').value, p = parseInt(document.getElementById('purity').value), g = parseFloat(document.getElementById('grams').value) || 0, up = parseFloat(document.getElementById('price').value) || 0, um = parseFloat(document.getElementById('costs').value) || 0; 
+            if(!rd || g <= 0) return alert("Fill Date and Grams!"); 
+            const e = { timestamp: new Date(rd).getTime(), dateStr: new Date(rd).toLocaleDateString('en-GB'), purity: p, grams: g, unitPrice: up, unitMaking: um, totalCost: g * (up + um) }; 
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(e) }); fetchEntries(); 
         }
         function updateStats(c, g, i, v) { 
+            const p = v - i, dk = document.documentElement.classList.contains('dark'); 
             document.getElementById('statCount').innerText = c; document.getElementById('statGrams').innerText = g.toFixed(2) + 'g'; 
-            document.getElementById('statInvested').innerText = formatCurrency(i); document.getElementById('statValue').innerText = formatCurrency(v); document.getElementById('statProfit').innerText = formatCurrency(v - i); 
+            document.getElementById('statInvested').innerText = formatCurrency(i); document.getElementById('statValue').innerText = formatCurrency(v); document.getElementById('statProfit').innerText = formatCurrency(p); 
+            const ah = (cid, lid, sid, s) => { 
+                const ca = document.getElementById(cid), la = document.getElementById(lid), st = document.getElementById(sid); 
+                if (s && i > 0) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`; la.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400"; st.className = "text-xl font-black text-green-700 dark:text-green-300"; } 
+                else if (i > 0 && !s) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-red-900/30 border-red-800' : 'bg-red-50 border-red-200'}`; la.className = "text-[10px] uppercase font-bold text-red-600 dark:text-red-400"; st.className = "text-xl font-black text-red-700 dark:text-red-300"; } 
+                else { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`; la.className = "text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"; st.className = "text-xl font-black text-gray-800 dark:text-white"; } 
+            }; 
+            ah('cardValue', 'labelValue', 'statValue', v > i); ah('cardProfit', 'labelProfit', 'statProfit', p > 0); 
         }
         function loadTradingView() {
             const isDark = document.documentElement.classList.contains('dark');
-            new TradingView.widget({ "autosize": true, "symbol": "OANDA:XAUUSD", "interval": "240", "theme": isDark ? "dark" : "light", "style": "2", "container_id": "tradingview_widget", "hide_top_toolbar": true });
+            const bgColor = isDark ? "#111827" : "#f3f4f6"; 
+            
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": "OANDA:XAUUSD",
+                "interval": "240",
+                "timezone": "Etc/UTC",
+                "theme": isDark ? "dark" : "light",
+                "style": "2",
+                "locale": "en",
+                "toolbar_bg": bgColor,
+                "backgroundColor": bgColor,
+                "enable_publishing": false,
+                "hide_top_toolbar": true,
+                "hide_legend": true,
+                "save_image": false,
+                "container_id": "tradingview_widget"
+            });
         }
         async function deleteEntry(id) { if(confirm("Delete?")) { await fetch(`${DB_URL.replace('.json', '')}/${id}.json`, { method: 'DELETE' }); fetchEntries(); } }
-        function toggleTheme() { document.documentElement.classList.toggle('dark'); localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; loadTradingView(); initCharts(); fetchEntries(); }
-        async function downloadPDF() { const { jsPDF } = window.jspdf; const db = document.getElementById('mainDashboard'), np = document.querySelectorAll('.no-pdf'); np.forEach(e => e.style.display = 'none'); const c = await html2canvas(db, { scale: 2 }); const p = new jsPDF('l', 'mm', 'a4'); p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, 280, (c.height * 280) / c.width); p.save(`Gold_Report.pdf`); np.forEach(e => e.style.display = ''); }
+        function toggleTheme() { 
+            document.documentElement.classList.toggle('dark'); 
+            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; 
+            loadTradingView(); 
+            [walletChart, barChart].forEach(c => c.destroy()); 
+            initCharts(); 
+            fetchEntries(); 
+        }
+        async function downloadPDF() { const { jsPDF } = window.jspdf; const db = document.getElementById('mainDashboard'), np = document.querySelectorAll('.no-pdf'), dk = document.documentElement.classList.contains('dark'); np.forEach(e => e.style.display = 'none'); if(dk) document.documentElement.classList.remove('dark'); try { const c = await html2canvas(db, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f3f4f6' }); const p = new jsPDF('l', 'mm', 'a4'); p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, 280, (c.height * 280) / c.width); p.save(`Gold_Report_${new Date().toLocaleDateString()}.pdf`); } catch (err) {} finally { np.forEach(e => e.style.display = ''); if(dk) document.documentElement.classList.add('dark'); } }
     </script>
 </body>
 </html>
