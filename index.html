@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.5.2</title>
+    <title>Gold Investment Wallet V2.5.0</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -64,6 +64,7 @@
             <input type="password" id="passInput" placeholder="••••••••" oninput="checkPass(this.value)">
             <p id="passError" class="text-red-500 text-[10px] mt-2 uppercase hidden">Invalid Access Key</p>
         </div>
+        
         <p id="loaderSub" class="text-gray-500 text-[10px] mt-4 tracking-tighter uppercase opacity-50">Syncing Market Prices</p>
     </div>
     
@@ -73,7 +74,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.5.2</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.5.0</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                  <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -198,16 +199,26 @@
  
         window.onload = function() {
             const loaderBar = document.getElementById('loaderBar');
+            const loaderScreen = document.getElementById('loadingScreen');
             const passArea = document.getElementById('passwordArea');
             const loaderTitle = document.getElementById('loaderTitle');
             const pContainer = document.getElementById('pContainer');
+
             setTimeout(() => { loaderBar.style.width = '100%'; }, 50);
+            
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                document.documentElement.classList.add('dark');
             }
             document.getElementById('purchaseDate').valueAsDate = new Date();
-            initCharts(); loadTradingView(); fetchEntries(); fetchLiveRates(); fetchGoldFlow();
-            setInterval(fetchGoldFlow, 60000); startExchangeStream(); 
+            
+            initCharts(); 
+            loadTradingView();
+            fetchEntries(); 
+            fetchLiveRates(); 
+            fetchGoldFlow();
+            setInterval(fetchGoldFlow, 60000); 
+            startExchangeStream(); 
+ 
             setTimeout(() => {
                 loaderTitle.classList.remove('loader-text-pulse');
                 loaderTitle.innerText = "ACCESS SECURED";
@@ -218,22 +229,33 @@
         };
 
         function checkPass(val) {
+            const error = document.getElementById('passError');
             if(val === "siakaiba") {
-                document.getElementById('loadingScreen').style.opacity = '0';
-                document.getElementById('loadingScreen').style.visibility = 'hidden';
+                const loaderScreen = document.getElementById('loadingScreen');
+                loaderScreen.style.opacity = '0';
+                loaderScreen.style.visibility = 'hidden';
+                error.classList.add('hidden');
             } else if (val.length >= 8) {
-                document.getElementById('passError').classList.remove('hidden');
+                error.classList.remove('hidden');
             }
         }
 
+        // Logic for Market Open/Closed Status
         function isMarketOpen() {
             const now = new Date();
-            const day = now.getUTCDay();
+            const day = now.getUTCDay(); // 0 = Sun, 1 = Mon... 5 = Fri, 6 = Sat
             const hour = now.getUTCHours();
-            if (day === 6) return false;
-            if (day === 0 && hour < 22) return false;
-            if (day === 5 && hour >= 21) return false;
+            const min = now.getUTCMinutes();
+
+            // Market closes Friday 21:00 UTC (12:00 AM Saturday Doha)
+            // Market opens Sunday 22:00 UTC (1:00 AM Monday Doha)
+            if (day === 6) return false; // Saturday
+            if (day === 0 && hour < 22) return false; // Sunday before open
+            if (day === 5 && hour >= 21) return false; // Friday after close
+            
+            // Daily maintenance hour (00:00 - 01:00 Doha / 21:00 - 22:00 UTC)
             if (hour === 21) return false;
+
             return true;
         }
 
@@ -256,9 +278,9 @@
             }
 
             if (!marketOpen) {
-                indicator.className = "w-2.5 h-2.5 rounded-full bg-red-600 shadow-sm"; 
+                indicator.className = "w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm";
                 timeLabel.innerText = "Market Closed";
-                timeLabel.className = "text-red-600 font-black tracking-widest text-[10px] uppercase";
+                timeLabel.className = "text-yellow-200 font-black tracking-widest text-[10px] uppercase";
             } else if (successFlag) {
                 indicator.className = "w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm transition-all duration-500 status-flash";
                 timeLabel.innerText = "Live";
@@ -392,10 +414,12 @@
                     y: { ticks: { color: tc, font: { size: 9 } }, grid: { color: gc } } 
                 }
             };
+
             walletChart = new Chart(document.getElementById('walletBehaviorChart').getContext('2d'), { 
                 type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: GOLD_COLOR, backgroundColor: 'rgba(202, 138, 4, 0.1)', fill: true, tension: 0.3, pointRadius: 3 }] }, 
                 options: { ...commonOptions, interaction: { mode: 'index', intersect: false } } 
             }); 
+            
             barChart = new Chart(document.getElementById('weightBarChart').getContext('2d'), { 
                 type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: GOLD_COLOR, borderRadius: 5 }] }, 
                 options: { ...commonOptions, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 12 }, color: '#fff' } }, scales: { y: { display: false }, x: { ticks: { color: tc, font: { size: 12, weight: 'bold' } }, grid: { display: false } } } } 
@@ -409,6 +433,7 @@
             document.querySelectorAll('.currency-label').forEach(el => el.innerText = currentCurrency); 
             updatePriceDisplay(0); if(cachedEntries) renderTable(cachedEntries); 
         }
+        
         function updatePriceDisplay(c) { 
             const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); 
             if(!e24 || currentPrices.k24 === 0) return;
@@ -438,11 +463,22 @@
         function loadTradingView() {
             const isDark = document.documentElement.classList.contains('dark');
             const bgColor = isDark ? "#111827" : "#f3f4f6"; 
+            
             new TradingView.widget({
-                "autosize": true, "symbol": "OANDA:XAUUSD", "interval": "240", "timezone": "Etc/UTC",
-                "theme": isDark ? "dark" : "light", "style": "2", "locale": "en", "toolbar_bg": bgColor,
-                "backgroundColor": bgColor, "enable_publishing": false, "hide_top_toolbar": true,
-                "hide_legend": true, "save_image": false, "container_id": "tradingview_widget"
+                "autosize": true,
+                "symbol": "OANDA:XAUUSD",
+                "interval": "240",
+                "timezone": "Etc/UTC",
+                "theme": isDark ? "dark" : "light",
+                "style": "2",
+                "locale": "en",
+                "toolbar_bg": bgColor,
+                "backgroundColor": bgColor,
+                "enable_publishing": false,
+                "hide_top_toolbar": true,
+                "hide_legend": true,
+                "save_image": false,
+                "container_id": "tradingview_widget"
             });
         }
         async function deleteEntry(id) { if(confirm("Delete?")) { await fetch(`${DB_URL.replace('.json', '')}/${id}.json`, { method: 'DELETE' }); fetchEntries(); } }
