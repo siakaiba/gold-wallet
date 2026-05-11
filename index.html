@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.5.8</title>
+    <title>Gold Investment Wallet V2.5.9</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -39,7 +39,17 @@
         }
         .status-flash { animation: live-flash 2s infinite; }
         .dark .theme-slider-bg { transform: translateX(100%); }
-        .tv-widget-container { height: 180px; width: 100%; border-radius: 8px; overflow: hidden; }
+
+        /* V2.5.9: Removed all borders and forced seamless background */
+        .tv-widget-container { 
+            height: 180px; 
+            width: 100%; 
+            border: none !important;
+            border-radius: 0px; 
+            overflow: hidden;
+            background-color: #f3f4f6; 
+        }
+        .dark .tv-widget-container { background-color: #1f2937; }
         
         #passwordArea { display: none; flex-direction: column; align-items: center; margin-top: 20px; }
         #passInput { background: #1f2937; border: 1px solid #374151; color: white; padding: 8px 12px; border-radius: 8px; outline: none; text-align: center; letter-spacing: 4px; }
@@ -72,7 +82,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.5.6</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.5.9</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                  <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -142,10 +152,10 @@
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Weight Breakdown (G)</h2>
                 <div style="height: 180px;"><canvas id="weightBarChart"></canvas></div>
           </div>
-            <div class="border-l dark:border-gray-700 lg:pl-6 relative overflow-hidden transition-all duration-300" id="livePriceChartContainer">
-                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">Live 24K OZ Market Price</h2>
+            <div class="border-l dark:border-gray-700 relative overflow-hidden transition-all duration-300" id="livePriceChartContainer">
+                <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 px-6 lg:px-0">Live 24K OZ Market Price</h2>
                 <div id="tradingview_widget" class="tv-widget-container transition-opacity duration-300"></div>
-                <div id="marketClosedBlock" class="absolute inset-x-6 top-16 bottom-0 bg-red-600 rounded-xl flex flex-col items-center justify-center gap-4 text-white p-6 transition-all duration-300 translate-y-full opacity-0 pointer-events-none">
+                <div id="marketClosedBlock" class="absolute inset-x-0 top-16 bottom-0 bg-red-600 flex flex-col items-center justify-center gap-4 text-white p-6 transition-all duration-300 translate-y-full opacity-0 pointer-events-none">
                   <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
                       <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
                   </div>
@@ -223,7 +233,6 @@
             fetchGoldFlow();
             setInterval(fetchGoldFlow, 60000); 
             
-            // Start the live clock
             startClock();
             startExchangeStream(); 
  
@@ -236,12 +245,10 @@
             }, 4000);
         };
 
-        // --- Live Clock System ---
         function startClock() {
             setInterval(() => {
                 const now = new Date();
                 const options = { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-                // Example: Mon, 12 May 10:05:30 AM
                 document.getElementById('liveClock').innerText = now.toLocaleString('en-GB', options).replace(',', '');
             }, 1000);
         }
@@ -259,7 +266,6 @@
             const now = new Date();
             const day = now.getUTCDay(); 
             const hour = now.getUTCHours();
-            // Fri 21:00 UTC to Sun 22:00 UTC
             if (day === 6) return false;
             if (day === 0 && hour < 22) return false;
             if (day === 5 && hour >= 21) return false;
@@ -307,7 +313,7 @@
                 document.getElementById('liveClock').className = "text-[8px] font-bold text-red-600/80 tracking-tighter uppercase leading-none";
 
                 livePriceContainer.classList.add('lg:col-span-3');
-                livePriceContainer.classList.remove('lg:pl-6', 'border-l');
+                livePriceContainer.classList.remove('border-l');
                 walletFlowContainer.classList.add('opacity-0');
                 weightFlowContainer.classList.add('opacity-0');
                 marketClosedBlock.classList.remove('translate-y-full', 'opacity-0', 'pointer-events-none');
@@ -321,7 +327,7 @@
                 document.getElementById('liveClock').className = "text-[8px] font-bold text-white opacity-90 tracking-tighter uppercase leading-none";
 
                 livePriceContainer.classList.remove('lg:col-span-3');
-                livePriceContainer.classList.add('lg:pl-6', 'border-l');
+                livePriceContainer.classList.add('border-l');
                 walletFlowContainer.classList.remove('opacity-0'); 
                 weightFlowContainer.classList.remove('opacity-0');
                 marketClosedBlock.classList.add('translate-y-full', 'opacity-0', 'pointer-events-none');
@@ -506,19 +512,38 @@
             }; 
             ah('cardValue', 'labelValue', 'statValue', v > i); ah('cardProfit', 'labelProfit', 'statProfit', p > 0); 
         }
+        
         function loadTradingView() {
             const container = document.getElementById('tradingview_widget');
             if(!container || !isMarketOpen()) return;
             container.innerHTML = '';
             const isDark = document.documentElement.classList.contains('dark');
             const bgColor = isDark ? "#1f2937" : "#f3f4f6"; 
+            
             new TradingView.widget({
-                "autosize": true, "symbol": "OANDA:XAUUSD", "interval": "240", "timezone": "Etc/UTC",
-                "theme": isDark ? "dark" : "light", "style": "2", "locale": "en", "toolbar_bg": bgColor,
-                "backgroundColor": bgColor, "enable_publishing": false, "hide_top_toolbar": true,
-                "hide_legend": true, "save_image": false, "container_id": "tradingview_widget"
+                "autosize": true, 
+                "symbol": "OANDA:XAUUSD", 
+                "interval": "240", 
+                "timezone": "Etc/UTC",
+                "theme": isDark ? "dark" : "light", 
+                "style": "2", 
+                "locale": "en", 
+                "toolbar_bg": bgColor,
+                "backgroundColor": bgColor,
+                "enable_publishing": false, 
+                "hide_top_toolbar": true,
+                "hide_legend": true, 
+                "save_image": false, 
+                "container_id": "tradingview_widget",
+                // V2.5.9: Force remove all internal widget borders
+                "overrides": {
+                    "paneProperties.background": bgColor,
+                    "paneProperties.border": "rgba(0,0,0,0)",
+                    "scalesProperties.lineColor": "rgba(0,0,0,0)"
+                }
             });
         }
+        
         async function deleteEntry(id) { if(confirm("Delete?")) { await fetch(`${DB_URL.replace('.json', '')}/${id}.json`, { method: 'DELETE' }); fetchEntries(); } }
         function toggleTheme() { 
             document.documentElement.classList.toggle('dark'); 
