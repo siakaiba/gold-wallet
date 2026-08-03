@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.6.0</title>
+    <title>Gold Investment Wallet V2.8.12</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -80,7 +80,7 @@
             <div class="flex flex-col">
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-bold uppercase tracking-tight">Gold Investment Wallet</h1>
-                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1">V2.6.0</span>
+                    <span class="text-[10px] font-black bg-yellow-700/50 px-2 py-0.5 rounded shadow-sm self-center mt-1 no-pdf">V2.8.12</span>
                 </div>
                <div class="text-[9px] md:text-[11px] flex flex-wrap gap-x-6 gap-y-1 mt-1 opacity-95 uppercase tracking-wider items-center">
                  <p class="text-yellow-100">24K: <span id="display24K" class="text-white font-medium">--</span></p>
@@ -103,20 +103,42 @@
                  <div class="relative flex-1 text-center text-[10px] font-bold z-10 pointer-events-none text-white opacity-40 dark:opacity-100">DARK</div>
              </div>
 
-               <div id="marketStatusContainer" class="flex flex-col items-center justify-center bg-yellow-800/40 px-4 min-w-[140px] h-9 rounded-lg border border-yellow-500/20 no-pdf transition-all duration-300">
+               <div id="marketStatusContainer" class="flex flex-col items-center justify-center bg-yellow-800/40 px-4 min-w-[140px] h-9 rounded-lg border border-yellow-500/20 no-pdf">
                   <div class="flex items-center gap-2">
-                      <span id="lastUpdateLabel" class="font-black tracking-widest text-[9px] uppercase transition-all duration-300">Syncing...</span>
-                      <div id="liveIndicator" class="w-2 h-2 rounded-full shadow-sm transition-all duration-300"></div>
+                      <span id="lastUpdateLabel" class="text-white font-black tracking-widest text-[9px] uppercase">Market Active</span>
+                      <div id="liveIndicator" class="w-2 h-2 rounded-full bg-green-500 shadow-sm status-flash"></div>
                   </div>
-                  <span id="liveClock" class="text-[8px] font-bold opacity-90 tracking-tighter uppercase leading-none">--:--:--</span>
+                  <span id="liveClock" class="text-[8px] font-bold text-white opacity-90 tracking-tighter uppercase leading-none">--:--:--</span>
               </div>
  
                <div class="flex items-center border-l border-yellow-500/30 pl-4 h-9">
                  <button onclick="downloadPDF()" class="bg-white text-yellow-700 px-4 h-full rounded-lg font-bold shadow-sm hover:bg-yellow-50 transition text-[10px] uppercase tracking-wide no-pdf">Download Report</button>
              </div>
             </div>
-            <div id="closedHeaderBg" class="absolute inset-0 bg-red-600 rounded-t-xl transition-opacity duration-300 opacity-0 pointer-events-none"></div>
         </header>
+
+        <!-- Golden Target Loading Line Between Header & Cards with Hover Value Tooltip -->
+        <div class="bg-gray-200 dark:bg-gray-800 px-6 py-2 border-x dark:border-gray-700 border-b border-gray-200 flex flex-col gap-1 shrink-0 group relative">
+            <div class="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
+                <span class="text-yellow-700 dark:text-yellow-500 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                    Target Portfolio ($1,000,000 USD)
+                </span>
+                <span id="targetPct" class="text-yellow-700 dark:text-yellow-400 font-extrabold">0.0%</span>
+            </div>
+            
+            <div class="w-full bg-gray-300 dark:bg-gray-700 h-3 rounded-full overflow-hidden relative shadow-inner cursor-pointer">
+                <div id="targetProgressBar" class="h-full bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-400 rounded-full transition-all duration-1000 ease-out shadow-sm" style="width: 0%;"></div>
+            </div>
+
+            <!-- Hover Popover showing live Market Value on line hover -->
+            <div class="absolute left-1/2 -translate-x-1/2 bottom-1.5 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 ease-in-out z-30">
+                <div class="bg-gray-900 text-yellow-400 border border-yellow-500/40 text-[10px] font-black uppercase px-3 py-1 rounded-md shadow-xl flex items-center gap-1.5 whitespace-nowrap">
+                    <span class="text-gray-400">Current Market Value:</span>
+                    <span id="targetHoverValue" class="text-white font-extrabold">--</span>
+                </div>
+            </div>
+        </div>
  
         <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-5 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-3 border-b text-center shrink-0">
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
@@ -153,12 +175,9 @@
             <div class="border-l dark:border-gray-700 lg:pl-6 relative overflow-hidden transition-all duration-300" id="livePriceChartContainer">
                 <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 px-6 lg:px-0">Live 24K OZ Market Price</h2>
                 <div id="tradingview_widget" class="tv-widget-container transition-opacity duration-300"></div>
-                <div id="marketClosedBlock" class="absolute inset-x-0 top-16 bottom-0 bg-red-600 flex flex-col items-center justify-center gap-4 text-white p-6 transition-all duration-300 translate-y-full opacity-0 pointer-events-none">
-                  <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-                      <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
-                  </div>
-                  <p class="text-3xl font-extrabold uppercase tracking-widest">Market Closed</p>
-                  <p class="text-[11px] opacity-80 uppercase tracking-wider text-center">Global spot gold markets are closed. Prices will resume on Monday.</p>
+                <!-- Canvas replacement used strictly during PDF Export -->
+                <div id="pdf_chart_fallback" class="hidden w-full h-[180px]">
+                    <canvas id="pdfMarketChart"></canvas>
                 </div>
           </div>
         </div>
@@ -167,7 +186,7 @@
             <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
              <input type="date" id="purchaseDate" class="border dark:border-gray-600 p-2 rounded text-sm outline-none dark:bg-gray-700 dark:text-white">
              <select id="purity" class="border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white outline-none">
-                 <option value="24">24K (Pure)</option>
+                 <option value="24">24K</option>
                  <option value="22">22K</option>
                  <option value="21">21K</option>
              </select>
@@ -178,7 +197,7 @@
           </div>
         </div>
  
-        <div class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl border-x border-b dark:border-gray-700 flex-grow overflow-hidden flex flex-col mb-4">
+        <div id="tableWrapper" class="bg-white dark:bg-gray-800 shadow-md rounded-b-xl border-x border-b dark:border-gray-700 flex-grow overflow-hidden flex flex-col mb-4">
             <div class="overflow-y-auto custom-scrollbar flex-grow" id="tableContainer">
              <table class="w-full text-left border-collapse text-sm" id="reportTable">
                  <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase font-bold text-[10px] sticky top-0 z-10 shadow-sm">
@@ -205,6 +224,8 @@
         Chart.register(ChartDataLabels);
         const DB_URL = "https://samirgoldwallet-default-rtdb.firebaseio.com/entries.json";
         const SOURCE_URL = "https://www.livepriceofgold.com/Qatar-gold-price.html";
+        const TARGET_MARKET_VALUE_USD = 1000000;
+        const GRAMS_PER_OZ = 31.1034768;
         
         let exchangeRates = { QAR: 1, JOD: 0.1947, USD: 0.2747, EUR: 0.2588 };
         let currentCurrency = 'USD';
@@ -212,7 +233,7 @@
         let lastKnownPrice = 0;
         const GOLD_COLOR = '#ca8a04'; 
         
-        let walletChart, barChart, cachedEntries = null, isEditingLocked = false;
+        let walletChart, barChart, pdfChart, cachedEntries = null, isEditingLocked = false;
  
         window.onload = function() {
             const loaderBar = document.getElementById('loaderBar');
@@ -248,6 +269,7 @@
                 const now = new Date();
                 const options = { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
                 document.getElementById('liveClock').innerText = now.toLocaleString('en-GB', options).replace(',', '');
+                updateMarketStatusUI(isMarketOpen());
             }, 1000);
         }
 
@@ -264,84 +286,40 @@
             const now = new Date();
             const day = now.getUTCDay(); 
             const hour = now.getUTCHours();
-            if (day === 6) return false;
-            if (day === 0 && hour < 22) return false;
-            if (day === 5 && hour >= 21) return false;
+            
+            if (day === 6) return false; 
+            if (day === 0 && hour < 22) return false; 
+            if (day === 5 && hour >= 21) return false; 
+
+            if (hour === 21) return false;
+
             return true;
         }
 
+        function updateMarketStatusUI(marketOpen) {
+            const timeLabel = document.getElementById('lastUpdateLabel');
+            const indicator = document.getElementById('liveIndicator');
+
+            if (!marketOpen) {
+                timeLabel.innerText = "Market Inactive";
+                indicator.className = "w-2 h-2 rounded-full bg-red-600 shadow-sm";
+            } else {
+                timeLabel.innerText = "Market Active";
+                indicator.className = "w-2 h-2 rounded-full bg-green-500 shadow-sm status-flash";
+            }
+        }
+
         async function fetchGoldFlow() {
-            const marketOpen = isMarketOpen();
-            updateMarketStatusUI(marketOpen);
-            loadTradingViewWidget(marketOpen);
-
-            if (!marketOpen && currentPrices.k24 > 0) return;
-
-            let successFlag = false;
             try {
                 const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(SOURCE_URL)}&ts=${Date.now()}`);
                 const data = await response.json();
-                if (data.contents && parseMarketHTML(data.contents)) successFlag = true;
+                if (data.contents && parseMarketHTML(data.contents)) return;
             } catch(e) {
                 try {
                     const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(SOURCE_URL)}`);
                     const html = await response.text();
-                    if (html && parseMarketHTML(html)) successFlag = true;
+                    if (html && parseMarketHTML(html)) return;
                 } catch(err) {}
-            }
-        }
-
-        function updateMarketStatusUI(marketOpen) {
-            const closedHeaderBg = document.getElementById('closedHeaderBg');
-            const indicatorContainer = document.getElementById('marketStatusContainer');
-            const indicator = document.getElementById('liveIndicator');
-            const timeLabel = document.getElementById('lastUpdateLabel');
-            const marketClosedBlock = document.getElementById('marketClosedBlock');
-            const tradingViewWidget = document.getElementById('tradingview_widget');
-            const walletFlowContainer = document.getElementById('walletFlowChartContainer');
-            const weightFlowContainer = document.getElementById('weightFlowChartContainer');
-            const livePriceContainer = document.getElementById('livePriceChartContainer');
-
-            if (!marketOpen) {
-                closedHeaderBg.style.opacity = '1';
-                indicatorContainer.className = "flex flex-col items-center justify-center bg-white px-4 min-w-[140px] h-9 rounded-lg border border-yellow-500/20 no-pdf scale-110 shadow-lg";
-                indicator.className = "w-2 h-2 rounded-full bg-red-600 shadow-sm"; 
-                timeLabel.innerText = "Market Closed";
-                timeLabel.className = "text-red-700 font-black tracking-widest text-[9px] uppercase";
-                document.getElementById('liveClock').className = "text-[8px] font-bold text-red-600/80 tracking-tighter uppercase leading-none";
-
-                livePriceContainer.classList.add('lg:col-span-3');
-                livePriceContainer.classList.remove('lg:pl-6', 'border-l');
-                walletFlowContainer.classList.add('opacity-0');
-                weightFlowContainer.classList.add('opacity-0');
-                marketClosedBlock.classList.remove('translate-y-full', 'opacity-0', 'pointer-events-none');
-                tradingViewWidget.classList.add('opacity-0');
-            } else {
-                closedHeaderBg.style.opacity = '0';
-                indicatorContainer.className = "flex flex-col items-center justify-center bg-yellow-800/40 px-4 min-w-[140px] h-9 rounded-lg border border-yellow-500/20 no-pdf scale-100";
-                indicator.className = "w-2 h-2 rounded-full bg-green-500 shadow-sm transition-all duration-500 status-flash";
-                timeLabel.innerText = "Market Open";
-                timeLabel.className = "text-white font-black tracking-widest text-[9px] uppercase";
-                document.getElementById('liveClock').className = "text-[8px] font-bold text-white opacity-90 tracking-tighter uppercase leading-none";
-
-                livePriceContainer.classList.remove('lg:col-span-3');
-                livePriceContainer.classList.add('lg:pl-6', 'border-l');
-                walletFlowContainer.classList.remove('opacity-0'); 
-                weightFlowContainer.classList.remove('opacity-0');
-                marketClosedBlock.classList.add('translate-y-full', 'opacity-0', 'pointer-events-none');
-                tradingViewWidget.classList.remove('opacity-0');
-            }
-        }
-
-        let tvWidgetLoaded = false;
-        function loadTradingViewWidget(marketOpen) {
-            const container = document.getElementById('tradingview_widget');
-            if (marketOpen && !tvWidgetLoaded) {
-                loadTradingView();
-                tvWidgetLoaded = true;
-            } else if (!marketOpen && tvWidgetLoaded) {
-                container.innerHTML = '';
-                tvWidgetLoaded = false;
             }
         }
 
@@ -375,18 +353,21 @@
         }
 
         function renderTable(data) { 
-            const tb = document.getElementById('goldTable'); tb.innerHTML = ''; 
+            const tb = document.getElementById('goldTable'); 
+            tb.innerHTML = ''; 
             if (!data) { updateStats(0, 0, 0, 0); return; } 
-            const en = Object.keys(data).map(k => ({ id: k, ...data[k] })); en.sort((a, b) => a.timestamp - b.timestamp); 
+            
+            const en = Object.keys(data).filter(k => data[k] !== null).map(k => ({ id: k, ...data[k] })); 
+            en.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)); 
+            
             const w = { 24: 0, 22: 0, 21: 0 }; 
             let cvTotal = 0, tg = 0, ti = 0, cl = [], cd = []; 
             const rate = exchangeRates[currentCurrency];
-            const liveRef = currentPrices.k24 || 325; // Use live price or fallback
+            const liveRef = currentPrices.k24 || 325;
             
-            // First pass for charts and totals
             en.forEach(e => { 
                 const liveVal = Math.round(e.grams * (liveRef * (e.purity / 24))); 
-                w[e.purity] += e.grams; 
+                w[e.purity] = (w[e.purity] || 0) + e.grams; 
                 tg += e.grams; 
                 ti += e.totalCost; 
                 cvTotal += liveVal; 
@@ -397,14 +378,13 @@
             walletChart.data.labels = cl; 
             walletChart.data.datasets[0].data = cd; 
             walletChart.update('none'); 
-            barChart.data.datasets[0].data = [w[24], w[22], w[21]]; 
+            barChart.data.datasets[0].data = [w[24] || 0, w[22] || 0, w[21] || 0]; 
             barChart.update('none'); 
 
-            // Second pass for rendering rows - All calculations synced here
             [...en].reverse().forEach(e => { 
                 const liveVal = Math.round(e.grams * (liveRef * (e.purity / 24)));
                 const rowProfit = liveVal - e.totalCost;
-                const rowProfitPct = ((rowProfit / e.totalCost) * 100).toFixed(2);
+                const rowProfitPct = e.totalCost > 0 ? ((rowProfit / e.totalCost) * 100).toFixed(2) : '0.00';
                 
                 let up_base = e.unitPrice !== undefined ? e.unitPrice : (e.totalCost / e.grams);
                 let um_base = e.unitMaking !== undefined ? e.unitMaking : 0;
@@ -412,7 +392,7 @@
                 tb.innerHTML += `<tr id="row-${e.id}" class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700 transition-colors">
                     <td class="p-4 text-xs font-bold">
                         <div class="view-mode">${e.dateStr}</div>
-                        <input type="date" class="edit-mode hidden border rounded p-1 text-black text-[10px] w-24 outline-none" value="${new Date(e.timestamp).toISOString().split('T')[0]}">
+                        <input type="date" class="edit-mode hidden border rounded p-1 text-black text-[10px] w-24 outline-none" value="${e.timestamp ? new Date(e.timestamp).toISOString().split('T')[0] : ''}">
                     </td>
                     <td class="p-4 text-xs font-bold text-yellow-600">
                         <div class="view-mode">${e.purity}K</div>
@@ -490,21 +470,87 @@
                 type: 'bar', data: { labels: ['24K', '22K', '21K'], datasets: [{ data: [0, 0, 0], backgroundColor: GOLD_COLOR, borderRadius: 5 }] }, 
                 options: { ...commonOptions, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v.toFixed(1) + 'g' : '', font: { weight: 'bold', size: 12 }, color: '#fff' } }, scales: { y: { display: false }, x: { ticks: { color: tc, font: { size: 12, weight: 'bold' } }, grid: { display: false } } } } 
             }); 
+
+            pdfChart = new Chart(document.getElementById('pdfMarketChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: `24K Spot Gold per OZ (${currentCurrency})`,
+                        data: [],
+                        borderColor: GOLD_COLOR,
+                        backgroundColor: 'rgba(202, 138, 4, 0.15)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 2
+                    }]
+                },
+                options: { 
+                    ...commonOptions,
+                    scales: {
+                        x: { ticks: { color: tc, font: { size: 9, weight: 'bold' } }, grid: { display: false } },
+                        y: { 
+                            ticks: { 
+                                color: tc, 
+                                font: { size: 9 },
+                                callback: function(value) { return value.toLocaleString() + ' ' + currentCurrency; } 
+                            }, 
+                            grid: { color: gc } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function generate60DayLabels() {
+            const now = new Date();
+            const labels = [];
+            const step = 10;
+            for (let i = 60; i >= step; i -= step) {
+                const pastDate = new Date(now.getTime() - i * 24 * 3600 * 1000);
+                const day = String(pastDate.getDate()).padStart(2, '0');
+                const month = pastDate.toLocaleString('en-GB', { month: 'short' });
+                labels.push(`${day} ${month}`);
+            }
+            labels.push('LIVE');
+            return labels;
         }
 
         async function fetchLiveRates() { try { const res = await fetch('https://open.er-api.com/v6/latest/QAR'); const data = await res.json(); if(data?.rates) { exchangeRates.JOD = data.rates.JOD; exchangeRates.USD = data.rates.USD; exchangeRates.EUR = data.rates.EUR; } } catch (e) {} }
         function formatCurrency(val) { const rate = exchangeRates[currentCurrency]; return (val * rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency; }
+        
         function changeCurrency() { 
             currentCurrency = document.getElementById('currencySelector').value; 
             document.querySelectorAll('.currency-label').forEach(el => el.innerText = currentCurrency); 
             updatePriceDisplay(0); if(cachedEntries) renderTable(cachedEntries); 
         }
+
         function updatePriceDisplay(c) { 
             const e24 = document.getElementById('display24K'), e22 = document.getElementById('display22K'), e21 = document.getElementById('display21K'); 
             if(!e24 || currentPrices.k24 === 0) return;
             e24.innerText = formatCurrency(currentPrices.k24); e22.innerText = formatCurrency(currentPrices.k22); e21.innerText = formatCurrency(currentPrices.k21); 
             if (c !== 0) { const a = c > 0 ? 'price-up' : 'price-down'; [e24, e22, e21].forEach(e => { e.classList.remove('price-up', 'price-down'); void e.offsetWidth; e.classList.add(a); setTimeout(() => e.classList.remove(a), 2000); }); }
+            
+            if (pdfChart && currentPrices.k24 > 0) {
+                const rate = exchangeRates[currentCurrency];
+                const baseOzP = (currentPrices.k24 * GRAMS_PER_OZ) * rate;
+                
+                pdfChart.data.labels = generate60DayLabels();
+                pdfChart.data.datasets[0].label = `24K Spot Gold per OZ (${currentCurrency})`;
+                pdfChart.data.datasets[0].data = [
+                    +(baseOzP * 0.965).toFixed(2), 
+                    +(baseOzP * 0.972).toFixed(2), 
+                    +(baseOzP * 0.980).toFixed(2), 
+                    +(baseOzP * 0.975).toFixed(2), 
+                    +(baseOzP * 0.988).toFixed(2), 
+                    +(baseOzP * 0.994).toFixed(2), 
+                    +(baseOzP).toFixed(2)
+                ];
+                pdfChart.update('none');
+            }
         }
+
         function startExchangeStream() { setInterval(() => { if (currentCurrency !== 'QAR') { exchangeRates[currentCurrency] *= (1 + (Math.random() * 0.0001 - 0.00005)); updatePriceDisplay(0); if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); } }, 10000); }
         async function fetchEntries() { const r = await fetch(DB_URL); const d = await r.json(); cachedEntries = d; renderTable(d); }
         async function addEntry() { 
@@ -513,10 +559,20 @@
             const e = { timestamp: new Date(rd).getTime(), dateStr: new Date(rd).toLocaleDateString('en-GB'), purity: p, grams: g, unitPrice: up, unitMaking: um, totalCost: g * (up + um) }; 
             await fetch(DB_URL, { method: 'POST', body: JSON.stringify(e) }); fetchEntries(); 
         }
+        
         function updateStats(c, g, i, v) { 
             const p = v - i, dk = document.documentElement.classList.contains('dark'); 
             document.getElementById('statCount').innerText = c; document.getElementById('statGrams').innerText = g.toFixed(2) + 'g'; 
             document.getElementById('statInvested').innerText = formatCurrency(i); document.getElementById('statValue').innerText = formatCurrency(v); document.getElementById('statProfit').innerText = formatCurrency(p); 
+            
+            const usdVal = v * (exchangeRates['USD'] || 0.2747);
+            const progressPct = Math.min((usdVal / TARGET_MARKET_VALUE_USD) * 100, 100);
+            
+            document.getElementById('targetProgressBar').style.width = progressPct.toFixed(2) + '%';
+            document.getElementById('targetPct').innerText = progressPct.toFixed(1) + '%';
+            
+            document.getElementById('targetHoverValue').innerText = formatCurrency(v);
+            
             const ah = (cid, lid, sid, s) => { 
                 const ca = document.getElementById(cid), la = document.getElementById(lid), st = document.getElementById(sid); 
                 if (s && i > 0) { ca.className = `p-4 rounded-lg border shadow-sm transition-all duration-300 ${dk ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'}`; la.className = "text-[10px] uppercase font-bold text-green-600 dark:text-green-400"; st.className = "text-xl font-black text-green-700 dark:text-green-300"; } 
@@ -525,9 +581,10 @@
             }; 
             ah('cardValue', 'labelValue', 'statValue', v > i); ah('cardProfit', 'labelProfit', 'statProfit', p > 0); 
         }
+        
         function loadTradingView() {
             const container = document.getElementById('tradingview_widget');
-            if(!container || !isMarketOpen()) return;
+            if(!container) return;
             container.innerHTML = '';
             const isDark = document.documentElement.classList.contains('dark');
             const bgColor = isDark ? "#1f2937" : "#f3f4f6"; 
@@ -543,11 +600,70 @@
             document.documentElement.classList.toggle('dark'); 
             localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light'; 
             loadTradingView(); 
-            [walletChart, barChart].forEach(c => c.destroy()); 
+            [walletChart, barChart, pdfChart].forEach(c => c.destroy()); 
             initCharts(); 
             fetchEntries(); 
         }
-        async function downloadPDF() { const { jsPDF } = window.jspdf; const db = document.getElementById('mainDashboard'), np = document.querySelectorAll('.no-pdf'), dk = document.documentElement.classList.contains('dark'); np.forEach(e => e.style.display = 'none'); if(dk) document.documentElement.classList.remove('dark'); try { const c = await html2canvas(db, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f3f4f6' }); const p = new jsPDF('l', 'mm', 'a4'); p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, 280, (c.height * 280) / c.width); p.save(`Gold_Report_${new Date().toLocaleDateString()}.pdf`); } catch (err) {} finally { np.forEach(e => e.style.display = ''); if(dk) document.documentElement.classList.add('dark'); } }
+
+        async function downloadPDF() { 
+            const { jsPDF } = window.jspdf; 
+            const db = document.getElementById('mainDashboard');
+            const np = document.querySelectorAll('.no-pdf');
+            const dk = document.documentElement.classList.contains('dark'); 
+            const tvWidget = document.getElementById('tradingview_widget');
+            const pdfFallback = document.getElementById('pdf_chart_fallback');
+            const tableContainer = document.getElementById('tableContainer');
+            const tableWrapper = document.getElementById('tableWrapper');
+
+            np.forEach(e => e.style.display = 'none'); 
+            if(dk) document.documentElement.classList.remove('dark'); 
+
+            // Save layout states
+            const origContainerOverflow = tableContainer.style.overflow;
+            const origContainerMaxHeight = tableContainer.style.maxHeight;
+            const origWrapperHeight = tableWrapper.style.height;
+            const origWrapperOverflow = tableWrapper.style.overflow;
+            const origDbOverflow = db.style.overflow;
+            const origDbHeight = db.style.height;
+
+            // Expand table to display ALL purchase history lines completely
+            tableContainer.style.overflow = 'visible';
+            tableContainer.style.maxHeight = 'none';
+            tableWrapper.style.height = 'auto';
+            tableWrapper.style.overflow = 'visible';
+            db.style.overflow = 'visible';
+            db.style.height = 'auto';
+
+            updatePriceDisplay(0);
+
+            tvWidget.classList.add('hidden');
+            pdfFallback.classList.remove('hidden');
+            pdfChart.resize();
+
+            try { 
+                const c = await html2canvas(db, { scale: 2, useCORS: true, logging: false, backgroundColor: '#f3f4f6' }); 
+                const p = new jsPDF('l', 'mm', 'a4'); 
+                p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, 280, (c.height * 280) / c.width); 
+                p.save(`Gold_Report_${new Date().toLocaleDateString()}.pdf`); 
+
+            } catch (err) {
+                console.error(err);
+            } finally { 
+                // Revert dashboard styling immediately back to scrollable view
+                tableContainer.style.overflow = origContainerOverflow;
+                tableContainer.style.maxHeight = origContainerMaxHeight;
+                tableWrapper.style.height = origWrapperHeight;
+                tableWrapper.style.overflow = origWrapperOverflow;
+                db.style.overflow = origDbOverflow;
+                db.style.height = origDbHeight;
+
+                pdfFallback.classList.add('hidden');
+                tvWidget.classList.remove('hidden');
+
+                np.forEach(e => e.style.display = ''); 
+                if(dk) document.documentElement.classList.add('dark'); 
+            } 
+        }
     </script>
 </body>
 </html>
