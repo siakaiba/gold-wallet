@@ -250,7 +250,7 @@
             
             initCharts(); loadTradingView(); fetchEntries(); fetchLiveRates(); 
             fetchGoldFlow();
-            setInterval(fetchGoldFlow, 60000); 
+            setInterval(fetchGoldFlow, 1000); 
             
             startClock();
             startExchangeStream(); 
@@ -551,7 +551,7 @@
             }
         }
 
-        function startExchangeStream() { setInterval(() => { if (currentCurrency !== 'QAR') { exchangeRates[currentCurrency] *= (1 + (Math.random() * 0.0001 - 0.00005)); updatePriceDisplay(0); if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); } }, 10000); }
+        function startExchangeStream() { setInterval(() => { if (currentCurrency !== 'QAR') { exchangeRates[currentCurrency] *= (1 + (Math.random() * 0.0001 - 0.00005)); updatePriceDisplay(0); if(cachedEntries && !isEditingLocked) renderTable(cachedEntries); } }, 1000); }
         async function fetchEntries() { const r = await fetch(DB_URL); const d = await r.json(); cachedEntries = d; renderTable(d); }
         async function addEntry() { 
             const rd = document.getElementById('purchaseDate').value, p = parseInt(document.getElementById('purity').value), g = parseFloat(document.getElementById('grams').value) || 0, up = parseFloat(document.getElementById('price').value) || 0, um = parseFloat(document.getElementById('costs').value) || 0; 
