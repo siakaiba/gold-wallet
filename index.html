@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gold Investment Wallet V2.9.5</title>
+    <title>Gold Investment Wallet V2.9.6</title>
     
     <link rel="icon" type="image/png" href="https://static.vecteezy.com/system/resources/previews/063/053/951/non_2x/gold-wallet-dollar-icon-3d-glossy-golden-wallet-with-dollar-symbol-and-metallic-shine-for-money-finance-spending-and-online-payment-concepts-png.png">
  
@@ -140,27 +140,31 @@
             </div>
         </div>
  
-        <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-5 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-3 border-b text-center shrink-0">
+        <div id="statsContainer" class="grid grid-cols-1 md:grid-cols-6 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-3 border-b text-center shrink-0">
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Total Purchases</p>
                 <p id="statCount" class="text-xl font-black text-gray-800 dark:text-white">0</p>
-          </div>
+            </div>
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Total Weight</p>
                 <p id="statGrams" class="text-xl font-black text-gray-800 dark:text-white">0.00g</p>
-          </div>
+            </div>
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Total Invested</p>
                 <p id="statInvested" class="text-xl font-black text-gray-800 dark:text-white">--</p>
-          </div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold">Avg Cost</p>
+                <p id="statAvgCost" class="text-xl font-black text-gray-800 dark:text-white">--</p>
+            </div>
             <div id="cardProfit" class="p-4 rounded-lg border shadow-sm transition-all duration-300 bg-gray-50 dark:bg-gray-700">
                 <p id="labelProfit" class="text-[10px] uppercase font-bold text-gray-500">Net Profit/Loss</p>
                 <p id="statProfit" class="text-xl font-black">--</p>
-          </div>
+            </div>
             <div id="cardValue" class="p-4 rounded-lg border shadow-sm transition-all duration-300 bg-gray-50 dark:bg-gray-700">
                 <p id="labelValue" class="text-[10px] uppercase font-bold text-gray-500">Market Value</p>
                 <p id="statValue" class="text-xl font-black">--</p>
-          </div>
+            </div>
         </div>
  
         <div id="chartsContainer" class="grid grid-cols-1 lg:grid-cols-3 bg-white dark:bg-gray-800 border-x dark:border-gray-700 p-6 gap-6 border-b shrink-0 transition-all duration-300">
@@ -429,7 +433,7 @@
                     </td>
                 </tr>`; 
             }); 
-            updateStats(en.length, tg, Math.round(ti), cvTotal); 
+            updateStats(en.length, tg, ti, cvTotal); 
         }
 
         function toggleEdit(id, show) { 
@@ -562,8 +566,14 @@
         
         function updateStats(c, g, i, v) { 
             const p = v - i, dk = document.documentElement.classList.contains('dark'); 
-            document.getElementById('statCount').innerText = c; document.getElementById('statGrams').innerText = g.toFixed(2) + 'g'; 
-            document.getElementById('statInvested').innerText = formatCurrency(i); document.getElementById('statValue').innerText = formatCurrency(v); document.getElementById('statProfit').innerText = formatCurrency(p); 
+            const avgCost = g > 0 ? (i / g) : 0;
+
+            document.getElementById('statCount').innerText = c; 
+            document.getElementById('statGrams').innerText = g.toFixed(2) + 'g'; 
+            document.getElementById('statInvested').innerText = formatCurrency(Math.round(i)); 
+            document.getElementById('statAvgCost').innerText = g > 0 ? formatCurrency(avgCost) : '--';
+            document.getElementById('statValue').innerText = formatCurrency(v); 
+            document.getElementById('statProfit').innerText = formatCurrency(Math.round(p)); 
             
             const usdVal = v * (exchangeRates['USD'] || 0.2747);
             const progressPct = Math.min((usdVal / TARGET_MARKET_VALUE_USD) * 100, 100);
